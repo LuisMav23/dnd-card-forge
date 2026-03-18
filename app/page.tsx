@@ -123,6 +123,9 @@ export default function CardForgePage() {
         />
         <LivePreview ref={cardRef} state={state} />
       </div>
+      <footer className="flex-shrink-0 border-t border-bdr py-2 px-4 text-center text-[.62rem] text-gold-dark italic tracking-wide font-[var(--font-cinzel),serif]">
+        Created by Kurt Andrei Gabriel
+      </footer>
     </>
   );
 }
