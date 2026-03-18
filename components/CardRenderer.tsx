@@ -1,0 +1,108 @@
+'use client';
+
+import React, { forwardRef } from 'react';
+import { CardState } from '@/lib/types';
+import { CARD_TYPES, getTypebar, getCost } from '@/lib/cardConfig';
+import { GEMS, abilityMod } from '@/lib/utils';
+
+const CornerSVG = () => (
+  <svg viewBox="0 0 20 20">
+    <path d="M0 20L0 0L20 0" fill="none" stroke="rgba(20,8,0,.38)" strokeWidth="2" />
+    <circle cx="0" cy="0" r="3.5" fill="rgba(20,8,0,.22)" />
+  </svg>
+);
+
+interface Props {
+  state: CardState;
+}
+
+const CardRenderer = forwardRef<HTMLDivElement, Props>(({ state }, ref) => {
+  const cfg = CARD_TYPES[state.type];
+  const f = state.fields;
+  const tb = getTypebar(state.type, f);
+  const cost = getCost(state.type, f);
+  const name = f.name || 'Card Name';
+  const flavor = f.flavor || '';
+  const desc = f.desc || 'Enter the card effect or description…';
+  const cls = f.class || '';
+
+  const stats = [0, 1, 2, 3]
+    .map(i => ({ label: f[`sl${i}`], value: f[`sv${i}`] }))
+    .filter(s => s.label && s.value);
+
+  const artContent = state.image ? (
+    <img src={state.image} alt="Card art" />
+  ) : (
+    <div className="c-art-ph">{state.icon}</div>
+  );
+
+  const isSK = cfg.isSidekick;
+
+  return (
+    <div ref={ref} className={`spell-card th-${state.theme} rar-${state.rarity}`}>
+      <div className="card-bg" />
+      <div className="card-border-o" />
+      <div className="card-border-i" />
+      <div className="corner ctlx"><CornerSVG /></div>
+      <div className="corner ctrx"><CornerSVG /></div>
+      <div className="corner cblx"><CornerSVG /></div>
+      <div className="corner cbrx"><CornerSVG /></div>
+
+      <div className="cz-header">
+        <div className="c-name">{name}</div>
+        <div className="c-cost-badge">
+          {cost.value}
+          <span className="cl">{cost.label}</span>
+        </div>
+      </div>
+
+      {isSK ? (
+        <>
+          <div className="cz-portrait">{artContent}</div>
+          <div className="cz-sk-stats">
+            {(['str', 'dex', 'con', 'int', 'wis', 'cha'] as const).map(ab => (
+              <div key={ab} className="sk-stat-row">
+                <span className="sk-stat-key">{ab.toUpperCase()}</span>
+                <span className="sk-stat-val">
+                  {f[ab] || '10'} ({abilityMod(f[ab] || '10')})
+                </span>
+              </div>
+            ))}
+          </div>
+        </>
+      ) : (
+        <div className="cz-art">{artContent}</div>
+      )}
+
+      <div className="cz-typebar">
+        <span className="c-type">{tb.left}</span>
+        <span className="c-subtype">{tb.right}</span>
+      </div>
+
+      <div className="cz-text">
+        {flavor && <div className="c-flavor">&ldquo;{flavor}&rdquo;</div>}
+        <div className="c-desc" dangerouslySetInnerHTML={{ __html: desc }} />
+      </div>
+
+      {stats.length > 0 && (
+        <div className="cz-stats">
+          {stats.map((s, i) => (
+            <div key={i} className="c-stat">
+              <span className="c-stat-l">{s.label}</span>
+              <span className="c-stat-v">{s.value}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="cz-footer">
+        <span className="c-class">{cls}</span>
+        <span className="c-gems">{GEMS[state.rarity]}</span>
+      </div>
+    </div>
+  );
+});
+
+CardRenderer.displayName = 'CardRenderer';
+
+export default CardRenderer;
