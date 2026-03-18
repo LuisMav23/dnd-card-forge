@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>D&D Card Forge</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root {
+  --gold:#c9a84c;--gold-l:#e8c96a;--gold-d:#7a5e18;
+  --parch:#f5e9c8;--ink:#1a0f00;
+  --bg:#080602;--panel:#100c05;--mid:#140e06;
+  --bdr:#2a1e08;--bdr2:#3a2a0c;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Crimson Text',Georgia,serif;background:var(--bg);color:var(--parch);display:flex;flex-direction:column;}
+
+header{background:linear-gradient(180deg,#040300,var(--mid));border-bottom:2px solid var(--gold-d);padding:11px 22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:50;}
+header h1{font-family:'Cinzel',serif;font-size:1.25rem;font-weight:900;color:var(--gold);letter-spacing:.12em;text-shadow:0 0 18px rgba(201,168,76,.4);}
+header h1 em{color:var(--gold-l);font-style:normal;}
+.hdr-sub{font-size:.7rem;color:var(--gold-d);font-style:italic;}
+
+.type-bar{background:var(--panel);border-bottom:1px solid var(--bdr);padding:8px 20px;display:flex;align-items:center;gap:6px;flex-shrink:0;overflow-x:auto;}
+.type-bar>span{font-family:'Cinzel',serif;font-size:.6rem;color:var(--gold-d);letter-spacing:.1em;text-transform:uppercase;margin-right:6px;white-space:nowrap;}
+.tbtn{padding:6px 15px;border-radius:4px;border:1px solid var(--bdr2);background:transparent;cursor:pointer;font-family:'Cinzel',serif;font-size:.66rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;transition:all .18s;white-space:nowrap;color:#806840;}
+.tbtn:hover{border-color:var(--gold-d);color:var(--gold);}
+.tbtn.active{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.1);box-shadow:0 0 12px rgba(201,168,76,.12);}
+
+.workspace{display:flex;flex:1;overflow:hidden;min-height:0;}
+
+.ex-panel{width:300px;min-width:300px;background:var(--panel);border-right:1px solid var(--bdr);display:flex;flex-direction:column;overflow:hidden;transition:width .35s,min-width .35s;position:relative;flex-shrink:0;}
+.ex-panel.hidden{width:0;min-width:0;}
+.ex-hdr{padding:9px 13px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.ex-hdr h3{font-family:'Cinzel',serif;font-size:.65rem;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;}
+.btn-sm{background:none;border:1px solid var(--bdr2);color:var(--gold-d);font-family:'Crimson Text',serif;font-size:.72rem;padding:3px 9px;border-radius:3px;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.btn-sm:hover{background:var(--bdr);color:var(--gold);}
+.ex-body{overflow-y:auto;padding:14px;flex:1;display:flex;flex-direction:column;align-items:center;gap:10px;}
+.ex-note{font-size:.68rem;color:var(--gold-d);font-style:italic;text-align:center;line-height:1.55;}
+.ex-legend{background:rgba(201,168,76,.06);border:1px solid var(--bdr2);border-radius:5px;padding:10px 12px;font-size:.68rem;color:var(--gold);line-height:1.9;width:100%;}
+.ex-legend b{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.06em;}
+
+.show-ex-btn{position:absolute;left:0;top:50%;transform:translateY(-50%);background:var(--panel);border:1px solid var(--bdr2);border-left:none;color:var(--gold-d);font-family:'Cinzel',serif;font-size:.55rem;writing-mode:vertical-rl;padding:10px 5px;cursor:pointer;letter-spacing:.08em;text-transform:uppercase;border-radius:0 4px 4px 0;z-index:10;transition:all .15s;display:none;}
+.show-ex-btn:hover{color:var(--gold);background:var(--bdr);}
+
+.form-panel{flex:1;overflow-y:auto;background:var(--mid);padding:20px;min-width:0;}
+.fsec{background:var(--panel);border:1px solid var(--bdr);border-radius:6px;padding:17px;margin-bottom:14px;}
+.fsec h3{font-family:'Cinzel',serif;font-size:.72rem;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid var(--bdr);}
+.frow{display:grid;gap:10px;margin-bottom:10px;}
+.frow.c2{grid-template-columns:1fr 1fr;}
+.frow.c3{grid-template-columns:1fr 1fr 1fr;}
+.frow.c1{grid-template-columns:1fr;}
+.fg{display:flex;flex-direction:column;gap:4px;}
+label{font-size:.63rem;color:var(--gold-d);font-family:'Cinzel',serif;letter-spacing:.06em;text-transform:uppercase;}
+input[type=text],input[type=number],select,textarea{background:#0a080480;border:1px solid var(--bdr2);border-radius:4px;color:var(--parch);font-family:'Crimson Text',serif;font-size:.92rem;padding:6px 9px;outline:none;transition:border-color .15s;width:100%;}
+input:focus,select:focus,textarea:focus{border-color:var(--gold-d);box-shadow:0 0 0 2px rgba(201,168,76,.08);}
+select option{background:#100c05;}
+textarea{resize:vertical;min-height:68px;line-height:1.5;}
+
+.swatches{display:flex;gap:7px;flex-wrap:wrap;}
+.swatch{width:34px;height:34px;border-radius:4px;cursor:pointer;border:2px solid transparent;transition:all .15s;}
+.swatch.active{border-color:var(--gold-l);transform:scale(1.15);}
+.swatch:hover{transform:scale(1.08);}
+
+.icon-grid{display:flex;gap:5px;flex-wrap:wrap;}
+.ibtn{width:36px;height:36px;background:#0a080480;border:1px solid var(--bdr2);border-radius:4px;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.ibtn.active{border-color:var(--gold);background:rgba(201,168,76,.14);}
+.ibtn:hover{border-color:var(--gold-d);}
+
+.rar-opts{display:flex;gap:6px;flex-wrap:wrap;}
+.rar-btn{padding:5px 11px;border-radius:4px;border:1px solid var(--bdr2);background:#0a080480;cursor:pointer;font-family:'Cinzel',serif;font-size:.63rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;transition:all .15s;}
+.rar-btn.active{transform:scale(1.05);}
+
+.upload-area{border:2px dashed var(--bdr2);border-radius:5px;padding:14px;text-align:center;cursor:pointer;transition:all .15s;position:relative;overflow:hidden;}
+.upload-area:hover{border-color:var(--gold-d);background:rgba(201,168,76,.04);}
+.upload-area input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.upload-area p{font-size:.75rem;color:var(--gold-d);font-style:italic;margin-top:4px;}
+.upload-icon{font-size:1.6rem;}
+.prev-wrap{margin-top:8px;display:none;justify-content:center;}
+.prev-wrap.vis{display:flex;}
+.prev-wrap canvas{border:1px solid var(--bdr2);border-radius:3px;max-width:110px;}
+.clear-btn{margin-top:5px;background:none;border:1px solid var(--bdr);color:var(--gold-d);font-family:'Crimson Text',serif;font-size:.75rem;padding:3px 9px;border-radius:3px;cursor:pointer;display:none;width:100%;}
+
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;}
+.stat-pair .row2{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+
+.btn-finish{width:100%;padding:13px;background:linear-gradient(135deg,var(--gold-d),var(--gold),var(--gold-d));border:none;border-radius:5px;font-family:'Cinzel',serif;font-size:.95rem;font-weight:700;color:var(--ink);letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:all .25s;box-shadow:0 4px 16px rgba(201,168,76,.25);margin-top:4px;}
+.btn-finish:hover{transform:translateY(-2px);box-shadow:0 8px 26px rgba(201,168,76,.45);background:linear-gradient(135deg,var(--gold),var(--gold-l),var(--gold));}
+.btn-finish:active{transform:translateY(0);}
+.btn-finish.loading{opacity:.65;pointer-events:none;animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{opacity:.65}50%{opacity:1}}
+.export-note{text-align:center;font-size:.68rem;color:var(--gold-d);font-style:italic;margin-top:8px;margin-bottom:20px;}
+
+.prev-panel{width:290px;min-width:290px;background:#070502aa;border-left:1px solid var(--bdr);display:flex;flex-direction:column;align-items:center;padding:18px 14px;overflow-y:auto;gap:10px;flex-shrink:0;}
+.prev-label{font-family:'Cinzel',serif;font-size:.65rem;color:var(--gold-d);letter-spacing:.1em;text-transform:uppercase;text-align:center;}
+.prev-note{font-size:.62rem;color:#3a2a08;font-style:italic;text-align:center;}
+
+.card-scale-wrap{transform:scale(0.435);transform-origin:top center;margin-bottom:-476px;}
+.ex-card-scale{transform:scale(0.36);transform-origin:top center;margin-bottom:-532px;}
+
+/* ═══ THE CARD ═══ */
+.spell-card{width:595px;height:833px;position:relative;border-radius:22px;overflow:hidden;font-family:'Crimson Text',serif;box-shadow:0 12px 50px rgba(0,0,0,.9),0 0 0 3px rgba(201,168,76,.22);flex-shrink:0;}
+.card-bg{position:absolute;inset:0;}
+.card-border-o{position:absolute;inset:6px;border-radius:18px;border:3px solid;pointer-events:none;z-index:20;}
+.card-border-i{position:absolute;inset:14px;border-radius:12px;border:1.5px solid;pointer-events:none;z-index:20;opacity:.42;}
+.corner{position:absolute;width:26px;height:26px;z-index:25;pointer-events:none;opacity:.42;}
+.corner svg{width:100%;height:100%;}
+.ctlx{top:16px;left:16px;} .ctrx{top:16px;right:16px;transform:scaleX(-1);}
+.cblx{bottom:16px;left:16px;transform:scaleY(-1);} .cbrx{bottom:16px;right:16px;transform:scale(-1,-1);}
+
+/* themes */
+.th-arcane .card-bg{background:linear-gradient(155deg,#ede0f8,#d8bff0 45%,#c8a8e8);}
+.th-fire   .card-bg{background:linear-gradient(155deg,#f8e8d0,#f0c898 45%,#e8a860);}
+.th-nature .card-bg{background:linear-gradient(155deg,#d0f0c8,#b0d898 45%,#88c060);}
+.th-divine .card-bg{background:linear-gradient(155deg,#f8f5d0,#f0e888 45%,#e8d840);}
+.th-shadow .card-bg{background:linear-gradient(155deg,#c8c0d8,#a8a0c0 45%,#8880a8);}
+.th-frost  .card-bg{background:linear-gradient(155deg,#cce8f8,#a8cce8 45%,#80b0d8);}
+.th-storm  .card-bg{background:linear-gradient(155deg,#f0f0b0,#e0d870 45%,#c8c040);}
+.th-blood  .card-bg{background:linear-gradient(155deg,#f0c8c8,#e09090 45%,#c85858);}
+.th-iron   .card-bg{background:linear-gradient(155deg,#ddd8d0,#b8b0a8 45%,#908880);}
+.th-earth  .card-bg{background:linear-gradient(155deg,#e0d0b0,#c8b080 45%,#a88848);}
+.th-cosmic .card-bg{background:linear-gradient(155deg,#c0c8e8,#9098c8 45%,#6068a8);}
+.th-void   .card-bg{background:linear-gradient(155deg,#b0a8b8,#807888 45%,#504858);}
+
+/* rarity borders */
+.rar-common   .card-border-o{border-color:#909090;} .rar-common   .card-border-i{border-color:#b8b8b8;}
+.rar-uncommon .card-border-o{border-color:#2a7a2a;} .rar-uncommon .card-border-i{border-color:#50aa50;}
+.rar-rare     .card-border-o{border-color:#1a3a9b;} .rar-rare     .card-border-i{border-color:#4060bb;}
+.rar-epic     .card-border-o{border-color:#6a1a9b;} .rar-epic     .card-border-i{border-color:#9040bb;}
+.rar-legendary .card-border-o{border-color:#c9a84c;} .rar-legendary .card-border-i{border-color:#e8c96a;}
+.rar-artifact  .card-border-o{border-color:#c85858;} .rar-artifact  .card-border-i{border-color:#e88080;}
+
+/* card zones */
+.cz-header{position:absolute;top:18px;left:18px;right:18px;z-index:10;display:flex;align-items:flex-start;justify-content:space-between;}
+.c-name{font-family:'Cinzel',serif;font-size:22px;font-weight:900;color:#140800;line-height:1.1;text-shadow:0 1px 2px rgba(255,255,255,.3);max-width:330px;}
+.c-cost-badge{background:rgba(0,0,0,.14);border:2px solid rgba(0,0,0,.2);border-radius:50%;width:52px;height:52px;display:flex;align-items:center;justify-content:center;flex-direction:column;font-family:'Cinzel',serif;font-size:18px;font-weight:900;color:#140800;flex-shrink:0;line-height:1;}
+.c-cost-badge .cl{font-size:8px;font-family:'Crimson Text',serif;font-style:italic;opacity:.65;margin-top:1px;}
+
+.cz-art{position:absolute;top:74px;left:18px;right:18px;height:256px;border-radius:8px;overflow:hidden;border:2px solid rgba(0,0,0,.18);z-index:5;background:rgba(0,0,0,.08);display:flex;align-items:center;justify-content:center;}
+.cz-art img,.cz-portrait img{width:100%;height:100%;object-fit:cover;}
+.c-art-ph{font-size:82px;opacity:.3;user-select:none;}
+
+.cz-typebar{position:absolute;top:338px;left:18px;right:18px;height:30px;border-radius:4px;background:rgba(0,0,0,.16);border:1px solid rgba(0,0,0,.12);z-index:8;display:flex;align-items:center;padding:0 11px;justify-content:space-between;}
+.c-type{font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:#140800;letter-spacing:.04em;}
+.c-subtype{font-family:'Crimson Text',serif;font-size:12px;font-style:italic;color:#2a1000;}
+
+.cz-text{position:absolute;top:376px;left:18px;right:18px;bottom:90px;background:rgba(255,255,255,.22);border:1px solid rgba(0,0,0,.1);border-radius:6px;padding:11px 13px;z-index:5;overflow:hidden;display:flex;flex-direction:column;gap:7px;}
+.c-flavor{font-size:13px;font-style:italic;color:#2a1000;line-height:1.45;border-bottom:1px solid rgba(0,0,0,.1);padding-bottom:6px;}
+.c-desc{font-size:12.5px;color:#140800;line-height:1.5;flex:1;}
+
+.cz-stats{position:absolute;bottom:50px;left:18px;right:18px;display:flex;gap:5px;z-index:8;}
+.c-stat{flex:1;background:rgba(0,0,0,.13);border:1px solid rgba(0,0,0,.18);border-radius:5px;padding:4px 5px;text-align:center;}
+.c-stat-l{font-family:'Cinzel',serif;font-size:7.5px;color:#2a1000;letter-spacing:.06em;text-transform:uppercase;display:block;}
+.c-stat-v{font-family:'Cinzel',serif;font-size:13.5px;font-weight:700;color:#140800;display:block;margin-top:1px;}
+
+.cz-footer{position:absolute;bottom:14px;left:18px;right:18px;display:flex;align-items:center;justify-content:space-between;z-index:8;}
+.c-class{font-family:'Cinzel',serif;font-size:8.5px;color:rgba(20,8,0,.45);letter-spacing:.07em;text-transform:uppercase;}
+.c-gems{font-size:12px;letter-spacing:2px;}
+
+/* sidekick-specific */
+.cz-portrait{position:absolute;top:74px;left:18px;width:196px;height:256px;border-radius:8px 0 0 8px;overflow:hidden;border:2px solid rgba(0,0,0,.18);z-index:5;background:rgba(0,0,0,.08);display:flex;align-items:center;justify-content:center;}
+.cz-sk-stats{position:absolute;top:74px;left:220px;right:18px;height:256px;z-index:6;display:flex;flex-direction:column;gap:5px;justify-content:center;padding:4px;}
+.sk-stat-row{display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.12);border-radius:4px;padding:4px 8px;border:1px solid rgba(0,0,0,.1);}
+.sk-stat-key{font-family:'Cinzel',serif;font-size:8px;color:#2a1000;letter-spacing:.06em;text-transform:uppercase;width:48px;flex-shrink:0;}
+.sk-stat-val{font-family:'Cinzel',serif;font-size:13px;font-weight:700;color:#140800;}
+
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:3px;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⚔ D&D <em>Card Forge</em></h1>
+  <span class="hdr-sub">Spells · Armor · Weapons · Items · Sidekicks · Anything — Export PNG</span>
+</header>
+
+<div class="type-bar">
+  <span>Card Type:</span>
+  <button class="tbtn active" onclick="setType('spell',this)">✨ Spell</button>
+  <button class="tbtn" onclick="setType('armor',this)">🛡 Armor</button>
+  <button class="tbtn" onclick="setType('equipment',this)">🎒 Equipment</button>
+  <button class="tbtn" onclick="setType('weapon',this)">⚔️ Weapon</button>
+  <button class="tbtn" onclick="setType('sidekick',this)">🧑 Sidekick</button>
+  <button class="tbtn" onclick="setType('anything',this)">🌀 Anything</button>
+</div>
+
+<div class="workspace">
+
+  <!-- EXAMPLE PANEL -->
+  <div class="ex-panel" id="exPanel">
+    <div class="ex-hdr">
+      <h3>📖 Example &amp; Legend</h3>
+      <button class="btn-sm" onclick="toggleEx()">Hide ✕</button>
+    </div>
+    <div class="ex-body">
+      <p class="ex-note">Example mirrors your card live. Use it as layout reference.</p>
+      <div class="ex-card-scale">
+        <div class="spell-card th-arcane rar-legendary" id="exCard">
+          <div class="card-bg"></div>
+          <div class="card-border-o"></div>
+          <div class="card-border-i"></div>
+          <div class="corner ctlx"><svg viewBox="0 0 20 20"><path d="M0 20L0 0L20 0" fill="none" stroke="rgba(20,8,0,.38)" stroke-width="2"/><circle cx="0" cy="0" r="3.5" fill="rgba(20,8,0,.22)"/></svg></div>
+          <div class="corner ctrx"><svg viewBox="0 0 20 20"><path d="M0 20L0 0L20 0" fill="none" stroke="rgba(20,8,0,.38)" stroke-width="2"/><circle cx="0" cy="0" r="3.5" fill="rgba(20,8,0,.22)"/></svg></div>
+          <div class="corner cblx"><svg viewBox="0 0 20 20"><path d="M0 20L0 0L20 0" fill="none" stroke="rgba(20,8,0,.38)" stroke-width="2"/><circle cx="0" cy="0" r="3.5" fill="rgba(20,8,0,.22)"/></svg></div>
+          <div class="corner cbrx"><svg viewBox="0 0 20 20"><path d="M0 20L0 0L20 0" fill="none" stroke="rgba(20,8,0,.38)" stroke-width="2"/><circle cx="0" cy="0" r="3.5" fill="rgba(20,8,0,.22)"/></svg></div>
+          <div class="cz-header"><div class="c-name">Arcane Rift</div><div class="c-cost-badge">7<span class="cl">SP</span></div></div>
+          <div class="cz-art"><div class="c-art-ph">🌀</div></div>
+          <div class="cz-typebar"><span class="c-type">Spell — Evocation · Action</span><span class="c-subtype">✨ Arcane</span></div>
+          <div class="cz-text">
+            <div class="c-flavor">"The veil between worlds is thinner than you think."</div>
+            <div class="c-desc">Target must make DC 18 INT save or be pulled into the astral plane for 1 min, taking 8d10 psychic damage each turn.<br><br><b>At Higher Levels:</b> +2d10 per slot above 7th.</div>
+          </div>
+          <div class="cz-stats">
+            <div class="c-stat"><span class="c-stat-l">Range</span><span class="c-stat-v">60 ft</span></div>
+            <div class="c-stat"><span class="c-stat-l">Duration</span><span class="c-stat-v">1 min</span></div>
+            <div class="c-stat"><span class="c-stat-l">Damage</span><span class="c-stat-v">8d10</span></div>
+            <div class="c-stat"><span class="c-stat-l">Save DC</span><span class="c-stat-v">18</span></div>
+          </div>
+          <div class="cz-footer"><span class="c-class">Wizard · Sorcerer · Warlock</span><span class="c-gems">◆◆◆◆◆</span></div>
+        </div>
+      </div>
+      <div class="ex-legend" id="exLegend">
+        <b>CARD ANATOMY</b><br>
+        🔵 Top Left — Card Name<br>
+        🔵 Top Right — Cost / Slot / CR<br>
+        🔵 Art Frame — Image or icon<br>
+        🔵 Type Bar — Category · Subtype<br>
+        🔵 Text Box — Flavor + Effect<br>
+        🔵 Stat Pips — Key numbers (×4)<br>
+        🔵 Border Color — Rarity tier<br>
+        🔵 Bottom — Class / Source<br>
+        🔵 Gems — ◇ Common → ◈ Artifact
+      </div>
+    </div>
+  </div>
+  <button class="show-ex-btn" id="showExBtn" onclick="toggleEx()">Show Example</button>
+
+  <!-- FORM -->
+  <div class="form-panel" id="formPanel">
+    <div id="formContent"></div>
+    <button class="btn-finish" id="finishBtn" onclick="exportCard()">⬇ Export Card as PNG</button>
+    <p class="export-note">Pokémon card size · 63mm × 88mm · print-ready PNG</p>
+  </div>
+
+  <!-- LIVE PREVIEW -->
+  <div class="prev-panel">
+    <span class="prev-label">✦ Live Preview ✦</span>
+    <div class="card-scale-wrap">
+      <div class="spell-card th-arcane rar-legendary" id="liveCard">
+        <div class="card-bg"></div>
+        <div class="card-border-o"></div>
+        <div class="card-border-i"></div>
+        <div class="corner ctlx"><svg viewBox="0 0 20 20"><path d="M0 20L0 0L20 0" fill="none" stroke="rgba(20,8,0,.38)" stroke-width="2"/><circle cx="0" cy="0" r="3.5" fill="rgba(20,8,0,.22)"/></svg></div>
+        <div class="corner ctrx"><svg viewBox="0 0 20 20"><path d="M0 20L0 0L20 0" fill="none" stroke="rgba(20,8,0,.38)" stroke-width="2"/><circle cx="0" cy="0" r="3.5" fill="rgba(20,8,0,.22)"/></svg></div>
+        <div class="corner cblx"><svg viewBox="0 0 20 20"><path d="M0 20L0 0L20 0" fill="none" stroke="rgba(20,8,0,.38)" stroke-width="2"/><circle cx="0" cy="0" r="3.5" fill="rgba(20,8,0,.22)"/></svg></div>
+        <div class="corner cbrx"><svg viewBox="0 0 20 20"><path d="M0 20L0 0L20 0" fill="none" stroke="rgba(20,8,0,.38)" stroke-width="2"/><circle cx="0" cy="0" r="3.5" fill="rgba(20,8,0,.22)"/></svg></div>
+        <div id="lc_inner"></div>
+      </div>
+    </div>
+    <p class="prev-note">Updates instantly as you type</p>
+  </div>
+</div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────────
+const S = { type:'spell', theme:'arcane', rarity:'legendary', icon:'🌀', img:null };
+const GEMS = {common:'◇',uncommon:'◇◇◇',rare:'◆◆◆',epic:'◆◆◆◆',legendary:'◆◆◆◆◆',artifact:'◈◈◈◈◈'};
+
+// ─── TYPE CONFIG ──────────────────────────────────────────────
+const T = {
+
+spell:{
+  defIcon:'🌀', defTheme:'arcane',
+  icons:['🌀','💥','🔥','❄️','⚡','☠️','✨','🌿','🛡','👁','🌙','☀️','💀','🌪️','🩸','🔮','💫','🌊'],
+  themes:[{k:'arcane',bg:'linear-gradient(135deg,#e8d4f0,#c4a0d8)',n:'Arcane'},{k:'fire',bg:'linear-gradient(135deg,#f5d5b0,#e8a870)',n:'Fire'},{k:'frost',bg:'linear-gradient(135deg,#c8e0f5,#90b8d8)',n:'Frost'},{k:'storm',bg:'linear-gradient(135deg,#f0f0b0,#d8d840)',n:'Storm'},{k:'nature',bg:'linear-gradient(135deg,#c8e8c0,#90c878)',n:'Nature'},{k:'shadow',bg:'linear-gradient(135deg,#c0b8d0,#8888a8)',n:'Shadow'},{k:'divine',bg:'linear-gradient(135deg,#f5f0c8,#e8d870)',n:'Divine'},{k:'blood',bg:'linear-gradient(135deg,#f0c8c8,#d88080)',n:'Blood'}],
+  fields:`
+    <div class="fsec"><h3>✨ Spell Identity</h3>
+      <div class="frow c2"><div class="fg"><label>Spell Name</label><input id="f_name" type="text" placeholder="e.g. Arcane Rift" oninput="upd()" maxlength="28"></div>
+      <div class="fg"><label>Spell Slot</label><select id="f_cost" onchange="upd()"><option value="0">Cantrip (0)</option><option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option><option value="4">4th</option><option value="5">5th</option><option value="6">6th</option><option value="7" selected>7th</option><option value="8">8th</option><option value="9">9th</option></select></div></div>
+      <div class="frow c3">
+        <div class="fg"><label>Spell Category</label><select id="f_sptype" onchange="upd()"><option>Spell</option><option>Ritual</option><option>Cantrip</option><option>Invocation</option><option>Pact Magic</option></select></div>
+        <div class="fg"><label>School of Magic</label><select id="f_school" onchange="upd()"><option value="✨ Arcane">Arcane</option><option value="💥 Evocation">Evocation</option><option value="🌀 Conjuration">Conjuration</option><option value="🔮 Divination">Divination</option><option value="🪄 Transmutation">Transmutation</option><option value="🛡 Abjuration">Abjuration</option><option value="💀 Necromancy">Necromancy</option><option value="👁 Illusion">Illusion</option><option value="🌿 Druidic">Druidic</option><option value="☀️ Divine">Divine</option><option value="🖤 Shadow">Shadow</option><option value="🩸 Blood">Blood</option><option value="⚡ Storm">Storm</option></select></div>
+        <div class="fg"><label>Action Type</label><select id="f_action" onchange="upd()"><option>Action</option><option>Bonus Action</option><option>Reaction</option><option>Full Turn</option><option>Ritual (10 min)</option><option>Passive</option></select></div>
+      </div>
+      <div class="frow c1"><div class="fg"><label>Available to (Classes)</label><input id="f_class" type="text" placeholder="e.g. Wizard · Sorcerer · Warlock" oninput="upd()" maxlength="55"></div></div>
+    </div>`,
+  typebar:()=>{const t=g('f_sptype')||'Spell',sch=g('f_school')||'✨ Arcane',a=g('f_action')||'Action',sn=sch.split(' ').slice(1).join(' ');return{L:`${t} — ${sn} · ${a}`,R:sch};},
+  cost:()=>({v:g('f_cost')||'7',l:'SP'}),
+  cls:()=>g('f_class')||'',
+  sl:['Range','Duration','Damage','Save DC'], sd:['60 ft','1 min','8d10','18'],
+},
+
+armor:{
+  defIcon:'🛡', defTheme:'iron',
+  icons:['🛡','⚙️','🔩','🪖','⛓️','💎','🌟','🦾','🪬','🏛️','🗡️','🔰','🌀','⚔️'],
+  themes:[{k:'iron',bg:'linear-gradient(135deg,#ddd8d0,#909890)',n:'Iron'},{k:'frost',bg:'linear-gradient(135deg,#c8e0f5,#90b8d8)',n:'Frost'},{k:'divine',bg:'linear-gradient(135deg,#f5f0c8,#e8d870)',n:'Divine'},{k:'shadow',bg:'linear-gradient(135deg,#c0b8d0,#8888a8)',n:'Shadow'},{k:'earth',bg:'linear-gradient(135deg,#e0d0b0,#a88848)',n:'Earth'},{k:'arcane',bg:'linear-gradient(135deg,#e8d4f0,#c4a0d8)',n:'Arcane'},{k:'fire',bg:'linear-gradient(135deg,#f5d5b0,#e8a870)',n:'Infernal'},{k:'cosmic',bg:'linear-gradient(135deg,#c0c8e8,#6068a8)',n:'Cosmic'}],
+  fields:`
+    <div class="fsec"><h3>🛡 Armor Identity</h3>
+      <div class="frow c2"><div class="fg"><label>Armor Name</label><input id="f_name" type="text" placeholder="e.g. Plate of the Fallen Star" oninput="upd()" maxlength="28"></div>
+      <div class="fg"><label>Base AC</label><select id="f_cost" onchange="upd()"><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16" selected>16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21 (artifact)</option></select></div></div>
+      <div class="frow c3">
+        <div class="fg"><label>Armor Type</label><select id="f_atype" onchange="upd()"><option>Light Armor</option><option>Medium Armor</option><option selected>Heavy Armor</option><option>Shield</option><option>Half-Plate</option><option>Mithral</option><option>Adamantine</option><option>Dragonscale</option></select></div>
+        <div class="fg"><label>Material</label><select id="f_mat" onchange="upd()"><option>Steel</option><option>Mithral</option><option>Adamantine</option><option>Dragon Scale</option><option>Shadow Silk</option><option>Celestial Bronze</option><option>Bone</option><option>Enchanted Wood</option><option>Obsidian</option></select></div>
+        <div class="fg"><label>Attunement</label><select id="f_att" onchange="upd()"><option value="No">No</option><option value="Yes" selected>Yes</option><option value="Yes (by class)">Yes (class)</option></select></div>
+      </div>
+      <div class="frow c1"><div class="fg"><label>Usable By</label><input id="f_class" type="text" placeholder="e.g. Fighter · Paladin · Barbarian" oninput="upd()" maxlength="55"></div></div>
+    </div>`,
+  typebar:()=>{const at=g('f_atype')||'Heavy Armor',m=g('f_mat')||'Steel',a=g('f_att')||'No';return{L:`${at} — ${m}${a!=='No'?' · '+a:''}`,R:'🛡 Armor'};},
+  cost:()=>({v:g('f_cost')||'16',l:'AC'}),
+  cls:()=>g('f_class')||'',
+  sl:['Stealth','Str Req.','Wt (lbs)','Value'], sd:['Disadv.','15','65','1,500gp'],
+},
+
+equipment:{
+  defIcon:'🎒', defTheme:'earth',
+  icons:['🎒','🧪','📜','🔮','💍','🪬','🕯️','🗝️','📿','🧿','🪄','🎯','🧲','⚗️','🪙','🗺️','🔑','📦'],
+  themes:[{k:'earth',bg:'linear-gradient(135deg,#e0d0b0,#a88848)',n:'Earth'},{k:'arcane',bg:'linear-gradient(135deg,#e8d4f0,#c4a0d8)',n:'Arcane'},{k:'divine',bg:'linear-gradient(135deg,#f5f0c8,#e8d870)',n:'Divine'},{k:'nature',bg:'linear-gradient(135deg,#c8e8c0,#90c878)',n:'Nature'},{k:'shadow',bg:'linear-gradient(135deg,#c0b8d0,#8888a8)',n:'Shadow'},{k:'iron',bg:'linear-gradient(135deg,#ddd8d0,#909890)',n:'Iron'},{k:'frost',bg:'linear-gradient(135deg,#c8e0f5,#90b8d8)',n:'Frost'},{k:'fire',bg:'linear-gradient(135deg,#f5d5b0,#e8a870)',n:'Infernal'}],
+  fields:`
+    <div class="fsec"><h3>🎒 Item Identity</h3>
+      <div class="frow c2"><div class="fg"><label>Item Name</label><input id="f_name" type="text" placeholder="e.g. Potion of Giant Strength" oninput="upd()" maxlength="28"></div>
+      <div class="fg"><label>Charges / Uses</label><select id="f_cost" onchange="upd()"><option value="∞">Unlimited</option><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="10">10</option></select></div></div>
+      <div class="frow c3">
+        <div class="fg"><label>Item Category</label><select id="f_cat" onchange="upd()"><option>Potion</option><option>Scroll</option><option>Wondrous Item</option><option>Ring</option><option>Rod</option><option>Staff</option><option>Wand</option><option>Tool</option><option>Trinket</option><option>Ammunition</option><option>Consumable</option><option>Figurine</option></select></div>
+        <div class="fg"><label>Activation</label><select id="f_trig" onchange="upd()"><option>Action</option><option>Bonus Action</option><option>Passive</option><option>Reaction</option><option>Attunement</option><option>On Contact</option><option>Command Word</option></select></div>
+        <div class="fg"><label>Attunement</label><select id="f_att" onchange="upd()"><option value="No">No</option><option value="Yes">Yes</option></select></div>
+      </div>
+      <div class="frow c1"><div class="fg"><label>Usable By</label><input id="f_class" type="text" placeholder="e.g. Any · Requires Attunement by Spellcaster" oninput="upd()" maxlength="55"></div></div>
+    </div>`,
+  typebar:()=>{const c=g('f_cat')||'Wondrous Item',t=g('f_trig')||'Action',a=g('f_att')||'No';return{L:`${c} · ${t}${a!=='No'?' · Attunement':''}`,R:'🎒 Equipment'};},
+  cost:()=>({v:g('f_cost')||'3',l:'Uses'}),
+  cls:()=>g('f_class')||'',
+  sl:['Weight','Value','Recharge','Dmg/Heal'], sd:['0.5 lb','500 gp','Dawn','2d4+2'],
+},
+
+weapon:{
+  defIcon:'⚔️', defTheme:'blood',
+  icons:['⚔️','🗡️','🏹','🪓','🔱','🔨','⚡','🔥','🌀','💀','🩸','🪃','🦂','🐉','🌙','🛡'],
+  themes:[{k:'blood',bg:'linear-gradient(135deg,#f0c8c8,#d88080)',n:'Blood'},{k:'iron',bg:'linear-gradient(135deg,#ddd8d0,#909890)',n:'Iron'},{k:'fire',bg:'linear-gradient(135deg,#f5d5b0,#e8a870)',n:'Flame'},{k:'frost',bg:'linear-gradient(135deg,#c8e0f5,#90b8d8)',n:'Frost'},{k:'storm',bg:'linear-gradient(135deg,#f0f0b0,#d8d840)',n:'Storm'},{k:'shadow',bg:'linear-gradient(135deg,#c0b8d0,#8888a8)',n:'Shadow'},{k:'arcane',bg:'linear-gradient(135deg,#e8d4f0,#c4a0d8)',n:'Arcane'},{k:'void',bg:'linear-gradient(135deg,#b0a8b8,#504858)',n:'Void'}],
+  fields:`
+    <div class="fsec"><h3>⚔️ Weapon Identity</h3>
+      <div class="frow c2"><div class="fg"><label>Weapon Name</label><input id="f_name" type="text" placeholder="e.g. Vorpal Blade of Ruin" oninput="upd()" maxlength="28"></div>
+      <div class="fg"><label>Magic Bonus</label><select id="f_cost" onchange="upd()"><option value="+0">+0 (Mundane)</option><option value="+1" selected>+1</option><option value="+2">+2</option><option value="+3">+3</option></select></div></div>
+      <div class="frow c3">
+        <div class="fg"><label>Weapon Type</label><select id="f_wtype" onchange="upd()"><option>Longsword</option><option>Shortsword</option><option>Dagger</option><option>Greataxe</option><option>Greatsword</option><option>Handaxe</option><option>Rapier</option><option>Warhammer</option><option>Shortbow</option><option>Longbow</option><option>Crossbow</option><option>Quarterstaff</option><option>Spear</option><option>Trident</option><option>Flail</option><option>Scimitar</option><option>Whip</option></select></div>
+        <div class="fg"><label>Damage Type</label><select id="f_dmg" onchange="upd()"><option>Slashing</option><option>Piercing</option><option>Bludgeoning</option><option>Fire</option><option>Cold</option><option>Lightning</option><option>Necrotic</option><option>Radiant</option><option>Psychic</option><option>Poison</option><option>Acid</option><option>Thunder</option><option>Force</option></select></div>
+        <div class="fg"><label>Properties</label><select id="f_prop" onchange="upd()"><option>Versatile</option><option>Finesse</option><option>Two-Handed</option><option>Light, Thrown</option><option>Heavy, Reach</option><option>Ranged</option><option>Loading</option><option>Special</option><option>Thrown</option><option>Reach</option></select></div>
+      </div>
+      <div class="frow c1"><div class="fg"><label>Usable By</label><input id="f_class" type="text" placeholder="e.g. Any · Requires Attunement" oninput="upd()" maxlength="55"></div></div>
+    </div>`,
+  typebar:()=>{const w=g('f_wtype')||'Longsword',d=g('f_dmg')||'Slashing',p=g('f_prop')||'Versatile';return{L:`${w} — ${d} · ${p}`,R:'⚔️ Weapon'};},
+  cost:()=>({v:g('f_cost')||'+1',l:'Bonus'}),
+  cls:()=>g('f_class')||'',
+  sl:['Damage','Range','Weight','Value'], sd:['1d8+1','5 ft','3 lb','750 gp'],
+},
+
+sidekick:{
+  defIcon:'🧙', defTheme:'earth', isSK:true,
+  icons:['🧙','🐉','🦅','🐺','🦁','🧝','👺','🧟','🤖','🧚','🐻','🦊','🦉','🐗','👤','🧛'],
+  themes:[{k:'earth',bg:'linear-gradient(135deg,#e0d0b0,#a88848)',n:'Earth'},{k:'nature',bg:'linear-gradient(135deg,#c8e8c0,#90c878)',n:'Nature'},{k:'divine',bg:'linear-gradient(135deg,#f5f0c8,#e8d870)',n:'Divine'},{k:'arcane',bg:'linear-gradient(135deg,#e8d4f0,#c4a0d8)',n:'Arcane'},{k:'shadow',bg:'linear-gradient(135deg,#c0b8d0,#8888a8)',n:'Shadow'},{k:'blood',bg:'linear-gradient(135deg,#f0c8c8,#d88080)',n:'War'},{k:'frost',bg:'linear-gradient(135deg,#c8e0f5,#90b8d8)',n:'Frost'},{k:'cosmic',bg:'linear-gradient(135deg,#c0c8e8,#6068a8)',n:'Cosmic'}],
+  fields:`
+    <div class="fsec"><h3>🧑 Sidekick Identity</h3>
+      <div class="frow c2"><div class="fg"><label>Sidekick Name</label><input id="f_name" type="text" placeholder="e.g. Aelindra, Scout of the Mist" oninput="upd()" maxlength="28"></div>
+      <div class="fg"><label>Challenge Rating</label><select id="f_cost" onchange="upd()"><option value="1/8">1/8</option><option value="1/4">1/4</option><option value="1/2">1/2</option><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option></select></div></div>
+      <div class="frow c3">
+        <div class="fg"><label>Creature Type</label><select id="f_ctype" onchange="upd()"><option>Humanoid</option><option>Beast</option><option>Fey</option><option>Fiend</option><option>Celestial</option><option>Undead</option><option>Construct</option><option>Elemental</option><option>Dragon</option><option>Monstrosity</option><option>Aberration</option></select></div>
+        <div class="fg"><label>Role</label><select id="f_role" onchange="upd()"><option>Expert</option><option>Spellcaster</option><option>Warrior</option><option>Scout</option><option>Support</option><option>Tank</option><option>Ranger</option><option>Assassin</option></select></div>
+        <div class="fg"><label>Alignment</label><select id="f_align" onchange="upd()"><option>Lawful Good</option><option>Neutral Good</option><option>Chaotic Good</option><option>Lawful Neutral</option><option>True Neutral</option><option>Chaotic Neutral</option><option>Lawful Evil</option><option>Neutral Evil</option><option>Chaotic Evil</option></select></div>
+      </div>
+    </div>
+    <div class="fsec"><h3>📊 Ability Scores & Stats</h3>
+      <div class="frow c3">
+        <div class="fg"><label>STR</label><input id="f_str" type="text" value="10" oninput="upd()" maxlength="3"></div>
+        <div class="fg"><label>DEX</label><input id="f_dex" type="text" value="14" oninput="upd()" maxlength="3"></div>
+        <div class="fg"><label>CON</label><input id="f_con" type="text" value="12" oninput="upd()" maxlength="3"></div>
+        <div class="fg"><label>INT</label><input id="f_int" type="text" value="10" oninput="upd()" maxlength="3"></div>
+        <div class="fg"><label>WIS</label><input id="f_wis" type="text" value="13" oninput="upd()" maxlength="3"></div>
+        <div class="fg"><label>CHA</label><input id="f_cha" type="text" value="11" oninput="upd()" maxlength="3"></div>
+      </div>
+    </div>`,
+  typebar:()=>{const c=g('f_ctype')||'Humanoid',r=g('f_role')||'Expert',al=g('f_align')||'Neutral Good';return{L:`${c} · ${r}`,R:al};},
+  cost:()=>({v:g('f_cost')||'1',l:'CR'}),
+  cls:()=>'',
+  sl:['HP','AC','Speed','Init'], sd:['45','14','30 ft','+3'],
+},
+
+anything:{
+  defIcon:'🌀', defTheme:'arcane',
+  icons:['🌀','💥','🔥','❄️','⚡','☠️','✨','🌿','🛡','👁','🌙','☀️','💀','🌪️','🩸','🔮','💫','🌊','🎒','🗡️','🏹','🪓','🔱','🔨','🧪','📜','💍','🕯️','🗝️','🧙','🐉','🦅','🐺','🌈','🎭','🎪'],
+  themes:[{k:'arcane',bg:'linear-gradient(135deg,#e8d4f0,#c4a0d8)',n:'Arcane'},{k:'fire',bg:'linear-gradient(135deg,#f5d5b0,#e8a870)',n:'Fire'},{k:'nature',bg:'linear-gradient(135deg,#c8e8c0,#90c878)',n:'Nature'},{k:'divine',bg:'linear-gradient(135deg,#f5f0c8,#e8d870)',n:'Divine'},{k:'shadow',bg:'linear-gradient(135deg,#c0b8d0,#8888a8)',n:'Shadow'},{k:'frost',bg:'linear-gradient(135deg,#c8e0f5,#90b8d8)',n:'Frost'},{k:'storm',bg:'linear-gradient(135deg,#f0f0b0,#d8d840)',n:'Storm'},{k:'blood',bg:'linear-gradient(135deg,#f0c8c8,#d88080)',n:'Blood'},{k:'iron',bg:'linear-gradient(135deg,#ddd8d0,#909890)',n:'Iron'},{k:'earth',bg:'linear-gradient(135deg,#e0d0b0,#a88848)',n:'Earth'},{k:'cosmic',bg:'linear-gradient(135deg,#c0c8e8,#6068a8)',n:'Cosmic'},{k:'void',bg:'linear-gradient(135deg,#b0a8b8,#504858)',n:'Void'}],
+  fields:`
+    <div class="fsec"><h3>🌀 Card Identity</h3>
+      <div class="frow c2"><div class="fg"><label>Card Name</label><input id="f_name" type="text" placeholder="Name your creation…" oninput="upd()" maxlength="28"></div>
+      <div class="fg"><label>Cost / Value / Level</label><input id="f_cost" type="text" value="—" oninput="upd()" maxlength="6"></div></div>
+      <div class="frow c2">
+        <div class="fg"><label>Type Label (left of bar)</label><input id="f_tl" type="text" placeholder="e.g. Mythic Artifact · Active" oninput="upd()" maxlength="38"></div>
+        <div class="fg"><label>Subtype Label (right)</label><input id="f_tr" type="text" placeholder="e.g. 🌀 Creation" oninput="upd()" maxlength="24"></div>
+      </div>
+      <div class="frow c1"><div class="fg"><label>Footer / Source Label</label><input id="f_class" type="text" placeholder="e.g. Homebrew · Campaign Exclusive" oninput="upd()" maxlength="55"></div></div>
+    </div>`,
+  typebar:()=>({L:g('f_tl')||'Custom Card · Active',R:g('f_tr')||'🌀 Creation'}),
+  cost:()=>({v:g('f_cost')||'—',l:''}),
+  cls:()=>g('f_class')||'',
+  sl:['Stat 1','Stat 2','Stat 3','Stat 4'], sd:['—','—','—','—'],
+},
+
+};
+
+// ─── HELPERS ─────────────────────────────────────────────────
+function g(id){ const el=document.getElementById(id); return el?el.value:''; }
+function mod(n){ const m=Math.floor((parseInt(n)||10)-10)/2; return(m>=0?'+':'')+Math.floor(m); }
+function corners(){ const s=`<svg viewBox="0 0 20 20"><path d="M0 20L0 0L20 0" fill="none" stroke="rgba(20,8,0,.38)" stroke-width="2"/><circle cx="0" cy="0" r="3.5" fill="rgba(20,8,0,.22)"/></svg>`; return `<div class="corner ctlx">${s}</div><div class="corner ctrx">${s}</div><div class="corner cblx">${s}</div><div class="corner cbrx">${s}</div>`; }
+
+// ─── TOGGLE EXAMPLE ──────────────────────────────────────────
+function toggleEx(){
+  const p=document.getElementById('exPanel'), b=document.getElementById('showExBtn');
+  const h=p.classList.toggle('hidden');
+  b.style.display=h?'block':'none';
+}
+
+// ─── SET TYPE ────────────────────────────────────────────────
+function setType(t,btn){
+  S.type=t; S.img=null;
+  const def=T[t]; S.theme=def.defTheme; S.icon=def.defIcon;
+  document.querySelectorAll('.tbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  buildForm();
+  upd();
+}
+
+// ─── BUILD FORM ───────────────────────────────────────────────
+function buildForm(){
+  const def=T[S.type];
+
+  const themeSwatches=def.themes.map(th=>`<div class="swatch${S.theme===th.k?' active':''}" style="background:${th.bg};" onclick="setTheme('${th.k}',this)" title="${th.n}"></div>`).join('');
+  const iconBtns=def.icons.map(ic=>`<button class="ibtn${S.icon===ic?' active':''}" onclick="setIcon('${ic}',this)">${ic}</button>`).join('');
+  const RARS=[{k:'common',c:'#aaa',b:'#888'},{k:'uncommon',c:'#5acc5a',b:'#2a7a2a'},{k:'rare',c:'#6080d0',b:'#1a3a9b'},{k:'epic',c:'#a060d0',b:'#6a1a9b'},{k:'legendary',c:'#c9a84c',b:'#c9a84c'},{k:'artifact',c:'#e08080',b:'#c85858'}];
+  const rarBtns=RARS.map(r=>`<button class="rar-btn${S.rarity===r.k?' active':''}" style="color:${r.c};border-color:${r.b};${S.rarity===r.k?`background:${r.b}22`:''}" onclick="setRarity('${r.k}',this)">${r.k[0].toUpperCase()+r.k.slice(1)}</button>`).join('');
+  const sls=def.sl, sds=def.sd;
+  const statInputs=[0,1,2,3].map(i=>`<div class="stat-pair"><div class="row2"><div class="fg"><label>Stat ${i+1} Label</label><input id="sl${i}" type="text" value="${sls[i]||''}" oninput="upd()" maxlength="9"></div><div class="fg"><label>Value</label><input id="sv${i}" type="text" value="${sds[i]||''}" oninput="upd()" maxlength="9"></div></div></div>`).join('');
+
+  document.getElementById('formContent').innerHTML=`
+    ${def.fields}
+    <div class="fsec"><h3>🎨 Card Theme</h3>
+      <div class="fg" style="margin-bottom:10px;"><label>Background</label><div class="swatches">${themeSwatches}</div></div>
+      <div class="fg"><label>Rarity / Power Level</label><div class="rar-opts">${rarBtns}</div></div>
+    </div>
+    <div class="fsec"><h3>🖼 Card Art</h3>
+      <div class="frow c2">
+        <div class="fg"><label>Icon (used when no image)</label><div class="icon-grid">${iconBtns}</div></div>
+        <div class="fg"><label>Upload Image (auto-crops to art frame)</label>
+          <div class="upload-area"><input type="file" accept="image/*" onchange="handleImg(event)"><div class="upload-icon">📷</div><p>Click to upload<br>Auto center-cropped</p></div>
+          <div class="prev-wrap" id="prevWrap"><canvas id="cropCv"></canvas></div>
+          <button class="clear-btn" id="clearBtn" onclick="clearImg()">✕ Remove Image</button>
+        </div>
+      </div>
+    </div>
+    <div class="fsec"><h3>📜 Card Text</h3>
+      <div class="frow c1"><div class="fg"><label>Flavor Text (italic quote)</label><input id="f_flavor" type="text" placeholder='"A line that sets the mood…"' oninput="upd()" maxlength="120"></div></div>
+      <div class="frow c1"><div class="fg"><label>Description / Effect</label><textarea id="f_desc" rows="5" placeholder="Describe the effect, rules, stats, lore…" oninput="upd()"></textarea></div></div>
+    </div>
+    <div class="fsec"><h3>📊 Stat Pips — up to 4 (leave blank to hide)</h3><div class="stats-grid">${statInputs}</div></div>
+  `;
+
+  if(S.img){ restoreImgPreview(); }
+}
+
+function restoreImgPreview(){
+  const pv=document.getElementById('prevWrap'), cb=document.getElementById('clearBtn'), cv=document.getElementById('cropCv');
+  if(!pv||!cv)return;
+  const img=new Image(); img.onload=()=>{ cv.width=200;cv.height=94;cv.style.maxWidth='110px';cv.getContext('2d').drawImage(img,0,0,200,94); pv.classList.add('vis'); if(cb)cb.style.display='block'; }; img.src=S.img;
+}
+
+// ─── THEME / RARITY / ICON ───────────────────────────────────
+function setTheme(t,el){ S.theme=t; document.querySelectorAll('.swatch').forEach(s=>s.classList.remove('active')); el.classList.add('active'); upd(); }
+function setRarity(r,el){ S.rarity=r; document.querySelectorAll('.rar-btn').forEach(b=>b.classList.remove('active')); el.classList.add('active'); upd(); }
+function setIcon(ic,el){ S.icon=ic; document.querySelectorAll('.ibtn').forEach(b=>b.classList.remove('active')); el.classList.add('active'); upd(); }
+
+// ─── IMAGE UPLOAD ─────────────────────────────────────────────
+function handleImg(e){
+  const file=e.target.files[0]; if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{ const img=new Image(); img.onload=()=>{
+    const W=559,H=256,cv=document.createElement('canvas'); cv.width=W;cv.height=H;
+    const ctx=cv.getContext('2d'), ar=img.width/img.height, tr=W/H;
+    let sx,sy,sw,sh;
+    if(ar>tr){sh=img.height;sw=sh*tr;sx=(img.width-sw)/2;sy=0;}
+    else{sw=img.width;sh=sw/tr;sx=0;sy=(img.height-sh)/2;}
+    ctx.drawImage(img,sx,sy,sw,sh,0,0,W,H);
+    S.img=cv.toDataURL('image/png');
+    const pv=document.getElementById('prevWrap'), cb=document.getElementById('clearBtn'), pcv=document.getElementById('cropCv');
+    if(pcv){pcv.width=200;pcv.height=94;pcv.style.maxWidth='110px';pcv.getContext('2d').drawImage(cv,0,0,W,H,0,0,200,94);}
+    if(pv)pv.classList.add('vis'); if(cb)cb.style.display='block';
+    upd();
+  }; img.src=ev.target.result; };
+  reader.readAsDataURL(file);
+}
+function clearImg(){ S.img=null; const pv=document.getElementById('prevWrap'),cb=document.getElementById('clearBtn'); if(pv)pv.classList.remove('vis'); if(cb)cb.style.display='none'; upd(); }
+
+// ─── BUILD CARD HTML ──────────────────────────────────────────
+function buildCardHTML(def){
+  const name=g('f_name')||'Card Name';
+  const flavor=g('f_flavor');
+  const desc=g('f_desc')||'Enter the card effect or description…';
+  const cost=def.cost();
+  const tb=def.typebar();
+  const cls=def.cls();
+  const stats=[0,1,2,3].map(i=>({l:g(`sl${i}`),v:g(`sv${i}`)})).filter(s=>s.l&&s.v);
+  const statHTML=stats.map(s=>`<div class="c-stat"><span class="c-stat-l">${s.l}</span><span class="c-stat-v">${s.v}</span></div>`).join('');
+  const artHTML=S.img?`<img src="${S.img}">`:`<div class="c-art-ph">${S.icon}</div>`;
+  const flavorHTML=flavor?`<div class="c-flavor">"${flavor}"</div>`:'';
+
+  if(def.isSK){
+    const ABS=['str','dex','con','int','wis','cha'];
+    const skHTML=ABS.map(a=>`<div class="sk-stat-row"><span class="sk-stat-key">${a.toUpperCase()}</span><span class="sk-stat-val">${g('f_'+a)||'10'} (${mod(g('f_'+a)||10)})</span></div>`).join('');
+    return `<div class="card-bg"></div><div class="card-border-o"></div><div class="card-border-i"></div>${corners()}<div class="cz-header"><div class="c-name">${name}</div><div class="c-cost-badge">${cost.v}<span class="cl">${cost.l}</span></div></div><div class="cz-portrait">${artHTML}</div><div class="cz-sk-stats">${skHTML}</div><div class="cz-typebar"><span class="c-type">${tb.L}</span><span class="c-subtype">${tb.R}</span></div><div class="cz-text">${flavorHTML}<div class="c-desc">${desc}</div></div><div class="cz-stats">${statHTML}</div><div class="cz-footer"><span class="c-class">${cls}</span><span class="c-gems">${GEMS[S.rarity]||'◆◆◆◆◆'}</span></div>`;
+  }
+  return `<div class="card-bg"></div><div class="card-border-o"></div><div class="card-border-i"></div>${corners()}<div class="cz-header"><div class="c-name">${name}</div><div class="c-cost-badge">${cost.v}<span class="cl">${cost.l}</span></div></div><div class="cz-art">${artHTML}</div><div class="cz-typebar"><span class="c-type">${tb.L}</span><span class="c-subtype">${tb.R}</span></div><div class="cz-text">${flavorHTML}<div class="c-desc">${desc}</div></div><div class="cz-stats">${statHTML}</div><div class="cz-footer"><span class="c-class">${cls}</span><span class="c-gems">${GEMS[S.rarity]||'◆◆◆◆◆'}</span></div>`;
+}
+
+// ─── UPDATE LIVE PREVIEW ──────────────────────────────────────
+function upd(){
+  const def=T[S.type];
+  const lc=document.getElementById('liveCard');
+  lc.className=`spell-card th-${S.theme} rar-${S.rarity}`;
+  lc.innerHTML=buildCardHTML(def);
+
+  const ex=document.getElementById('exCard');
+  ex.className=`spell-card th-${S.theme} rar-${S.rarity}`;
+  ex.innerHTML=buildCardHTML(def);
+}
+
+// ─── EXPORT ──────────────────────────────────────────────────
+async function exportCard(){
+  const btn=document.getElementById('finishBtn');
+  btn.textContent='⏳ Generating…'; btn.classList.add('loading');
+
+  const src=document.getElementById('liveCard');
+  const clone=src.cloneNode(true);
+  Object.assign(clone.style,{position:'fixed',left:'-9999px',top:'0',width:'595px',height:'833px',transform:'none',borderRadius:'22px'});
+  document.body.appendChild(clone);
+
+  try{
+    await new Promise(r=>setTimeout(r,250));
+    const cv=await html2canvas(clone,{width:595,height:833,scale:1.26,useCORS:true,allowTaint:true,backgroundColor:null,logging:false});
+    const link=document.createElement('a');
+    link.download=`${(g('f_name')||'dnd-card').replace(/\s+/g,'-').toLowerCase()}-card.png`;
+    link.href=cv.toDataURL('image/png',1.0); link.click();
+    btn.textContent='✓ Exported!';
+    setTimeout(()=>{btn.textContent='⬇ Export Card as PNG';btn.classList.remove('loading');},2200);
+  } catch(err){
+    btn.textContent='✕ Error — Try Again'; btn.classList.remove('loading');
+    setTimeout(()=>{btn.textContent='⬇ Export Card as PNG';},2500);
+    console.error(err);
+  } finally{ document.body.removeChild(clone); }
+}
+
+// ─── INIT ────────────────────────────────────────────────────
+buildForm();
+upd();
+</script>
+</body>
+</html>
