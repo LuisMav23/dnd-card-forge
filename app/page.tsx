@@ -1,131 +1,43 @@
-'use client';
+import Link from 'next/link';
 
-import { useReducer, useRef, useCallback, useState } from 'react';
-import { CardState, CardAction, CardType } from '@/lib/types';
-import { CARD_TYPES, getDefaultFields } from '@/lib/cardConfig';
-import Header from '@/components/Header';
-import TypeBar from '@/components/TypeBar';
-import ExamplePanel from '@/components/ExamplePanel';
-import FormPanel from '@/components/FormPanel';
-import LivePreview from '@/components/LivePreview';
-
-function cardReducer(state: CardState, action: CardAction): CardState {
-  switch (action.type) {
-    case 'SET_CARD_TYPE': {
-      const cfg = CARD_TYPES[action.payload];
-      return {
-        type: action.payload,
-        theme: cfg.defaultTheme,
-        rarity: state.rarity,
-        icon: cfg.defaultIcon,
-        image: null,
-        fields: getDefaultFields(action.payload),
-      };
-    }
-    case 'SET_THEME':
-      return { ...state, theme: action.payload };
-    case 'SET_RARITY':
-      return { ...state, rarity: action.payload };
-    case 'SET_ICON':
-      return { ...state, icon: action.payload };
-    case 'SET_IMAGE':
-      return { ...state, image: action.payload };
-    case 'SET_FIELD':
-      return { ...state, fields: { ...state.fields, [action.payload.key]: action.payload.value } };
-    case 'SET_FIELDS':
-      return { ...state, fields: { ...state.fields, ...action.payload } };
-    default:
-      return state;
-  }
-}
-
-const initialState: CardState = {
-  type: 'spell',
-  theme: 'arcane',
-  rarity: 'legendary',
-  icon: '🌀',
-  image: null,
-  fields: getDefaultFields('spell'),
-};
-
-export default function CardForgePage() {
-  const [state, dispatch] = useReducer(cardReducer, initialState);
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [exporting, setExporting] = useState(false);
-  const [exportLabel, setExportLabel] = useState('⬇ Export Card as PNG');
-
-  const handleTypeChange = useCallback((type: CardType) => {
-    dispatch({ type: 'SET_CARD_TYPE', payload: type });
-  }, []);
-
-  const handleExport = useCallback(async () => {
-    const el = cardRef.current;
-    if (!el) return;
-
-    setExporting(true);
-    setExportLabel('⏳ Generating…');
-
-    const clone = el.cloneNode(true) as HTMLElement;
-    Object.assign(clone.style, {
-      position: 'fixed',
-      left: '-9999px',
-      top: '0',
-      width: '595px',
-      height: '833px',
-      transform: 'none',
-      borderRadius: '22px',
-    });
-    document.body.appendChild(clone);
-
-    try {
-      const html2canvas = (await import('html2canvas')).default;
-      await new Promise(r => setTimeout(r, 250));
-
-      const canvas = await html2canvas(clone, {
-        width: 595,
-        height: 833,
-        scale: 1.26,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: null,
-        logging: false,
-      });
-
-      const link = document.createElement('a');
-      link.download = `${(state.fields.name || 'dnd-card').replace(/\s+/g, '-').toLowerCase()}-card.png`;
-      link.href = canvas.toDataURL('image/png', 1.0);
-      link.click();
-
-      setExportLabel('✓ Exported!');
-      setTimeout(() => { setExportLabel('⬇ Export Card as PNG'); setExporting(false); }, 2200);
-    } catch (err) {
-      console.error(err);
-      setExportLabel('✕ Error — Try Again');
-      setExporting(false);
-      setTimeout(() => setExportLabel('⬇ Export Card as PNG'), 2500);
-    } finally {
-      document.body.removeChild(clone);
-    }
-  }, [state.fields.name]);
-
+export default function LandingPage() {
   return (
-    <>
-      <Header />
-      <TypeBar active={state.type} onSelect={handleTypeChange} />
-      <div className="workspace">
-        <ExamplePanel state={state} />
-        <FormPanel
-          state={state}
-          dispatch={dispatch}
-          onExport={handleExport}
-          exporting={exporting}
-          exportLabel={exportLabel}
-        />
-        <LivePreview ref={cardRef} state={state} />
-      </div>
+    <div className="min-h-screen bg-bg flex flex-col">
+      <header className="bg-gradient-to-b from-[#040300] to-mid border-b-2 border-gold-dark px-3 sm:px-[22px] py-[9px] sm:py-[11px] flex items-center justify-center flex-shrink-0 z-50">
+        <h1 className="font-[var(--font-cinzel),serif] text-[1rem] sm:text-[1.25rem] font-black text-gold tracking-[.12em] [text-shadow:0_0_18px_rgba(201,168,76,.4)]">
+          ⚔ D&D <em className="text-gold-light not-italic">Card Forge</em>
+        </h1>
+      </header>
+
+      <main className="flex-1 flex flex-col items-center justify-center px-4 py-12 gap-8">
+        <p className="font-[var(--font-cinzel),serif] text-[.75rem] sm:text-[.85rem] text-gold-dark tracking-[.15em] uppercase text-center">
+          Choose Your Forge
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl w-full">
+          <Link href="/card" className="landing-card group">
+            <span className="landing-icon">⚔️</span>
+            <h2 className="landing-title">Card Forge</h2>
+            <p className="landing-desc">
+              Create D&D cards — Spells, Armor, Weapons, Equipment, Sidekicks, and more. Export as print-ready PNG.
+            </p>
+            <span className="landing-arrow group-hover:translate-x-1 transition-transform">→</span>
+          </Link>
+
+          <Link href="/statblocks" className="landing-card group">
+            <span className="landing-icon">📜</span>
+            <h2 className="landing-title">Stat Blocks</h2>
+            <p className="landing-desc">
+              Build Daggerheart stat blocks for Adversaries, NPCs, and Environments. Export as print-ready PNG.
+            </p>
+            <span className="landing-arrow group-hover:translate-x-1 transition-transform">→</span>
+          </Link>
+        </div>
+      </main>
+
       <footer className="flex-shrink-0 border-t border-bdr py-2 px-4 text-center text-[.62rem] text-gold-dark italic tracking-wide font-[var(--font-cinzel),serif]">
         Created by Kurt Andrei Gabriel
       </footer>
-    </>
+    </div>
   );
 }
