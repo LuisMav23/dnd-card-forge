@@ -672,6 +672,7 @@
   align-items: center;
   gap: 6px;
   margin-bottom: 6px;
+  flex-wrap: wrap;
 }
 .sb-feature-num {
   font-family: 'Cinzel', serif;
@@ -691,6 +692,8 @@
 }
 .sb-feature-name-input {
   flex: 1;
+  min-width: 0;
+  width: 100%;
 }
 .sb-feature-remove {
   color: #c85858 !important;
