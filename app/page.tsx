@@ -8,6 +8,7 @@ import ThemeToggle from '@/components/ThemeToggle';
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -83,17 +84,28 @@ export default function LoginPage() {
             <label className="text-xs font-semibold uppercase tracking-wider text-gold-dark" htmlFor="password">
               Password
             </label>
-            <input
-              id="password"
-              className="rounded-md border border-bdr bg-mid px-4 py-3 text-parch placeholder:text-placeholder/90 focus:border-gold-dark focus:outline-none focus:ring-2 focus:ring-gold/20"
-              type="password"
-              name="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required
-              autoComplete="current-password"
-            />
+            <div className="relative">
+              <input
+                id="password"
+                className="w-full rounded-md border border-bdr bg-mid py-3 pl-4 pr-[4.5rem] text-parch placeholder:text-placeholder/90 focus:border-gold-dark focus:outline-none focus:ring-2 focus:ring-gold/20"
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+              />
+              <button
+                type="button"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded px-2 py-1 font-[var(--font-cinzel),serif] text-[0.65rem] font-semibold uppercase tracking-wider text-gold-dark transition-colors hover:bg-bdr/40 hover:text-gold"
+                onClick={() => setShowPassword(v => !v)}
+                aria-pressed={showPassword}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? 'Hide' : 'Show'}
+              </button>
+            </div>
 
             <div className="mt-2 flex flex-col gap-3">
               <button
