@@ -38,9 +38,19 @@ const CardRenderer = forwardRef<HTMLDivElement, Props>(({ state }, ref) => {
 
   const isSK = cfg.isSidekick;
 
+  const bgBlock =
+    state.backgroundTexture ? (
+      <div className="card-bg card-bg--textured">
+        <img className="card-bg-tex-img" src={state.backgroundTexture} alt="" />
+        <div className="card-bg-tex-wash" aria-hidden />
+      </div>
+    ) : (
+      <div className="card-bg" />
+    );
+
   return (
     <div ref={ref} className={`spell-card th-${state.theme} rar-${state.rarity}`}>
-      <div className="card-bg" />
+      {bgBlock}
       <div className="card-border-o" />
       <div className="card-border-i" />
       <div className="corner ctlx"><CornerSVG /></div>

@@ -1,6 +1,7 @@
 'use client';
 
-import { useReducer, useRef, useCallback, useState } from 'react';
+import { Suspense, useReducer, useRef, useCallback, useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { CardState, CardAction, CardType } from '@/lib/types';
 import { CARD_TYPES, getDefaultFields } from '@/lib/cardConfig';
 import Header from '@/components/Header';
@@ -8,6 +9,9 @@ import TypeBar from '@/components/TypeBar';
 import ExamplePanel from '@/components/ExamplePanel';
 import FormPanel from '@/components/FormPanel';
 import LivePreview from '@/components/LivePreview';
+import ForgeLibraryLoadSkeleton from '@/components/ui/ForgeLibraryLoadSkeleton';
+import LoadingLibraryProgressBar from '@/components/ui/LoadingLibraryProgressBar';
+import RouteSuspenseFallback from '@/components/ui/RouteSuspenseFallback';
 
 function cardReducer(state: CardState, action: CardAction): CardState {
   switch (action.type) {
@@ -19,6 +23,7 @@ function cardReducer(state: CardState, action: CardAction): CardState {
         rarity: state.rarity,
         icon: cfg.defaultIcon,
         image: null,
+        backgroundTexture: null,
         fields: getDefaultFields(action.payload),
       };
     }
@@ -30,10 +35,20 @@ function cardReducer(state: CardState, action: CardAction): CardState {
       return { ...state, icon: action.payload };
     case 'SET_IMAGE':
       return { ...state, image: action.payload };
+    case 'SET_BACKGROUND_TEXTURE':
+      return { ...state, backgroundTexture: action.payload };
     case 'SET_FIELD':
       return { ...state, fields: { ...state.fields, [action.payload.key]: action.payload.value } };
     case 'SET_FIELDS':
       return { ...state, fields: { ...state.fields, ...action.payload } };
+    case 'LOAD_STATE': {
+      const p = action.payload;
+      return {
+        ...p,
+        backgroundTexture: p.backgroundTexture ?? null,
+        image: p.image ?? null,
+      };
+    }
     default:
       return state;
   }
@@ -45,14 +60,67 @@ const initialState: CardState = {
   rarity: 'legendary',
   icon: '🌀',
   image: null,
+  backgroundTexture: null,
   fields: getDefaultFields('spell'),
 };
 
-export default function CardForgePage() {
+function CardForgeInner() {
+  const searchParams = useSearchParams();
+  const libraryId = searchParams.get('library');
+
   const [state, dispatch] = useReducer(cardReducer, initialState);
   const cardRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
   const [exportLabel, setExportLabel] = useState('⬇ Export Card as PNG');
+
+  const [saving, setSaving] = useState(false);
+  const saveBase = libraryId ? '💾 Update in Library' : '💾 Save to Library';
+  const [saveLabel, setSaveLabel] = useState(saveBase);
+
+  const [loadState, setLoadState] = useState<'idle' | 'loading' | 'error' | 'ready'>(() =>
+    libraryId ? 'loading' : 'ready'
+  );
+
+  useEffect(() => {
+    setSaveLabel(libraryId ? '💾 Update in Library' : '💾 Save to Library');
+  }, [libraryId]);
+
+  useEffect(() => {
+    if (!libraryId) {
+      setLoadState('ready');
+      return;
+    }
+    let cancelled = false;
+    setLoadState('loading');
+    (async () => {
+      try {
+        const res = await fetch(`/api/cards/${libraryId}`, { cache: 'no-store' });
+        if (!res.ok) throw new Error('load failed');
+        const row = await res.json();
+        if (cancelled) return;
+        if (row.item_type !== 'card' || !row.data) {
+          setLoadState('error');
+          return;
+        }
+        let loaded = row.data as CardState | string;
+        if (typeof loaded === 'string') {
+          try {
+            loaded = JSON.parse(loaded) as CardState;
+          } catch {
+            setLoadState('error');
+            return;
+          }
+        }
+        dispatch({ type: 'LOAD_STATE', payload: loaded });
+        setLoadState('ready');
+      } catch {
+        if (!cancelled) setLoadState('error');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [libraryId]);
 
   const handleTypeChange = useCallback((type: CardType) => {
     dispatch({ type: 'SET_CARD_TYPE', payload: type });
@@ -97,7 +165,10 @@ export default function CardForgePage() {
       link.click();
 
       setExportLabel('✓ Exported!');
-      setTimeout(() => { setExportLabel('⬇ Export Card as PNG'); setExporting(false); }, 2200);
+      setTimeout(() => {
+        setExportLabel('⬇ Export Card as PNG');
+        setExporting(false);
+      }, 2200);
     } catch (err) {
       console.error(err);
       setExportLabel('✕ Error — Try Again');
@@ -108,24 +179,107 @@ export default function CardForgePage() {
     }
   }, [state.fields.name]);
 
+  const handleSave = useCallback(async () => {
+    if (libraryId && loadState !== 'ready') return;
+    setSaving(true);
+    setSaveLabel('⏳ Saving…');
+    const reset = libraryId ? '💾 Update in Library' : '💾 Save to Library';
+    try {
+      if (libraryId) {
+        const res = await fetch(`/api/cards/${libraryId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: state.fields.name || 'Untitled Card',
+            cardData: state,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to update');
+        setSaveLabel('✓ Updated!');
+      } else {
+        const res = await fetch('/api/cards', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: state.fields.name || 'Untitled Card',
+            itemType: 'card',
+            cardData: state,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to save card');
+        setSaveLabel('✓ Saved!');
+      }
+    } catch (err: unknown) {
+      console.error(err);
+      const msg = err instanceof Error ? err.message : '';
+      if (msg === 'Unauthorized') {
+        setSaveLabel('✕ Please login first');
+      } else {
+        setSaveLabel('✕ Error saving');
+      }
+    } finally {
+      setTimeout(() => {
+        setSaveLabel(reset);
+        setSaving(false);
+      }, 2500);
+    }
+  }, [state, libraryId, loadState]);
+
   return (
-    <>
+    <div className="flex min-h-screen min-h-[100dvh] flex-col overflow-x-hidden">
       <Header />
-      <TypeBar active={state.type} onSelect={handleTypeChange} />
-      <div className="workspace">
-        <ExamplePanel state={state} />
-        <FormPanel
-          state={state}
-          dispatch={dispatch}
-          onExport={handleExport}
-          exporting={exporting}
-          exportLabel={exportLabel}
-        />
-        <LivePreview ref={cardRef} state={state} />
+      {libraryId && loadState === 'loading' && (
+        <div className="border-b border-bdr bg-panel/90">
+          <LoadingLibraryProgressBar />
+          <p className="px-4 py-1.5 text-center font-[var(--font-cinzel),serif] text-xs uppercase tracking-wider text-gold">
+            Loading library item…
+          </p>
+        </div>
+      )}
+      {libraryId && loadState === 'error' && (
+        <div className="border-b border-red-900/50 bg-red-950/40 px-4 py-2 text-center text-sm text-red-200">
+          Could not load this library item. It may have been deleted or is not a card.
+        </div>
+      )}
+      <div
+        className={
+          libraryId && loadState === 'loading' ? 'pointer-events-none opacity-90' : ''
+        }
+      >
+        <TypeBar active={state.type} onSelect={handleTypeChange} />
       </div>
-      <footer className="flex-shrink-0 border-t border-bdr py-2 px-4 text-center text-[.62rem] text-gold-dark italic tracking-wide font-[var(--font-cinzel),serif]">
+      {libraryId && loadState === 'loading' ? (
+        <ForgeLibraryLoadSkeleton />
+      ) : (
+        <div className="workspace min-h-0 flex-1">
+          <ExamplePanel state={state} />
+          <FormPanel
+            state={state}
+            dispatch={dispatch}
+            onExport={handleExport}
+            exporting={exporting}
+            exportLabel={exportLabel}
+            onSave={handleSave}
+            saving={saving}
+            saveLabel={saveLabel}
+            saveDisabled={Boolean(libraryId && loadState !== 'ready')}
+          />
+          <LivePreview ref={cardRef} state={state} />
+        </div>
+      )}
+      <footer className="flex-shrink-0 border-t border-bdr px-4 py-2 text-center font-[var(--font-cinzel),serif] text-xs italic tracking-wide text-muted">
         Created by Kurt Andrei Gabriel
       </footer>
-    </>
+    </div>
+  );
+}
+
+export default function CardForgePage() {
+  return (
+    <Suspense fallback={<RouteSuspenseFallback />}>
+      <CardForgeInner />
+    </Suspense>
   );
 }

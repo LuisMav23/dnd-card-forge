@@ -46,4 +46,5 @@ export type StatBlockAction =
   | { type: 'SET_FIELDS'; payload: Record<string, string> }
   | { type: 'ADD_FEATURE'; payload: Feature }
   | { type: 'UPDATE_FEATURE'; payload: Feature }
-  | { type: 'REMOVE_FEATURE'; payload: string };
+  | { type: 'REMOVE_FEATURE'; payload: string }
+  | { type: 'LOAD_STATE'; payload: StatBlockState };

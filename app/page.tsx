@@ -1,43 +1,129 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import ThemeToggle from '@/components/ThemeToggle';
 
-export default function LandingPage() {
+export default function LoginPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
+  const handleAuth = async () => {
+    if (!email || !password) {
+      setError('Please enter both your email and password.');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const res = await fetch(`/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Authentication failed');
+      }
+
+      router.push('/home');
+      router.refresh();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Something went wrong');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-bg flex flex-col">
-      <header className="bg-gradient-to-b from-[#040300] to-mid border-b-2 border-gold-dark px-3 sm:px-[22px] py-[9px] sm:py-[11px] flex items-center justify-center flex-shrink-0 z-50">
-        <h1 className="font-[var(--font-cinzel),serif] text-[1rem] sm:text-[1.25rem] font-black text-gold tracking-[.12em] [text-shadow:0_0_18px_rgba(201,168,76,.4)]">
-          ⚔ D&D <em className="text-gold-light not-italic">Card Forge</em>
-        </h1>
-      </header>
-
-      <main className="flex-1 flex flex-col items-center justify-center px-4 py-12 gap-8">
-        <p className="font-[var(--font-cinzel),serif] text-[.75rem] sm:text-[.85rem] text-gold-dark tracking-[.15em] uppercase text-center">
-          Choose Your Forge
-        </p>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl w-full">
-          <Link href="/card" className="landing-card group">
-            <span className="landing-icon">⚔️</span>
-            <h2 className="landing-title">Card Forge</h2>
-            <p className="landing-desc">
-              Create D&D cards — Spells, Armor, Weapons, Equipment, Sidekicks, and more. Export as print-ready PNG.
+    <div className="auth-hero-gradient relative flex min-h-screen flex-col overflow-y-auto bg-bg px-4 py-10 sm:py-14">
+      <div className="auth-page-vignette pointer-events-none absolute inset-0" aria-hidden />
+      <div className="absolute right-4 top-4 z-10 sm:right-6 sm:top-6">
+        <ThemeToggle />
+      </div>
+      <div className="relative mx-auto flex w-full max-w-md flex-1 flex-col justify-center">
+        <div className="rounded-xl border border-bdr bg-panel/95 p-8 shadow-[0_0_0_1px_rgba(201,168,76,0.08),0_24px_48px_rgba(0,0,0,0.55)] backdrop-blur-sm sm:p-10">
+          <div className="mb-8 text-center">
+            <p className="mb-2 font-[var(--font-cinzel),serif] text-xs uppercase tracking-[0.35em] text-gold-dark">
+              Welcome back
             </p>
-            <span className="landing-arrow group-hover:translate-x-1 transition-transform">→</span>
-          </Link>
-
-          <Link href="/statblocks" className="landing-card group">
-            <span className="landing-icon">📜</span>
-            <h2 className="landing-title">Stat Blocks</h2>
-            <p className="landing-desc">
-              Build Daggerheart stat blocks for Adversaries, NPCs, and Environments. Export as print-ready PNG.
+            <h1 className="font-[var(--font-cinzel),serif] text-2xl font-black tracking-[0.12em] text-gold [text-shadow:0_0_24px_rgba(201,168,76,0.35)] sm:text-3xl">
+              Card Forge
+            </h1>
+            <div className="mx-auto mt-4 h-px w-16 bg-gradient-to-r from-transparent via-gold to-transparent opacity-80" />
+            <p className="mt-4 font-[var(--font-cinzel),serif] text-xs uppercase tracking-[0.2em] text-gold-dark">
+              Sign in to continue
             </p>
-            <span className="landing-arrow group-hover:translate-x-1 transition-transform">→</span>
-          </Link>
+          </div>
+
+          <div className="flex flex-col gap-4 text-parch">
+            <label className="text-xs font-semibold uppercase tracking-wider text-gold-dark" htmlFor="email">
+              Email
+            </label>
+            <input
+              id="email"
+              className="rounded-md border border-bdr bg-mid px-4 py-3 text-parch placeholder:text-placeholder/90 focus:border-gold-dark focus:outline-none focus:ring-2 focus:ring-gold/20"
+              name="email"
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+              autoComplete="email"
+            />
+
+            <label className="text-xs font-semibold uppercase tracking-wider text-gold-dark" htmlFor="password">
+              Password
+            </label>
+            <input
+              id="password"
+              className="rounded-md border border-bdr bg-mid px-4 py-3 text-parch placeholder:text-placeholder/90 focus:border-gold-dark focus:outline-none focus:ring-2 focus:ring-gold/20"
+              type="password"
+              name="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
+              autoComplete="current-password"
+            />
+
+            <div className="mt-2 flex flex-col gap-3">
+              <button
+                type="button"
+                onClick={handleAuth}
+                disabled={loading}
+                className="panel-btn w-full justify-center disabled:pointer-events-none disabled:opacity-50"
+              >
+                {loading ? 'Processing…' : 'Sign In'}
+              </button>
+
+              <Link
+                href="/signup"
+                className="panel-btn w-full justify-center border-bdr bg-transparent text-gold-dark hover:bg-input hover:text-gold"
+              >
+                Need an account? Sign Up
+              </Link>
+            </div>
+
+            {error && (
+              <p
+                role="alert"
+                className="mt-2 rounded-md border border-red-800/80 bg-red-950/50 p-3 text-center text-sm text-red-200"
+              >
+                {error}
+              </p>
+            )}
+          </div>
         </div>
-      </main>
-
-      <footer className="flex-shrink-0 border-t border-bdr py-2 px-4 text-center text-[.62rem] text-gold-dark italic tracking-wide font-[var(--font-cinzel),serif]">
-        Created by Kurt Andrei Gabriel
-      </footer>
+      </div>
     </div>
   );
 }

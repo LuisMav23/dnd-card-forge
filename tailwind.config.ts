@@ -1,6 +1,7 @@
 import type { Config } from 'tailwindcss';
 
 const config: Config = {
+  darkMode: 'class',
   content: [
     './app/**/*.{ts,tsx}',
     './components/**/*.{ts,tsx}',
@@ -9,13 +10,26 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        gold: { DEFAULT: '#c9a84c', light: '#e8c96a', dark: '#7a5e18' },
-        parch: '#f5e9c8',
-        ink: '#1a0f00',
-        bg: '#080602',
-        panel: '#100c05',
-        mid: '#140e06',
-        bdr: { DEFAULT: '#2a1e08', '2': '#3a2a0c' },
+        gold: {
+          DEFAULT: 'rgb(var(--color-gold) / <alpha-value>)',
+          light: 'rgb(var(--color-gold-light) / <alpha-value>)',
+          dark: 'rgb(var(--color-gold-dark) / <alpha-value>)',
+        },
+        parch: 'rgb(var(--color-parch) / <alpha-value>)',
+        fg: 'rgb(var(--color-fg) / <alpha-value>)',
+        ink: 'rgb(var(--color-ink) / <alpha-value>)',
+        bg: 'rgb(var(--color-bg) / <alpha-value>)',
+        panel: 'rgb(var(--color-panel) / <alpha-value>)',
+        mid: 'rgb(var(--color-mid) / <alpha-value>)',
+        input: 'rgb(var(--color-input) / <alpha-value>)',
+        muted: 'rgb(var(--color-muted) / <alpha-value>)',
+        bronze: 'rgb(var(--color-bronze) / <alpha-value>)',
+        placeholder: 'rgb(var(--color-placeholder) / <alpha-value>)',
+        prev: 'rgb(var(--color-prev) / <alpha-value>)',
+        bdr: {
+          DEFAULT: 'rgb(var(--color-bdr) / <alpha-value>)',
+          '2': 'rgb(var(--color-bdr-2) / <alpha-value>)',
+        },
       },
     },
   },

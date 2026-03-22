@@ -9,6 +9,7 @@ import WeaponFields from './forms/WeaponFields';
 import SidekickFields from './forms/SidekickFields';
 import AnythingFields from './forms/AnythingFields';
 import ThemeSection from './forms/ThemeSection';
+import BackgroundTextureSection from './forms/BackgroundTextureSection';
 import ArtSection from './forms/ArtSection';
 import TextSection from './forms/TextSection';
 import StatsSection from './forms/StatsSection';
@@ -19,6 +20,10 @@ interface Props {
   onExport: () => void;
   exporting: boolean;
   exportLabel: string;
+  onSave?: () => void;
+  saving?: boolean;
+  saveLabel?: string;
+  saveDisabled?: boolean;
 }
 
 const FIELD_COMPONENTS: Record<CardType, React.ComponentType<{ fields: Record<string, string>; onChange: (k: string, v: string) => void }>> = {
@@ -30,7 +35,17 @@ const FIELD_COMPONENTS: Record<CardType, React.ComponentType<{ fields: Record<st
   anything: AnythingFields,
 };
 
-export default function FormPanel({ state, dispatch, onExport, exporting, exportLabel }: Props) {
+export default function FormPanel({
+  state,
+  dispatch,
+  onExport,
+  exporting,
+  exportLabel,
+  onSave,
+  saving,
+  saveLabel,
+  saveDisabled,
+}: Props) {
   const cfg = CARD_TYPES[state.type];
   const FieldsComponent = FIELD_COMPONENTS[state.type];
 
@@ -50,6 +65,11 @@ export default function FormPanel({ state, dispatch, onExport, exporting, export
         onRarityChange={r => dispatch({ type: 'SET_RARITY', payload: r as Rarity })}
       />
 
+      <BackgroundTextureSection
+        currentTexture={state.backgroundTexture}
+        onTextureChange={url => dispatch({ type: 'SET_BACKGROUND_TEXTURE', payload: url })}
+      />
+
       <ArtSection
         icons={cfg.icons}
         currentIcon={state.icon}
@@ -61,13 +81,24 @@ export default function FormPanel({ state, dispatch, onExport, exporting, export
       <TextSection fields={state.fields} onChange={onFieldChange} />
       <StatsSection fields={state.fields} onChange={onFieldChange} />
 
-      <button
-        className={`btn-finish${exporting ? ' btn-loading' : ''}`}
-        onClick={onExport}
-        disabled={exporting}
-      >
-        {exportLabel}
-      </button>
+      <div className="flex gap-2 w-full mt-4">
+        {onSave && (
+          <button
+            className={`btn-finish flex-1 !mt-0 px-2 py-3 !text-sm ${saving ? ' btn-loading' : ''}`}
+            onClick={onSave}
+            disabled={saving || saveDisabled}
+          >
+            {saveLabel || 'Save to Library'}
+          </button>
+        )}
+        <button
+          className={`btn-finish flex-1 !mt-0 px-2 py-3 !text-sm ${exporting ? ' btn-loading' : ''}`}
+          onClick={onExport}
+          disabled={exporting}
+        >
+          {exportLabel}
+        </button>
+      </div>
       <p className="export-note">Pokémon card size · 63mm × 88mm · print-ready PNG</p>
     </div>
   );

@@ -37,6 +37,8 @@ export interface CardState {
   rarity: Rarity;
   icon: string;
   image: string | null;
+  /** Full-bleed background behind theme wash; data URL (JPEG preferred). */
+  backgroundTexture: string | null;
   fields: Record<string, string>;
 }
 
@@ -46,8 +48,10 @@ export type CardAction =
   | { type: 'SET_RARITY'; payload: Rarity }
   | { type: 'SET_ICON'; payload: string }
   | { type: 'SET_IMAGE'; payload: string | null }
+  | { type: 'SET_BACKGROUND_TEXTURE'; payload: string | null }
   | { type: 'SET_FIELD'; payload: { key: string; value: string } }
-  | { type: 'SET_FIELDS'; payload: Record<string, string> };
+  | { type: 'SET_FIELDS'; payload: Record<string, string> }
+  | { type: 'LOAD_STATE'; payload: CardState };
 
 export interface TypebarResult {
   left: string;

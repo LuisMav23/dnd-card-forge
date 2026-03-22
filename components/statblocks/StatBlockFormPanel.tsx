@@ -17,6 +17,10 @@ interface Props {
   onExport: () => void;
   exporting: boolean;
   exportLabel: string;
+  onSave?: () => void;
+  saving?: boolean;
+  saveLabel?: string;
+  saveDisabled?: boolean;
 }
 
 type FieldComponentType = React.ComponentType<{ fields: Record<string, string>; onChange: (k: string, v: string) => void }>;
@@ -34,7 +38,17 @@ const FIELD_COMPONENTS: Record<GameSystem, Record<StatBlockType, FieldComponentT
   },
 };
 
-export default function StatBlockFormPanel({ state, dispatch, onExport, exporting, exportLabel }: Props) {
+export default function StatBlockFormPanel({
+  state,
+  dispatch,
+  onExport,
+  exporting,
+  exportLabel,
+  onSave,
+  saving,
+  saveLabel,
+  saveDisabled,
+}: Props) {
   const cfg = STATBLOCK_TYPES[state.type];
   const FieldsComponent = FIELD_COMPONENTS[state.system][state.type];
 
@@ -85,6 +99,8 @@ export default function StatBlockFormPanel({ state, dispatch, onExport, exportin
       </div>
 
       <ArtSection
+        sectionTitle="🖼 Header image"
+        assetKind="statblock-art"
         icons={cfg.icons}
         currentIcon={state.icon}
         currentImage={state.image}
@@ -92,13 +108,24 @@ export default function StatBlockFormPanel({ state, dispatch, onExport, exportin
         onImageChange={img => dispatch({ type: 'SET_IMAGE', payload: img })}
       />
 
-      <button
-        className={`btn-finish${exporting ? ' btn-loading' : ''}`}
-        onClick={onExport}
-        disabled={exporting}
-      >
-        {exportLabel}
-      </button>
+      <div className="flex gap-2 w-full mt-4">
+        {onSave && (
+          <button
+            className={`btn-finish flex-1 !mt-0 px-2 py-3 !text-sm ${saving ? ' btn-loading' : ''}`}
+            onClick={onSave}
+            disabled={saving || saveDisabled}
+          >
+            {saveLabel || 'Save to Library'}
+          </button>
+        )}
+        <button
+          className={`btn-finish flex-1 !mt-0 px-2 py-3 !text-sm ${exporting ? ' btn-loading' : ''}`}
+          onClick={onExport}
+          disabled={exporting}
+        >
+          {exportLabel}
+        </button>
+      </div>
       <p className="export-note">Stat block export · print-ready PNG</p>
     </div>
   );
