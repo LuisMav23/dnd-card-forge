@@ -56,13 +56,13 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="auth-hero-gradient relative flex min-h-screen flex-col overflow-y-auto bg-bg px-4 py-10 sm:py-14">
+    <div className="auth-hero-gradient relative flex min-h-screen flex-col overflow-y-auto bg-bg px-3 py-8 sm:px-4 sm:py-14">
       <div className="auth-page-vignette pointer-events-none absolute inset-0" aria-hidden />
       <div className="absolute right-4 top-4 z-10 sm:right-6 sm:top-6">
         <ThemeToggle />
       </div>
       <div className="relative mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-4">
-        <div className="rounded-xl border border-bdr bg-panel/95 p-8 shadow-[0_0_0_1px_rgba(201,168,76,0.08),0_24px_48px_rgba(0,0,0,0.55)] backdrop-blur-sm sm:p-10">
+        <div className="rounded-xl border border-bdr bg-panel/95 p-5 shadow-[0_0_0_1px_rgba(201,168,76,0.08),0_24px_48px_rgba(0,0,0,0.55)] backdrop-blur-sm sm:p-10">
           <div className="mb-8 text-center">
             <p className="mb-2 font-[var(--font-cinzel),serif] text-xs uppercase tracking-[0.35em] text-gold-dark">
               Begin your journey

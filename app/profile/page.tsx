@@ -228,7 +228,7 @@ export default function ProfilePage() {
             <p className="font-[var(--font-cinzel),serif] text-xs uppercase tracking-[0.28em] text-gold-dark">
               Account
             </p>
-            <h1 className="mt-2 font-[var(--font-cinzel),serif] text-3xl font-black tracking-wide text-gold [text-shadow:0_0_20px_rgba(201,168,76,0.2)]">
+            <h1 className="mt-2 font-[var(--font-cinzel),serif] text-2xl font-black tracking-wide text-gold [text-shadow:0_0_20px_rgba(201,168,76,0.2)] sm:text-3xl">
               Profile
             </h1>
             <p className="mt-2 text-sm leading-relaxed text-bronze">

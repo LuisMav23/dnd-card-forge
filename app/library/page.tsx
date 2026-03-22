@@ -26,7 +26,7 @@ export default async function LibraryPage() {
           <p className="font-[var(--font-cinzel),serif] text-xs uppercase tracking-[0.28em] text-gold-dark">
             Collection
           </p>
-          <h1 className="mt-2 font-[var(--font-cinzel),serif] text-3xl font-black tracking-wide text-gold [text-shadow:0_0_20px_rgba(201,168,76,0.2)]">
+          <h1 className="mt-2 font-[var(--font-cinzel),serif] text-2xl font-black tracking-wide text-gold [text-shadow:0_0_20px_rgba(201,168,76,0.2)] sm:text-3xl">
             My Library
           </h1>
           <p className="mt-2 max-w-xl text-sm leading-relaxed text-bronze">

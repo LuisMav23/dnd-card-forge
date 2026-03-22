@@ -269,7 +269,7 @@ function CardForgeInner() {
           <LivePreview ref={cardRef} state={state} />
         </div>
       )}
-      <footer className="flex-shrink-0 border-t border-bdr px-4 py-2 text-center font-[var(--font-cinzel),serif] text-xs italic tracking-wide text-muted">
+      <footer className="flex-shrink-0 border-t border-bdr px-3 py-2 text-center font-[var(--font-cinzel),serif] text-[0.7rem] italic leading-snug tracking-wide text-muted sm:text-xs">
         Created by Kurt Andrei Gabriel
       </footer>
     </div>
