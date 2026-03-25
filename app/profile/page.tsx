@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import { createClient } from '@/lib/supabase/client';
+import { notifyProfileChanged } from '@/lib/profileChangedEvent';
 import { uploadUserAsset, removeUserAssetByPublicUrl } from '@/lib/storage/uploadUserAsset';
 
 const BIO_MAX = 500;
@@ -137,6 +138,7 @@ export default function ProfilePage() {
     const p = data.profile as ProfileRow;
     if (p?.avatar_url !== undefined) setAvatarUrl(p.avatar_url);
     if (previousUrl && previousUrl !== url) await removeUserAssetByPublicUrl(previousUrl);
+    notifyProfileChanged();
   };
 
   async function handleAvatarFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -198,6 +200,7 @@ export default function ProfilePage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Save failed');
+      notifyProfileChanged();
       setSaveLabel('Saved');
       setTimeout(() => setSaveLabel('Save profile'), 2000);
     } catch (err) {
@@ -396,8 +399,8 @@ export default function ProfilePage() {
               {recentCreations.map(c => {
                 const href =
                   c.item_type === 'card'
-                    ? `/card?library=${c.id}`
-                    : `/statblocks?library=${c.id}`;
+                    ? `/card/${c.id}`
+                    : `/statblocks/${c.id}`;
                 const label = c.item_type === 'card' ? 'Card' : 'Stat block';
                 return (
                   <li key={c.id}>

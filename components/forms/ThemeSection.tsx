@@ -1,40 +1,33 @@
 'use client';
 
-import { ThemeOption, Rarity } from '@/lib/types';
+import { Rarity, CardPalettePatch } from '@/lib/types';
 import { RARITIES } from '@/lib/utils';
+import ColorPalettePickers from './ColorPalettePickers';
+import type { CardPalette } from '@/lib/cardPalette';
 
 interface Props {
-  themes: ThemeOption[];
-  currentTheme: string;
   currentRarity: Rarity;
-  onThemeChange: (theme: string) => void;
   onRarityChange: (rarity: Rarity) => void;
+  colors: CardPalette;
+  onColorChange: (patch: CardPalettePatch) => void;
 }
 
-export default function ThemeSection({ themes, currentTheme, currentRarity, onThemeChange, onRarityChange }: Props) {
+export default function ThemeSection({ currentRarity, onRarityChange, colors, onColorChange }: Props) {
   return (
     <div className="fsec">
-      <h3>🎨 Card Theme</h3>
-      <div className="fg" style={{ marginBottom: 10 }}>
-        <label>Background</label>
-        <div className="swatches">
-          {themes.map(th => (
-            <div
-              key={th.key}
-              className={`swatch${currentTheme === th.key ? ' active' : ''}`}
-              style={{ background: th.bg }}
-              title={th.name}
-              onClick={() => onThemeChange(th.key)}
-            />
-          ))}
-        </div>
-      </div>
-      <div className="fg">
+      <ColorPalettePickers
+        title="🎨 Card colors"
+        intro="Background is a gradient (start → end). Foreground drives text; accent highlights frames and gems; borders are the outer and inner frame lines."
+        colors={colors}
+        onColorChange={onColorChange}
+      />
+      <div className="fg mt-3">
         <label>Rarity / Power Level</label>
         <div className="rar-opts">
           {RARITIES.map(r => (
             <button
               key={r.key}
+              type="button"
               className={`rar-btn${currentRarity === r.key ? ' active' : ''}`}
               style={{
                 color: r.color,

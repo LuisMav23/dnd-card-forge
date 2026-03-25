@@ -2,6 +2,7 @@
 
 import React, { forwardRef } from 'react';
 import { StatBlockState } from '@/lib/statblockTypes';
+import { statBlockPaletteCssVars } from '@/lib/statBlockPalette';
 
 interface Props {
   state: StatBlockState;
@@ -32,7 +33,7 @@ const DaggerheartStatBlock = forwardRef<HTMLDivElement, Props>(({ state }, ref) 
   const description = f.description || '';
 
   return (
-    <div ref={ref} className={`sb-card th-${state.theme}`}>
+    <div ref={ref} className="sb-card" style={statBlockPaletteCssVars(state)}>
       <div className="sb-bg" />
 
       <div className="sb-header">
@@ -244,7 +245,7 @@ const DndStatBlock = forwardRef<HTMLDivElement, Props>(({ state }, ref) => {
   const name = f.name || 'Unnamed';
 
   return (
-    <div ref={ref} className={`sb-card sb-dnd th-${state.theme}`}>
+    <div ref={ref} className="sb-card sb-dnd" style={statBlockPaletteCssVars(state)}>
       <div className="sb-bg" />
 
       <div className="sb-header">

@@ -1,9 +1,11 @@
 'use client';
 
 import { Suspense, useReducer, useRef, useCallback, useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { GameSystem, StatBlockState, StatBlockAction, StatBlockType } from '@/lib/statblockTypes';
 import { STATBLOCK_TYPES, getDefaultStatBlockFields, getDefaultFeatures } from '@/lib/statblockConfig';
+import { hydrateStatBlockPalette, paletteFromStatBlockDefaultTheme } from '@/lib/statBlockPalette';
 import Header from '@/components/Header';
 import StatBlockTypeBar from '@/components/statblocks/StatBlockTypeBar';
 import StatBlockFormPanel from '@/components/statblocks/StatBlockFormPanel';
@@ -21,7 +23,7 @@ function statBlockReducer(state: StatBlockState, action: StatBlockAction): StatB
       return {
         system,
         type: sbType,
-        theme: cfg.defaultTheme,
+        ...paletteFromStatBlockDefaultTheme(cfg.defaultTheme),
         icon: cfg.defaultIcon,
         image: null,
         fields: getDefaultStatBlockFields(system, sbType),
@@ -33,15 +35,15 @@ function statBlockReducer(state: StatBlockState, action: StatBlockAction): StatB
       return {
         ...state,
         type: action.payload,
-        theme: cfg.defaultTheme,
+        ...paletteFromStatBlockDefaultTheme(cfg.defaultTheme),
         icon: cfg.defaultIcon,
         image: null,
         fields: getDefaultStatBlockFields(state.system, action.payload),
         features: getDefaultFeatures(state.system, action.payload),
       };
     }
-    case 'SET_THEME':
-      return { ...state, theme: action.payload };
+    case 'SET_STATBLOCK_COLORS':
+      return { ...state, ...action.payload };
     case 'SET_ICON':
       return { ...state, icon: action.payload };
     case 'SET_IMAGE':
@@ -62,8 +64,19 @@ function statBlockReducer(state: StatBlockState, action: StatBlockAction): StatB
         ...state,
         features: state.features.filter(f => f.id !== action.payload),
       };
-    case 'LOAD_STATE':
-      return action.payload;
+    case 'LOAD_STATE': {
+      const p = action.payload as StatBlockState & Record<string, unknown>;
+      const palette = hydrateStatBlockPalette(p);
+      return {
+        system: p.system,
+        type: p.type,
+        icon: p.icon,
+        image: p.image ?? null,
+        fields: p.fields,
+        features: p.features,
+        ...palette,
+      };
+    }
     default:
       return state;
   }
@@ -72,7 +85,7 @@ function statBlockReducer(state: StatBlockState, action: StatBlockAction): StatB
 const initialState: StatBlockState = {
   system: 'daggerheart',
   type: 'adversary',
-  theme: STATBLOCK_TYPES.adversary.defaultTheme,
+  ...paletteFromStatBlockDefaultTheme(STATBLOCK_TYPES.adversary.defaultTheme),
   icon: STATBLOCK_TYPES.adversary.defaultIcon,
   image: null,
   fields: getDefaultStatBlockFields('daggerheart', 'adversary'),
@@ -137,13 +150,23 @@ function StatBlocksInner() {
     };
   }, [libraryId]);
 
-  const handleSystemChange = useCallback((system: GameSystem) => {
-    dispatch({ type: 'SET_SYSTEM', payload: system });
-  }, []);
+  const selectionLocked = Boolean(libraryId);
 
-  const handleTypeChange = useCallback((type: StatBlockType) => {
-    dispatch({ type: 'SET_STATBLOCK_TYPE', payload: type });
-  }, []);
+  const handleSystemChange = useCallback(
+    (system: GameSystem) => {
+      if (selectionLocked) return;
+      dispatch({ type: 'SET_SYSTEM', payload: system });
+    },
+    [selectionLocked]
+  );
+
+  const handleTypeChange = useCallback(
+    (type: StatBlockType) => {
+      if (selectionLocked) return;
+      dispatch({ type: 'SET_STATBLOCK_TYPE', payload: type });
+    },
+    [selectionLocked]
+  );
 
   const handleExport = useCallback(async () => {
     const el = blockRef.current;
@@ -246,6 +269,16 @@ function StatBlocksInner() {
   return (
     <div className="flex min-h-screen min-h-[100dvh] flex-col overflow-x-hidden">
       <Header />
+      {libraryId && (
+        <div className="border-b border-bdr bg-panel/80 px-4 py-2">
+          <Link
+            href={`/statblocks/${libraryId}`}
+            className="inline-flex font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-wider text-gold-dark transition-colors hover:text-gold"
+          >
+            ← Back to preview
+          </Link>
+        </div>
+      )}
       {libraryId && loadState === 'loading' && (
         <div className="border-b border-bdr bg-panel/90 px-4 py-2 text-center font-[var(--font-cinzel),serif] text-xs uppercase tracking-wider text-gold">
           Loading library item…
@@ -266,6 +299,7 @@ function StatBlocksInner() {
           active={state.type}
           onSystemChange={handleSystemChange}
           onSelect={handleTypeChange}
+          selectionLocked={selectionLocked}
         />
       </div>
       {libraryId && loadState === 'loading' ? (

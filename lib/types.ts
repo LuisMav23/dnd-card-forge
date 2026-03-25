@@ -33,22 +33,40 @@ export interface CardTypeConfig {
 
 export interface CardState {
   type: CardType;
-  theme: string;
   rarity: Rarity;
   icon: string;
   image: string | null;
-  /** Full-bleed background behind theme wash; data URL (JPEG preferred). */
+  /** Full-bleed background behind color wash; data URL (JPEG preferred). */
   backgroundTexture: string | null;
+  /** Face gradient and chrome (#rrggbb). */
+  colorBgFrom: string;
+  colorBgTo: string;
+  colorForeground: string;
+  colorAccent: string;
+  colorBorderOuter: string;
+  colorBorderInner: string;
   fields: Record<string, string>;
 }
 
+export type CardPalettePatch = Partial<
+  Pick<
+    CardState,
+    | 'colorBgFrom'
+    | 'colorBgTo'
+    | 'colorForeground'
+    | 'colorAccent'
+    | 'colorBorderOuter'
+    | 'colorBorderInner'
+  >
+>;
+
 export type CardAction =
   | { type: 'SET_CARD_TYPE'; payload: CardType }
-  | { type: 'SET_THEME'; payload: string }
   | { type: 'SET_RARITY'; payload: Rarity }
   | { type: 'SET_ICON'; payload: string }
   | { type: 'SET_IMAGE'; payload: string | null }
   | { type: 'SET_BACKGROUND_TEXTURE'; payload: string | null }
+  | { type: 'SET_CARD_COLORS'; payload: CardPalettePatch }
   | { type: 'SET_FIELD'; payload: { key: string; value: string } }
   | { type: 'SET_FIELDS'; payload: Record<string, string> }
   | { type: 'LOAD_STATE'; payload: CardState };

@@ -10,6 +10,7 @@ import DndNpcFields from './forms/DndNpcFields';
 import DndEnvironmentFields from './forms/DndEnvironmentFields';
 import FeaturesEditor from './forms/FeaturesEditor';
 import ArtSection from '@/components/forms/ArtSection';
+import ColorPalettePickers from '@/components/forms/ColorPalettePickers';
 
 interface Props {
   state: StatBlockState;
@@ -81,21 +82,19 @@ export default function StatBlockFormPanel({
       />
 
       <div className="fsec">
-        <h3>🎨 Theme</h3>
-        <div className="fg">
-          <label>Background</label>
-          <div className="swatches">
-            {cfg.themes.map(th => (
-              <div
-                key={th.key}
-                className={`swatch${state.theme === th.key ? ' active' : ''}`}
-                style={{ background: th.bg }}
-                title={th.name}
-                onClick={() => dispatch({ type: 'SET_THEME', payload: th.key })}
-              />
-            ))}
-          </div>
-        </div>
+        <ColorPalettePickers
+          title="🎨 Stat block colors"
+          intro="Same controls as card forge: gradient background, text, accent chrome, and borders."
+          colors={{
+            colorBgFrom: state.colorBgFrom,
+            colorBgTo: state.colorBgTo,
+            colorForeground: state.colorForeground,
+            colorAccent: state.colorAccent,
+            colorBorderOuter: state.colorBorderOuter,
+            colorBorderInner: state.colorBorderInner,
+          }}
+          onColorChange={patch => dispatch({ type: 'SET_STATBLOCK_COLORS', payload: patch })}
+        />
       </div>
 
       <ArtSection

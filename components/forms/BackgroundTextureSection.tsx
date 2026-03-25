@@ -122,7 +122,7 @@ export default function BackgroundTextureSection({ currentTexture, onTextureChan
     <div className="fsec">
       <h3>🎨 Background texture</h3>
       <p className="ex-note mb-3 text-left">
-        Optional full-card background (shown under the theme tint). Separate from card art.
+        Optional full-card background (shown under the color wash). Separate from card art.
       </p>
       <div className="frow c1">
         <div className="fg">

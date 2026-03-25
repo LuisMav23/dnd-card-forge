@@ -1,9 +1,12 @@
 'use client';
 
 import { Suspense, useReducer, useRef, useCallback, useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { CardState, CardAction, CardType } from '@/lib/types';
 import { CARD_TYPES, getDefaultFields } from '@/lib/cardConfig';
+import { coerceRarity, DEFAULT_CARD_PALETTE, hydrateCardPalette } from '@/lib/cardPalette';
+import { exportCardToPng } from '@/lib/exportCardPng';
 import Header from '@/components/Header';
 import TypeBar from '@/components/TypeBar';
 import ExamplePanel from '@/components/ExamplePanel';
@@ -19,16 +22,14 @@ function cardReducer(state: CardState, action: CardAction): CardState {
       const cfg = CARD_TYPES[action.payload];
       return {
         type: action.payload,
-        theme: cfg.defaultTheme,
         rarity: state.rarity,
         icon: cfg.defaultIcon,
         image: null,
         backgroundTexture: null,
+        ...DEFAULT_CARD_PALETTE,
         fields: getDefaultFields(action.payload),
       };
     }
-    case 'SET_THEME':
-      return { ...state, theme: action.payload };
     case 'SET_RARITY':
       return { ...state, rarity: action.payload };
     case 'SET_ICON':
@@ -37,16 +38,24 @@ function cardReducer(state: CardState, action: CardAction): CardState {
       return { ...state, image: action.payload };
     case 'SET_BACKGROUND_TEXTURE':
       return { ...state, backgroundTexture: action.payload };
+    case 'SET_CARD_COLORS':
+      return { ...state, ...action.payload };
     case 'SET_FIELD':
       return { ...state, fields: { ...state.fields, [action.payload.key]: action.payload.value } };
     case 'SET_FIELDS':
       return { ...state, fields: { ...state.fields, ...action.payload } };
     case 'LOAD_STATE': {
-      const p = action.payload;
+      const p = action.payload as CardState & Record<string, unknown>;
+      const rarity = coerceRarity(p.rarity);
+      const palette = hydrateCardPalette(p, rarity);
       return {
-        ...p,
-        backgroundTexture: p.backgroundTexture ?? null,
+        type: p.type,
+        rarity,
+        icon: p.icon,
         image: p.image ?? null,
+        backgroundTexture: p.backgroundTexture ?? null,
+        fields: p.fields,
+        ...palette,
       };
     }
     default:
@@ -56,11 +65,11 @@ function cardReducer(state: CardState, action: CardAction): CardState {
 
 const initialState: CardState = {
   type: 'spell',
-  theme: 'arcane',
   rarity: 'legendary',
   icon: '🌀',
   image: null,
   backgroundTexture: null,
+  ...DEFAULT_CARD_PALETTE,
   fields: getDefaultFields('spell'),
 };
 
@@ -133,37 +142,8 @@ function CardForgeInner() {
     setExporting(true);
     setExportLabel('⏳ Generating…');
 
-    const clone = el.cloneNode(true) as HTMLElement;
-    Object.assign(clone.style, {
-      position: 'fixed',
-      left: '-9999px',
-      top: '0',
-      width: '595px',
-      height: '833px',
-      transform: 'none',
-      borderRadius: '22px',
-    });
-    document.body.appendChild(clone);
-
     try {
-      const html2canvas = (await import('html2canvas')).default;
-      await new Promise(r => setTimeout(r, 250));
-
-      const canvas = await html2canvas(clone, {
-        width: 595,
-        height: 833,
-        scale: 1.26,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: null,
-        logging: false,
-      });
-
-      const link = document.createElement('a');
-      link.download = `${(state.fields.name || 'dnd-card').replace(/\s+/g, '-').toLowerCase()}-card.png`;
-      link.href = canvas.toDataURL('image/png', 1.0);
-      link.click();
-
+      await exportCardToPng(el, state.fields.name || 'dnd-card');
       setExportLabel('✓ Exported!');
       setTimeout(() => {
         setExportLabel('⬇ Export Card as PNG');
@@ -174,8 +154,6 @@ function CardForgeInner() {
       setExportLabel('✕ Error — Try Again');
       setExporting(false);
       setTimeout(() => setExportLabel('⬇ Export Card as PNG'), 2500);
-    } finally {
-      document.body.removeChild(clone);
     }
   }, [state.fields.name]);
 
@@ -230,6 +208,16 @@ function CardForgeInner() {
   return (
     <div className="flex min-h-screen min-h-[100dvh] flex-col overflow-x-hidden">
       <Header />
+      {libraryId && (
+        <div className="border-b border-bdr bg-panel/80 px-4 py-2">
+          <Link
+            href={`/card/${libraryId}`}
+            className="inline-flex font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-wider text-gold-dark transition-colors hover:text-gold"
+          >
+            ← Back to preview
+          </Link>
+        </div>
+      )}
       {libraryId && loadState === 'loading' && (
         <div className="border-b border-bdr bg-panel/90">
           <LoadingLibraryProgressBar />
@@ -248,7 +236,7 @@ function CardForgeInner() {
           libraryId && loadState === 'loading' ? 'pointer-events-none opacity-90' : ''
         }
       >
-        <TypeBar active={state.type} onSelect={handleTypeChange} />
+        <TypeBar active={state.type} onSelect={handleTypeChange} typeLocked={Boolean(libraryId)} />
       </div>
       {libraryId && loadState === 'loading' ? (
         <ForgeLibraryLoadSkeleton />

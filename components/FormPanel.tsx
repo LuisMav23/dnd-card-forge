@@ -58,11 +58,17 @@ export default function FormPanel({
       <FieldsComponent fields={state.fields} onChange={onFieldChange} />
 
       <ThemeSection
-        themes={cfg.themes}
-        currentTheme={state.theme}
         currentRarity={state.rarity}
-        onThemeChange={t => dispatch({ type: 'SET_THEME', payload: t })}
         onRarityChange={r => dispatch({ type: 'SET_RARITY', payload: r as Rarity })}
+        colors={{
+          colorBgFrom: state.colorBgFrom,
+          colorBgTo: state.colorBgTo,
+          colorForeground: state.colorForeground,
+          colorAccent: state.colorAccent,
+          colorBorderOuter: state.colorBorderOuter,
+          colorBorderInner: state.colorBorderInner,
+        }}
+        onColorChange={patch => dispatch({ type: 'SET_CARD_COLORS', payload: patch })}
       />
 
       <BackgroundTextureSection

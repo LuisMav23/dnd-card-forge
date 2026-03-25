@@ -3,12 +3,13 @@
 import React, { forwardRef } from 'react';
 import { CardState } from '@/lib/types';
 import { CARD_TYPES, getTypebar, getCost } from '@/lib/cardConfig';
+import { cardPaletteCssVars } from '@/lib/cardPalette';
 import { GEMS, abilityMod } from '@/lib/utils';
 
 const CornerSVG = () => (
-  <svg viewBox="0 0 20 20">
-    <path d="M0 20L0 0L20 0" fill="none" stroke="rgba(20,8,0,.38)" strokeWidth="2" />
-    <circle cx="0" cy="0" r="3.5" fill="rgba(20,8,0,.22)" />
+  <svg viewBox="0 0 20 20" aria-hidden>
+    <path d="M0 20L0 0L20 0" fill="none" stroke="currentColor" strokeWidth="2" />
+    <circle cx="0" cy="0" r="3.5" fill="currentColor" />
   </svg>
 );
 
@@ -49,14 +50,26 @@ const CardRenderer = forwardRef<HTMLDivElement, Props>(({ state }, ref) => {
     );
 
   return (
-    <div ref={ref} className={`spell-card th-${state.theme} rar-${state.rarity}`}>
+    <div
+      ref={ref}
+      className="spell-card"
+      style={cardPaletteCssVars(state)}
+    >
       {bgBlock}
       <div className="card-border-o" />
       <div className="card-border-i" />
-      <div className="corner ctlx"><CornerSVG /></div>
-      <div className="corner ctrx"><CornerSVG /></div>
-      <div className="corner cblx"><CornerSVG /></div>
-      <div className="corner cbrx"><CornerSVG /></div>
+      <div className="corner ctlx">
+        <CornerSVG />
+      </div>
+      <div className="corner ctrx">
+        <CornerSVG />
+      </div>
+      <div className="corner cblx">
+        <CornerSVG />
+      </div>
+      <div className="corner cbrx">
+        <CornerSVG />
+      </div>
 
       <div className="cz-header">
         <div className="c-name">{name}</div>

@@ -179,7 +179,7 @@ export default function LibraryView({
   );
 
   const openHref = (c: LibraryCard) =>
-    c.item_type === 'card' ? `/card?library=${c.id}` : `/statblocks?library=${c.id}`;
+    c.item_type === 'card' ? `/card/${c.id}` : `/statblocks/${c.id}`;
 
   const scopeTitle =
     scope === 'all'
