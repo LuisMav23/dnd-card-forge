@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import Header from '@/components/Header';
+import EncounterListRowsSkeleton from '@/components/ui/skeletons/EncounterListRowsSkeleton';
 import type { EncounterSummary } from '@/lib/encounterTypes';
 
 export default function EncountersPage() {
@@ -46,8 +47,8 @@ export default function EncountersPage() {
   return (
     <div className="page-radial-soft flex min-h-screen flex-col bg-bg">
       <Header />
-      <main className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-6 sm:px-8 sm:py-10">
-        <header className="mx-auto mb-8 flex w-full max-w-3xl flex-wrap items-end justify-between gap-4">
+      <main className="flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto px-4 py-6 sm:px-8 sm:py-10">
+        <header className="mx-auto flex w-full max-w-3xl flex-wrap items-end justify-between gap-4">
           <div>
             <p className="font-[var(--font-cinzel),serif] text-xs uppercase tracking-[0.28em] text-gold-dark">
               Sessions
@@ -65,7 +66,12 @@ export default function EncountersPage() {
         </header>
 
         <div className="mx-auto w-full max-w-3xl">
-          {loading && <p className="text-sm text-muted">Loading…</p>}
+          {loading && (
+            <div role="status" aria-label="Loading encounters">
+              <span className="sr-only">Loading encounters</span>
+              <EncounterListRowsSkeleton />
+            </div>
+          )}
           {error && <p className="text-sm text-red-300">{error}</p>}
           {!loading && !error && list.length === 0 && (
             <p className="text-sm text-bronze">
@@ -80,7 +86,7 @@ export default function EncountersPage() {
             {list.map(enc => (
               <li
                 key={enc.id}
-                className="flex flex-col gap-3 rounded-lg border border-bdr bg-panel/90 p-4 sm:flex-row sm:items-center sm:justify-between"
+                className="surface-card flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div>
                   <h2 className="font-[var(--font-cinzel),serif] text-lg font-semibold text-gold">{enc.title}</h2>
@@ -92,7 +98,7 @@ export default function EncountersPage() {
                     })}
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-shrink-0 flex-wrap items-center gap-2 sm:justify-end">
                   <Link href={`/encounters/${enc.id}`} className="panel-btn text-sm text-gold">
                     Open session
                   </Link>

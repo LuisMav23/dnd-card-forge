@@ -8,6 +8,7 @@ import type { StatBlockState } from '@/lib/statblockTypes';
 import Header from '@/components/Header';
 import StatBlockWikiView from '@/components/statblocks/StatBlockWikiView';
 import RouteSuspenseFallback from '@/components/ui/RouteSuspenseFallback';
+import WikiDetailBodySkeleton from '@/components/ui/skeletons/WikiDetailBodySkeleton';
 
 function StatBlockDetailInner() {
   const params = useParams();
@@ -74,9 +75,10 @@ function StatBlockDetailInner() {
       </div>
 
       {status === 'loading' && (
-        <p className="py-16 text-center font-[var(--font-cinzel),serif] text-sm text-muted">
-          Loading stat block…
-        </p>
+        <div role="status" aria-label="Loading stat block">
+          <span className="sr-only">Loading stat block</span>
+          <WikiDetailBodySkeleton />
+        </div>
       )}
 
       {status === 'unauthorized' && (

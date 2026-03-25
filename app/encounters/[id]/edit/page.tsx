@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import Header from '@/components/Header';
 import EncounterBuilderForm from '@/components/encounters/EncounterBuilderForm';
+import { EncounterFormFieldsSkeleton } from '@/components/ui/skeletons/EncounterFormSkeleton';
 import type { EncounterDetail } from '@/lib/encounterTypes';
 
 export default function EditEncounterPage() {
@@ -39,7 +40,7 @@ export default function EditEncounterPage() {
   return (
     <div className="page-radial-soft flex min-h-screen flex-col bg-bg">
       <Header />
-      <main className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-6 sm:px-8 sm:py-10">
+      <main className="flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto px-4 py-6 sm:px-8 sm:py-10">
         <div className="mx-auto mb-8 w-full max-w-2xl">
           <Link
             href={`/encounters/${id}`}
@@ -50,7 +51,12 @@ export default function EditEncounterPage() {
           <h1 className="mt-4 font-[var(--font-cinzel),serif] text-2xl font-bold text-gold">Edit encounter</h1>
         </div>
 
-        {loading && <p className="mx-auto max-w-2xl text-sm text-muted">Loading…</p>}
+        {loading && (
+          <div className="mx-auto max-w-2xl w-full" role="status" aria-label="Loading encounter">
+            <span className="sr-only">Loading encounter</span>
+            <EncounterFormFieldsSkeleton />
+          </div>
+        )}
         {error && (
           <div className="mx-auto max-w-2xl">
             <p className="text-sm text-red-300">{error}</p>

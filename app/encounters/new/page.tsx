@@ -11,7 +11,7 @@ export default function NewEncounterPage() {
   return (
     <div className="page-radial-soft flex min-h-screen flex-col bg-bg">
       <Header />
-      <main className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-6 sm:px-8 sm:py-10">
+      <main className="flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto px-4 py-6 sm:px-8 sm:py-10">
         <div className="mx-auto mb-8 w-full max-w-2xl">
           <Link
             href="/encounters"

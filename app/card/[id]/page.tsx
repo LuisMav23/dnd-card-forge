@@ -9,6 +9,7 @@ import { exportCardToPng } from '@/lib/exportCardPng';
 import Header from '@/components/Header';
 import CardWikiView from '@/components/cards/CardWikiView';
 import RouteSuspenseFallback from '@/components/ui/RouteSuspenseFallback';
+import WikiDetailBodySkeleton from '@/components/ui/skeletons/WikiDetailBodySkeleton';
 
 interface LibraryCardRow {
   id: string;
@@ -130,7 +131,10 @@ function CardDetailInner() {
       </div>
 
       {status === 'loading' && (
-        <p className="py-16 text-center font-[var(--font-cinzel),serif] text-sm text-muted">Loading card…</p>
+        <div role="status" aria-label="Loading card">
+          <span className="sr-only">Loading card</span>
+          <WikiDetailBodySkeleton />
+        </div>
       )}
 
       {status === 'unauthorized' && (

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
+import ProfilePageSkeleton from '@/components/ui/skeletons/ProfilePageSkeleton';
 import { createClient } from '@/lib/supabase/client';
 import { notifyProfileChanged } from '@/lib/profileChangedEvent';
 import { uploadUserAsset, removeUserAssetByPublicUrl } from '@/lib/storage/uploadUserAsset';
@@ -215,8 +216,9 @@ export default function ProfilePage() {
     return (
       <div className="page-radial-soft flex min-h-screen flex-col bg-bg">
         <Header />
-        <main className="flex flex-1 items-center justify-center px-4 py-10">
-          <p className="font-[var(--font-cinzel),serif] text-sm text-bronze">Loading profile…</p>
+        <main className="flex flex-1 flex-col px-4 py-8 sm:px-6 sm:py-10" role="status" aria-label="Loading profile">
+          <span className="sr-only">Loading profile</span>
+          <ProfilePageSkeleton />
         </main>
       </div>
     );

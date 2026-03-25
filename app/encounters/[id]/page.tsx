@@ -5,6 +5,8 @@ import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import Header from '@/components/Header';
 import EncounterSessionEntry from '@/components/encounters/EncounterSessionEntry';
+import { EncounterSessionLinesSkeleton } from '@/components/ui/skeletons/EncounterSessionSkeleton';
+import Skeleton from '@/components/ui/Skeleton';
 import { parseEncounterInstanceStatesArray } from '@/lib/encounterStatHelpers';
 import type {
   EncounterDetail,
@@ -147,8 +149,8 @@ export default function EncounterSessionPage() {
   return (
     <div className="page-radial-soft flex min-h-screen flex-col bg-bg">
       <Header />
-      <main className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-6 sm:px-8 sm:py-10">
-        <div className="mx-auto mb-6 flex w-full max-w-[1600px] flex-wrap items-start justify-between gap-4 px-0">
+      <main className="flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto px-4 py-6 sm:px-8 sm:py-10">
+        <div className="mx-auto flex w-full max-w-[1600px] flex-wrap items-start justify-between gap-4 px-0">
           <div>
             <Link
               href="/encounters"
@@ -156,6 +158,12 @@ export default function EncounterSessionPage() {
             >
               ← Encounters
             </Link>
+            {loading && (
+              <div className="mt-3 space-y-2" aria-hidden>
+                <Skeleton className="h-9 w-64 max-w-full sm:h-10" />
+                <Skeleton className="h-3 w-full max-w-2xl" />
+              </div>
+            )}
             {detail && (
               <>
                 <h1 className="mt-3 font-[var(--font-cinzel),serif] text-2xl font-bold text-gold sm:text-3xl">
@@ -168,6 +176,12 @@ export default function EncounterSessionPage() {
               </>
             )}
           </div>
+          {loading && (
+            <div className="flex flex-wrap gap-2" aria-hidden>
+              <Skeleton className="h-10 w-32 rounded-lg" />
+              <Skeleton className="h-10 w-28 rounded-lg" />
+            </div>
+          )}
           {detail && (
             <div className="flex flex-wrap gap-2">
               <Link href={`/encounters/${id}/edit`} className="panel-btn text-sm text-bronze">
@@ -186,7 +200,12 @@ export default function EncounterSessionPage() {
         </div>
 
         <div className="mx-auto w-full max-w-[1600px]">
-          {loading && <p className="text-sm text-muted">Loading…</p>}
+          {loading && (
+            <div role="status" aria-label="Loading encounter">
+              <span className="sr-only">Loading encounter</span>
+              <EncounterSessionLinesSkeleton />
+            </div>
+          )}
           {error && (
             <div>
               <p className="text-sm text-red-300">{error}</p>

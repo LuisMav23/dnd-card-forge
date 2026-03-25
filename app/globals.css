@@ -285,6 +285,23 @@
   animation: fade-in-up 0.28s ease-out forwards;
 }
 
+/* Shared panel surface (gold/dark aesthetic) */
+.surface-card {
+  border-radius: 0.75rem;
+  border: 1px solid theme('colors.bdr.DEFAULT');
+  background-color: color-mix(in srgb, theme('colors.panel') 92%, transparent);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.32);
+}
+
+.page-hero-divider {
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 1rem;
+  height: 1px;
+  width: 6rem;
+  background: linear-gradient(to right, transparent, color-mix(in srgb, theme('colors.gold.DEFAULT') 55%, transparent), transparent);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .loading-shimmer-bar {
     animation: none;

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import EncounterBuilderLibrarySkeleton from '@/components/ui/skeletons/EncounterBuilderLibrarySkeleton';
 import { labelForStatblockCard } from './statblockLabel';
 
 type LibraryRow = {
@@ -154,7 +155,12 @@ export default function EncounterBuilderForm({
           </button>
         </div>
 
-        {loadingLib && <p className="mt-3 text-sm text-muted">Loading your library…</p>}
+        {loadingLib && (
+          <div className="mt-3" role="status" aria-label="Loading library">
+            <span className="sr-only">Loading your library</span>
+            <EncounterBuilderLibrarySkeleton />
+          </div>
+        )}
         {!loadingLib && options.length === 0 && (
           <p className="mt-3 text-sm text-bronze">
             No stat blocks in your library yet.{' '}
