@@ -19,6 +19,7 @@ export default function Header() {
     { href: '/card', label: 'Card Forge' },
     { href: '/statblocks', label: 'Stat Blocks' },
     { href: '/library', label: 'My Library' },
+    { href: '/encounters', label: 'Encounters' },
   ];
 
   const linkClass = (href: string) =>

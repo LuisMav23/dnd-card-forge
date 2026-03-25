@@ -58,6 +58,18 @@
   .panel-btn {
     @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-md border border-bdr bg-panel px-4 py-2.5 text-center font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-[0.18em] text-gold transition-all hover:border-gold-dark hover:bg-mid;
   }
+
+  /* Encounter builder (and similar): force theme-aware native controls so text isn’t light-on-white */
+  .encounter-form-control {
+    color: rgb(var(--color-fg));
+    background-color: rgb(var(--color-input));
+  }
+  html.dark .encounter-form-control {
+    color-scheme: dark;
+  }
+  html:not(.dark) .encounter-form-control {
+    color-scheme: light;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -819,4 +831,11 @@
     transform-origin: top center;
     margin-bottom: -440px;
   }
+}
+
+/* Encounter session: fit stat blocks in grid columns */
+.enc-session-sb-wrap .sb-card {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }

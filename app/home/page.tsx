@@ -24,6 +24,13 @@ export default function LandingPage() {
       description:
         'Organize folders, save cards and stat blocks, and load them back into the forges when you need them.',
     },
+    {
+      href: '/encounters',
+      icon: '🎲',
+      title: 'Encounters',
+      description:
+        'Build encounter lists from saved stat blocks and track how many remain during live sessions.',
+    },
   ] as const;
 
   return (
@@ -37,7 +44,7 @@ export default function LandingPage() {
           </p>
           <div className="mx-auto mt-4 h-px w-24 bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
 
-          <div className="mt-10 grid w-full grid-cols-1 gap-6 md:grid-cols-3">
+          <div className="mt-10 grid w-full grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {cards.map(item => (
               <Link
                 key={item.href}

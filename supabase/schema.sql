@@ -102,3 +102,5 @@ drop policy if exists "Users can delete their own cards." on public.cards;
 create policy "Users can delete their own cards."
   on public.cards for delete
   using ( auth.uid() = user_id );
+
+-- Encounters (see migrations/20250326120000_encounters.sql for canonical DDL + RLS)
