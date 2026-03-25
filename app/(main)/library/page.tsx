@@ -1,4 +1,3 @@
-import Header from '@/components/Header';
 import LibraryView from '@/components/LibraryView';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
@@ -19,8 +18,7 @@ export default async function LibraryPage() {
   ]);
 
   return (
-    <div className="page-radial-soft flex min-h-screen flex-col bg-bg">
-      <Header />
+    <div className="page-radial-soft flex min-h-0 flex-1 flex-col bg-bg">
       <main className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-6 sm:px-8 sm:py-10">
         <header className="mb-8 max-w-4xl">
           <p className="font-[var(--font-cinzel),serif] text-xs uppercase tracking-[0.28em] text-gold-dark">

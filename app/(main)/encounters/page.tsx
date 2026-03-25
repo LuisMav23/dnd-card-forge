@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
-import Header from '@/components/Header';
 import EncounterListRowsSkeleton from '@/components/ui/skeletons/EncounterListRowsSkeleton';
 import type { EncounterSummary } from '@/lib/encounterTypes';
 
@@ -45,8 +44,7 @@ export default function EncountersPage() {
   };
 
   return (
-    <div className="page-radial-soft flex min-h-screen flex-col bg-bg">
-      <Header />
+    <div className="page-radial-soft flex min-h-0 flex-1 flex-col bg-bg">
       <main className="flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto px-4 py-6 sm:px-8 sm:py-10">
         <header className="mx-auto flex w-full max-w-3xl flex-wrap items-end justify-between gap-4">
           <div>

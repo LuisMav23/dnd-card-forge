@@ -17,7 +17,7 @@ interface PageLoadShellProps {
 export default function PageLoadShell({
   children,
   label = 'Loading',
-  showHeader = true,
+  showHeader = false,
   mainClassName = 'flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-6 sm:px-8 sm:py-10',
 }: PageLoadShellProps) {
   return (

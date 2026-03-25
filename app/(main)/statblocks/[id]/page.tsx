@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { parseStatBlockFromLibraryRow, type LibraryStatBlockRow } from '@/lib/statBlockLoad';
 import type { StatBlockState } from '@/lib/statblockTypes';
-import Header from '@/components/Header';
 import StatBlockWikiView from '@/components/statblocks/StatBlockWikiView';
 import RouteSuspenseFallback from '@/components/ui/RouteSuspenseFallback';
 import WikiDetailBodySkeleton from '@/components/ui/skeletons/WikiDetailBodySkeleton';
@@ -56,8 +55,7 @@ function StatBlockDetailInner() {
   }, [id]);
 
   return (
-    <div className="page-radial-soft flex min-h-[100dvh] flex-col overflow-x-hidden bg-bg">
-      <Header />
+    <div className="page-radial-soft flex min-h-0 flex-1 flex-col overflow-x-hidden bg-bg">
       <div className="border-b border-bdr bg-panel/80 px-4 py-3">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3">
           <Link

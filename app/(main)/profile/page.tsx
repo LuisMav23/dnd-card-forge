@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import Header from '@/components/Header';
 import ProfilePageSkeleton from '@/components/ui/skeletons/ProfilePageSkeleton';
 import { createClient } from '@/lib/supabase/client';
 import { notifyProfileChanged } from '@/lib/profileChangedEvent';
@@ -214,8 +213,7 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="page-radial-soft flex min-h-screen flex-col bg-bg">
-        <Header />
+      <div className="page-radial-soft flex min-h-0 flex-1 flex-col bg-bg">
         <main className="flex flex-1 flex-col px-4 py-8 sm:px-6 sm:py-10" role="status" aria-label="Loading profile">
           <span className="sr-only">Loading profile</span>
           <ProfilePageSkeleton />
@@ -225,8 +223,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="page-radial-soft flex min-h-screen flex-col bg-bg">
-      <Header />
+    <div className="page-radial-soft flex min-h-0 flex-1 flex-col bg-bg">
       <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-10 px-4 py-8 sm:px-6 sm:py-10 lg:flex-row lg:gap-12">
         <div className="min-w-0 flex-1">
           <header className="mb-8">

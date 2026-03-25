@@ -7,7 +7,6 @@ import { CardState, CardAction, CardType } from '@/lib/types';
 import { CARD_TYPES, getDefaultFields } from '@/lib/cardConfig';
 import { coerceRarity, DEFAULT_CARD_PALETTE, hydrateCardPalette } from '@/lib/cardPalette';
 import { exportCardToPng } from '@/lib/exportCardPng';
-import Header from '@/components/Header';
 import TypeBar from '@/components/TypeBar';
 import ExamplePanel from '@/components/ExamplePanel';
 import FormPanel from '@/components/FormPanel';
@@ -206,8 +205,7 @@ function CardForgeInner() {
   }, [state, libraryId, loadState]);
 
   return (
-    <div className="flex min-h-screen min-h-[100dvh] flex-col overflow-x-hidden">
-      <Header />
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden">
       {libraryId && (
         <div className="border-b border-bdr bg-panel/80 px-4 py-2">
           <Link

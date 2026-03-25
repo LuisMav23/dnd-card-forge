@@ -6,7 +6,6 @@ import { useSearchParams } from 'next/navigation';
 import { GameSystem, StatBlockState, StatBlockAction, StatBlockType } from '@/lib/statblockTypes';
 import { STATBLOCK_TYPES, getDefaultStatBlockFields, getDefaultFeatures } from '@/lib/statblockConfig';
 import { hydrateStatBlockPalette, paletteFromStatBlockDefaultTheme } from '@/lib/statBlockPalette';
-import Header from '@/components/Header';
 import StatBlockTypeBar from '@/components/statblocks/StatBlockTypeBar';
 import StatBlockFormPanel from '@/components/statblocks/StatBlockFormPanel';
 import StatBlockPreview from '@/components/statblocks/StatBlockPreview';
@@ -267,8 +266,7 @@ function StatBlocksInner() {
   }, [state, libraryId, loadState]);
 
   return (
-    <div className="flex min-h-screen min-h-[100dvh] flex-col overflow-x-hidden">
-      <Header />
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden">
       {libraryId && (
         <div className="border-b border-bdr bg-panel/80 px-4 py-2">
           <Link

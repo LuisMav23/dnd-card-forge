@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
-import Header from '@/components/Header';
 import EncounterSessionEntry from '@/components/encounters/EncounterSessionEntry';
 import { EncounterSessionLinesSkeleton } from '@/components/ui/skeletons/EncounterSessionSkeleton';
 import Skeleton from '@/components/ui/Skeleton';
@@ -147,8 +146,7 @@ export default function EncounterSessionPage() {
   };
 
   return (
-    <div className="page-radial-soft flex min-h-screen flex-col bg-bg">
-      <Header />
+    <div className="page-radial-soft flex min-h-0 flex-1 flex-col bg-bg">
       <main className="flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto px-4 py-6 sm:px-8 sm:py-10">
         <div className="mx-auto flex w-full max-w-[1600px] flex-wrap items-start justify-between gap-4 px-0">
           <div>

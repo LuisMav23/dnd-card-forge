@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import Header from '@/components/Header';
 
 export default function LandingPage() {
   const cards = [
@@ -34,9 +33,7 @@ export default function LandingPage() {
   ] as const;
 
   return (
-    <div className="flex min-h-screen flex-col bg-bg">
-      <Header />
-
+    <div className="flex min-h-0 flex-1 flex-col bg-bg">
       <main className="flex flex-1 flex-col gap-8 overflow-y-auto px-4 py-12 sm:px-6 sm:py-14">
         <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col items-center">
           <p className="font-[var(--font-cinzel),serif] text-xs uppercase tracking-[0.2em] text-gold-dark sm:text-sm">
