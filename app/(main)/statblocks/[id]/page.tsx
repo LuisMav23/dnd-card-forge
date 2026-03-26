@@ -1,10 +1,11 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { parseStatBlockFromLibraryRow, type LibraryStatBlockRow } from '@/lib/statBlockLoad';
 import type { StatBlockState } from '@/lib/statblockTypes';
+import { exportStatBlockToPng } from '@/lib/exportStatBlockPng';
 import StatBlockWikiView from '@/components/statblocks/StatBlockWikiView';
 import RouteSuspenseFallback from '@/components/ui/RouteSuspenseFallback';
 import WikiDetailBodySkeleton from '@/components/ui/skeletons/WikiDetailBodySkeleton';
@@ -16,6 +17,27 @@ function StatBlockDetailInner() {
   const [status, setStatus] = useState<'loading' | 'ready' | 'error' | 'unauthorized'>('loading');
   const [state, setState] = useState<StatBlockState | null>(null);
   const [savedTitle, setSavedTitle] = useState<string>('');
+  const [downloadLabel, setDownloadLabel] = useState('⬇ Download stat block (PNG)');
+  const [downloading, setDownloading] = useState(false);
+  const blockExportRef = useRef<HTMLDivElement>(null);
+
+  const handleDownloadStatBlock = useCallback(async () => {
+    const el = blockExportRef.current;
+    if (!el || !state) return;
+    setDownloading(true);
+    setDownloadLabel('⏳ Generating…');
+    try {
+      await exportStatBlockToPng(el, state.fields.name || 'stat-block');
+      setDownloadLabel('✓ Downloaded');
+      setTimeout(() => setDownloadLabel('⬇ Download stat block (PNG)'), 2000);
+    } catch (err) {
+      console.error(err);
+      setDownloadLabel('✕ Error — try again');
+      setTimeout(() => setDownloadLabel('⬇ Download stat block (PNG)'), 2500);
+    } finally {
+      setDownloading(false);
+    }
+  }, [state]);
 
   useEffect(() => {
     if (!id) {
@@ -65,9 +87,19 @@ function StatBlockDetailInner() {
             ← Library
           </Link>
           {status === 'ready' && id ? (
-            <Link href={`/statblocks?library=${id}`} className="panel-btn text-gold">
-              Edit stat block
-            </Link>
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => void handleDownloadStatBlock()}
+                disabled={downloading}
+                className="panel-btn border-bdr text-parch hover:border-gold/35 hover:text-gold disabled:opacity-50"
+              >
+                {downloadLabel}
+              </button>
+              <Link href={`/statblocks?library=${id}`} className="panel-btn text-gold">
+                Edit stat block
+              </Link>
+            </div>
           ) : null}
         </div>
       </div>
@@ -97,7 +129,9 @@ function StatBlockDetailInner() {
         </div>
       )}
 
-      {status === 'ready' && state && <StatBlockWikiView state={state} savedTitle={savedTitle} />}
+      {status === 'ready' && state && (
+        <StatBlockWikiView ref={blockExportRef} state={state} savedTitle={savedTitle} />
+      )}
 
       <footer className="mt-auto flex-shrink-0 border-t border-bdr px-3 py-2 text-center font-[var(--font-cinzel),serif] text-[0.7rem] italic leading-snug tracking-wide text-muted sm:text-xs">
         Created by Kurt Andrei Gabriel

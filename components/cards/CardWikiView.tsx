@@ -80,7 +80,7 @@ const CardWikiView = forwardRef<HTMLDivElement, Props>(function CardWikiView({ s
               <div className="overflow-hidden rounded-xl border border-bdr bg-prev px-2 py-4 sm:px-3">
                 <div className="mx-auto flex w-[290px] max-w-full justify-center">
                   <div className="card-scale-wrap">
-                    <CardRenderer state={state} />
+                    <CardRenderer ref={ref} state={state} />
                   </div>
                 </div>
               </div>

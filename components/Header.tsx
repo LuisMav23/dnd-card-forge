@@ -4,11 +4,11 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import AuthButton from './AuthButton';
-import ThemeToggle from './ThemeToggle';
 
 export default function Header() {
   const pathname = usePathname();
   const [navOpen, setNavOpen] = useState(false);
+  const [mobileAuthMount, setMobileAuthMount] = useState<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setNavOpen(false);
@@ -60,8 +60,10 @@ export default function Header() {
         </nav>
 
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
-          <ThemeToggle />
-          <AuthButton />
+          <AuthButton
+            mobileAccountMount={mobileAuthMount}
+            onCloseMobileNav={() => setNavOpen(false)}
+          />
           <button
             type="button"
             className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-bdr bg-panel/80 font-[var(--font-cinzel),serif] text-lg text-gold transition-colors hover:border-gold-dark hover:bg-mid hover:text-gold-light lg:hidden"
@@ -80,6 +82,7 @@ export default function Header() {
         className={`border-t border-bdr/70 bg-mid/95 lg:hidden ${navOpen ? 'block' : 'hidden'}`}
         aria-hidden={!navOpen}
       >
+        <div ref={setMobileAuthMount} className="lg:hidden" />
         <ul className="flex flex-col py-1">
           {links.map(l => (
             <li key={l.href}>

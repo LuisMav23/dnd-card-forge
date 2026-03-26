@@ -3,9 +3,11 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { User } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
 import { PROFILE_CHANGED_EVENT } from '@/lib/profileChangedEvent';
+import ThemeToggle from '@/components/ThemeToggle';
 
 function getDisplayNameFromAuth(user: User): string {
   const meta = user.user_metadata;
@@ -43,7 +45,19 @@ function avatarUrlFromUser(user: User): string | null {
   return null;
 }
 
-export default function AuthButton() {
+const accountLinkClass =
+  'block px-3 py-2.5 font-[var(--font-cinzel),serif] text-xs tracking-[.08em] uppercase text-bronze transition-colors hover:bg-mid hover:text-gold';
+
+const accountBtnClass =
+  'w-full px-3 py-2.5 text-left font-[var(--font-cinzel),serif] text-xs tracking-[.08em] uppercase text-bronze transition-colors hover:bg-mid hover:text-red-400';
+
+export type AuthButtonProps = {
+  /** Target node inside mobile hamburger nav; account block is portaled here below `lg` */
+  mobileAccountMount?: HTMLDivElement | null;
+  onCloseMobileNav?: () => void;
+};
+
+export default function AuthButton({ mobileAccountMount, onCloseMobileNav }: AuthButtonProps = {}) {
   const [user, setUser] = useState<User | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
@@ -143,6 +157,7 @@ export default function AuthButton() {
 
   const handleLogout = async () => {
     setMenuOpen(false);
+    onCloseMobileNav?.();
     await supabase.auth.signOut();
     setUser(null);
     router.push('/');
@@ -155,79 +170,130 @@ export default function AuthButton() {
     const profileAv = profileAvatarUrl?.trim();
     const avatarUrl = profileAv || avatarUrlFromUser(user);
 
-    return (
-      <div className="relative shrink-0" ref={menuRef}>
-        <button
-          type="button"
-          className="flex max-w-[min(100vw-8rem,14rem)] items-center gap-2 rounded-lg border border-bdr bg-panel/80 py-1 pl-1 pr-2.5 transition-colors hover:border-gold-dark/60 hover:bg-mid sm:max-w-[16rem] sm:pr-3"
-          aria-expanded={menuOpen}
-          aria-haspopup="menu"
-          aria-controls="user-account-menu"
-          id="user-account-trigger"
-          onClick={() => setMenuOpen(o => !o)}
-        >
-          <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-md border border-bdr bg-mid">
-            {avatarUrl && !avatarLoadFailed ? (
-              <img
-                src={avatarUrl}
-                alt=""
-                className="h-full w-full object-cover"
-                onError={() => setAvatarLoadFailed(true)}
-              />
-            ) : (
-              <span className="flex h-full w-full items-center justify-center font-[var(--font-cinzel),serif] text-xs font-bold text-gold">
-                {initials}
-              </span>
-            )}
-          </span>
-          <span className="min-w-0 truncate text-left font-[var(--font-cinzel),serif] text-[0.7rem] font-semibold tracking-wide text-bronze sm:text-xs">
-            {displayName}
-          </span>
-          <span className="shrink-0 text-[0.6rem] text-muted" aria-hidden>
-            {menuOpen ? '▲' : '▼'}
-          </span>
-        </button>
-
-        {menuOpen ? (
-          <div
-            id="user-account-menu"
-            role="menu"
-            aria-labelledby="user-account-trigger"
-            className="absolute right-0 z-[60] mt-1.5 min-w-[12rem] max-w-[min(calc(100vw-1.5rem),18rem)] rounded-lg border border-bdr bg-panel py-1 shadow-lg"
-          >
+    const mobileAccountPanel =
+      mobileAccountMount != null ? (
+        <div className="border-b border-bdr/70 bg-mid/90">
+          <div className="flex items-center gap-3 px-3 py-3">
+            <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-md border border-bdr bg-mid">
+              {avatarUrl && !avatarLoadFailed ? (
+                <img
+                  src={avatarUrl}
+                  alt=""
+                  className="h-full w-full object-cover"
+                  onError={() => setAvatarLoadFailed(true)}
+                />
+              ) : (
+                <span className="flex h-full w-full items-center justify-center font-[var(--font-cinzel),serif] text-sm font-bold text-gold">
+                  {initials}
+                </span>
+              )}
+            </span>
+            <span className="min-w-0 flex-1 font-[var(--font-cinzel),serif] text-sm font-semibold leading-snug text-gold">
+              {displayName}
+            </span>
+          </div>
+          <div className="pb-1" role="menu" aria-label="Account">
             {user.email ? (
-              <p className="border-b border-bdr/80 px-3 py-2 font-[Georgia,serif] text-[0.7rem] leading-snug text-muted">
+              <p className="border-t border-bdr/60 px-3 py-2 font-[Georgia,serif] text-[0.7rem] leading-snug text-muted">
                 {user.email}
               </p>
             ) : null}
             <Link
               href="/profile"
               role="menuitem"
-              className="block px-3 py-2.5 font-[var(--font-cinzel),serif] text-xs tracking-[.08em] uppercase text-bronze transition-colors hover:bg-mid hover:text-gold"
-              onClick={() => setMenuOpen(false)}
+              className={accountLinkClass}
+              onClick={() => onCloseMobileNav?.()}
             >
               Profile
             </Link>
-            <button
-              type="button"
-              role="menuitem"
-              className="w-full px-3 py-2.5 text-left font-[var(--font-cinzel),serif] text-xs tracking-[.08em] uppercase text-bronze transition-colors hover:bg-mid hover:text-red-400"
-              onClick={handleLogout}
-            >
+            <ThemeToggle
+              variant="menuitem"
+              onMenuThemeChange={() => {
+                onCloseMobileNav?.();
+              }}
+            />
+            <button type="button" role="menuitem" className={accountBtnClass} onClick={() => void handleLogout()}>
               Sign out
             </button>
           </div>
-        ) : null}
-      </div>
+        </div>
+      ) : null;
+
+    return (
+      <>
+        <div className="relative hidden shrink-0 lg:block" ref={menuRef}>
+          <button
+            type="button"
+            className="flex max-w-[min(100vw-8rem,14rem)] items-center gap-2 rounded-lg border border-bdr bg-panel/80 py-1 pl-1 pr-2.5 transition-colors hover:border-gold-dark/60 hover:bg-mid sm:max-w-[16rem] sm:pr-3"
+            aria-expanded={menuOpen}
+            aria-haspopup="menu"
+            aria-controls="user-account-menu"
+            id="user-account-trigger"
+            onClick={() => setMenuOpen(o => !o)}
+          >
+            <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-md border border-bdr bg-mid">
+              {avatarUrl && !avatarLoadFailed ? (
+                <img
+                  src={avatarUrl}
+                  alt=""
+                  className="h-full w-full object-cover"
+                  onError={() => setAvatarLoadFailed(true)}
+                />
+              ) : (
+                <span className="flex h-full w-full items-center justify-center font-[var(--font-cinzel),serif] text-xs font-bold text-gold">
+                  {initials}
+                </span>
+              )}
+            </span>
+            <span className="min-w-0 truncate text-left font-[var(--font-cinzel),serif] text-[0.7rem] font-semibold tracking-wide text-bronze sm:text-xs">
+              {displayName}
+            </span>
+            <span className="shrink-0 text-[0.6rem] text-muted" aria-hidden>
+              {menuOpen ? '▲' : '▼'}
+            </span>
+          </button>
+
+          {menuOpen ? (
+            <div
+              id="user-account-menu"
+              role="menu"
+              aria-labelledby="user-account-trigger"
+              className="absolute right-0 z-[60] mt-1.5 min-w-[12rem] max-w-[min(calc(100vw-1.5rem),18rem)] rounded-lg border border-bdr bg-panel py-1 shadow-lg"
+            >
+              {user.email ? (
+                <p className="border-b border-bdr/80 px-3 py-2 font-[Georgia,serif] text-[0.7rem] leading-snug text-muted">
+                  {user.email}
+                </p>
+              ) : null}
+              <Link
+                href="/profile"
+                role="menuitem"
+                className={accountLinkClass}
+                onClick={() => setMenuOpen(false)}
+              >
+                Profile
+              </Link>
+              <ThemeToggle variant="menuitem" onMenuThemeChange={() => setMenuOpen(false)} />
+              <button type="button" role="menuitem" className={accountBtnClass} onClick={() => void handleLogout()}>
+                Sign out
+              </button>
+            </div>
+          ) : null}
+        </div>
+        {mobileAccountMount && mobileAccountPanel ? createPortal(mobileAccountPanel, mobileAccountMount) : null}
+      </>
     );
   }
 
   return (
-    <Link
-      href="/"
-      className="whitespace-nowrap font-[var(--font-cinzel),serif] text-xs tracking-[.08em] uppercase text-gold transition-colors hover:text-gold-light sm:text-sm"
-    >
-      Sign in
-    </Link>
+    <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
+      <ThemeToggle />
+      <Link
+        href="/"
+        className="whitespace-nowrap font-[var(--font-cinzel),serif] text-xs tracking-[.08em] uppercase text-gold transition-colors hover:text-gold-light sm:text-sm"
+      >
+        Sign in
+      </Link>
+    </div>
   );
 }

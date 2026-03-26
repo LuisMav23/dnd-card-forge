@@ -12,6 +12,7 @@ import StatBlockPreview from '@/components/statblocks/StatBlockPreview';
 import StatBlockLibraryLoadSkeleton from '@/components/ui/StatBlockLibraryLoadSkeleton';
 import LoadingLibraryProgressBar from '@/components/ui/LoadingLibraryProgressBar';
 import RouteSuspenseFallback from '@/components/ui/RouteSuspenseFallback';
+import { exportStatBlockToPng } from '@/lib/exportStatBlockPng';
 
 function statBlockReducer(state: StatBlockState, action: StatBlockAction): StatBlockState {
   switch (action.type) {
@@ -174,34 +175,8 @@ function StatBlocksInner() {
     setExporting(true);
     setExportLabel('⏳ Generating…');
 
-    const clone = el.cloneNode(true) as HTMLElement;
-    Object.assign(clone.style, {
-      position: 'fixed',
-      left: '-9999px',
-      top: '0',
-      width: '700px',
-      transform: 'none',
-    });
-    document.body.appendChild(clone);
-
     try {
-      const html2canvas = (await import('html2canvas')).default;
-      await new Promise(r => setTimeout(r, 250));
-
-      const canvas = await html2canvas(clone, {
-        width: 700,
-        scale: 1.5,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: null,
-        logging: false,
-      });
-
-      const link = document.createElement('a');
-      link.download = `${(state.fields.name || 'stat-block').replace(/\s+/g, '-').toLowerCase()}-statblock.png`;
-      link.href = canvas.toDataURL('image/png', 1.0);
-      link.click();
-
+      await exportStatBlockToPng(el, state.fields.name || 'stat-block');
       setExportLabel('✓ Exported!');
       setTimeout(() => {
         setExportLabel('⬇ Export Stat Block as PNG');
@@ -212,8 +187,6 @@ function StatBlocksInner() {
       setExportLabel('✕ Error — Try Again');
       setExporting(false);
       setTimeout(() => setExportLabel('⬇ Export Stat Block as PNG'), 2500);
-    } finally {
-      document.body.removeChild(clone);
     }
   }, [state.fields.name]);
 

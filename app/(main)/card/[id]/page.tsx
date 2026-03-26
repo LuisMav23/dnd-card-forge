@@ -121,9 +121,19 @@ function CardDetailInner() {
             ← Library
           </Link>
           {status === 'ready' && id ? (
-            <Link href={`/card?library=${id}`} className="panel-btn text-gold">
-              Edit card
-            </Link>
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => void handleDownloadCard()}
+                disabled={downloading}
+                className="panel-btn border-bdr text-parch hover:border-gold/35 hover:text-gold disabled:opacity-50"
+              >
+                {downloadLabel}
+              </button>
+              <Link href={`/card?library=${id}`} className="panel-btn text-gold">
+                Edit card
+              </Link>
+            </div>
           ) : null}
         </div>
       </div>

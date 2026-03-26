@@ -1,6 +1,15 @@
 'use client';
 
-import { useLayoutEffect, useRef, useState } from 'react';
+import {
+  forwardRef,
+  useCallback,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ForwardedRef,
+  type MutableRefObject,
+  type Ref,
+} from 'react';
 import type { StatBlockState } from '@/lib/statblockTypes';
 import {
   getStatBlockWikiNarrativeSections,
@@ -14,18 +23,38 @@ import StatBlockRenderer from '@/components/statblocks/StatBlockRenderer';
 const WIKI_SB_SCALE = 0.39;
 const SB_CARD_LAYOUT_WIDTH = 700;
 
+function assignDomRef<T>(r: Ref<T> | null | undefined, node: T | null) {
+  if (r == null) return;
+  if (typeof r === 'function') r(node);
+  else (r as MutableRefObject<T | null>).current = node;
+}
+
 interface Props {
   state: StatBlockState;
   savedTitle?: string;
 }
 
 /** Scaled preview with viewport sized to scaled bounds so the full block is visible (avoids clipping from overflow + transform layout mismatch). */
-function StatBlockWikiScaledPreview({ state }: { state: StatBlockState }) {
-  const cardRef = useRef<HTMLDivElement>(null);
+function StatBlockWikiScaledPreview({
+  state,
+  exportRef,
+}: {
+  state: StatBlockState;
+  exportRef: ForwardedRef<HTMLDivElement>;
+}) {
+  const localRef = useRef<HTMLDivElement | null>(null);
+  const setCardNode = useCallback(
+    (node: HTMLDivElement | null) => {
+      localRef.current = node;
+      assignDomRef(exportRef, node);
+    },
+    [exportRef]
+  );
+
   const [naturalH, setNaturalH] = useState(0);
 
   useLayoutEffect(() => {
-    const el = cardRef.current;
+    const el = localRef.current;
     if (!el) return;
     const measure = () => setNaturalH(el.getBoundingClientRect().height);
     measure();
@@ -51,7 +80,7 @@ function StatBlockWikiScaledPreview({ state }: { state: StatBlockState }) {
               width: SB_CARD_LAYOUT_WIDTH,
             }}
           >
-            <StatBlockRenderer ref={cardRef} state={state} />
+            <StatBlockRenderer ref={setCardNode} state={state} />
           </div>
         </div>
       </div>
@@ -59,7 +88,10 @@ function StatBlockWikiScaledPreview({ state }: { state: StatBlockState }) {
   );
 }
 
-export default function StatBlockWikiView({ state, savedTitle }: Props) {
+const StatBlockWikiView = forwardRef<HTMLDivElement, Props>(function StatBlockWikiView(
+  { state, savedTitle },
+  ref
+) {
   const f = state.fields;
   const name = f.name || 'Untitled stat block';
   const stats = getStatBlockWikiPrimaryStats(state);
@@ -99,7 +131,7 @@ export default function StatBlockWikiView({ state, savedTitle }: Props) {
               <h2 className="border-b border-bdr pb-2 font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-[0.22em] text-gold">
                 Stat block preview
               </h2>
-              <StatBlockWikiScaledPreview state={state} />
+              <StatBlockWikiScaledPreview state={state} exportRef={ref} />
             </section>
           </div>
 
@@ -179,4 +211,8 @@ export default function StatBlockWikiView({ state, savedTitle }: Props) {
       </div>
     </article>
   );
-}
+});
+
+StatBlockWikiView.displayName = 'StatBlockWikiView';
+
+export default StatBlockWikiView;

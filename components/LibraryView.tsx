@@ -94,7 +94,7 @@ function LibraryCardOverflowMenu({
     'block w-full rounded-md px-3 py-2 text-left font-[var(--font-cinzel),serif] text-xs uppercase tracking-wide text-parch transition-colors hover:bg-gold/10 hover:text-gold';
 
   return (
-    <div ref={rootRef} className="absolute right-0 top-0 z-20">
+    <div ref={rootRef} className="absolute right-5 top-5 z-20 sm:right-6 sm:top-6">
       <button
         type="button"
         id={menuButtonId}
