@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 
 const DND_TYPE = 'application/x-dnd-card-forge-id';
 
@@ -34,6 +35,169 @@ function countInFolder(cards: LibraryCard[], folderId: string | null): number {
   return cards.filter(c => c.folder_id === folderId).length;
 }
 
+function openHref(c: LibraryCard) {
+  return c.item_type === 'card' ? `/card/${c.id}` : `/statblocks/${c.id}`;
+}
+
+function editHref(c: LibraryCard) {
+  return c.item_type === 'card' ? `/card?library=${c.id}` : `/statblocks?library=${c.id}`;
+}
+
+type MenuPanel = 'main' | 'move';
+
+function LibraryCardOverflowMenu({
+  card,
+  folders,
+  open,
+  panel,
+  onPanelChange,
+  onToggle,
+  onClose,
+  onMove,
+  onDelete,
+  menuButtonId,
+  menuId,
+}: {
+  card: LibraryCard;
+  folders: Folder[];
+  open: boolean;
+  panel: MenuPanel;
+  onPanelChange: (p: MenuPanel) => void;
+  onToggle: () => void;
+  onClose: () => void;
+  onMove: (folderId: string | null) => void;
+  onDelete: () => void;
+  menuButtonId: string;
+  menuId: string;
+}) {
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (rootRef.current?.contains(e.target as Node)) return;
+      onClose();
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('pointerdown', onPointerDown, true);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown, true);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [open, onClose]);
+
+  const itemLabel = cardSubtitle(card);
+  const menuItemClass =
+    'block w-full rounded-md px-3 py-2 text-left font-[var(--font-cinzel),serif] text-xs uppercase tracking-wide text-parch transition-colors hover:bg-gold/10 hover:text-gold';
+
+  return (
+    <div ref={rootRef} className="absolute right-0 top-0 z-20">
+      <button
+        type="button"
+        id={menuButtonId}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls={open ? menuId : undefined}
+        className="rounded-md p-1.5 text-muted transition-colors hover:bg-mid hover:text-gold"
+        aria-label={`More actions for ${itemLabel}`}
+        onPointerDown={e => e.stopPropagation()}
+        onClick={e => {
+          e.preventDefault();
+          e.stopPropagation();
+          onToggle();
+        }}
+      >
+        <span className="block px-0.5 font-bold leading-none tracking-widest text-gold/90" aria-hidden>
+          ⋮
+        </span>
+      </button>
+      {open ? (
+        <div
+          id={menuId}
+          role="menu"
+          aria-labelledby={menuButtonId}
+          className="absolute right-0 top-full z-30 mt-1 min-w-[11rem] rounded-lg border border-bdr bg-panel py-1 shadow-[0_12px_40px_rgba(0,0,0,0.45)]"
+        >
+          {panel === 'main' ? (
+            <>
+              <Link
+                href={editHref(card)}
+                role="menuitem"
+                className={menuItemClass}
+                onClick={() => onClose()}
+              >
+                Edit
+              </Link>
+              <button
+                type="button"
+                role="menuitem"
+                className={menuItemClass}
+                onClick={() => onPanelChange('move')}
+              >
+                Move to
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                className={`${menuItemClass} text-red-400 hover:bg-red-950/40 hover:text-red-300`}
+                onClick={() => {
+                  onClose();
+                  onDelete();
+                }}
+              >
+                Delete
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                className={menuItemClass}
+                onClick={() => onPanelChange('main')}
+              >
+                ← Back
+              </button>
+              <div className="my-1 border-t border-bdr/60" role="presentation" />
+              <button
+                type="button"
+                role="menuitem"
+                disabled={card.folder_id === null}
+                className={`${menuItemClass} disabled:cursor-not-allowed disabled:opacity-40`}
+                onClick={() => {
+                  if (card.folder_id === null) return;
+                  onMove(null);
+                  onClose();
+                }}
+              >
+                📂 Unfiled
+              </button>
+              {folders.map(f => (
+                <button
+                  key={f.id}
+                  type="button"
+                  role="menuitem"
+                  disabled={card.folder_id === f.id}
+                  className={`${menuItemClass} disabled:cursor-not-allowed disabled:opacity-40`}
+                  onClick={() => {
+                    if (card.folder_id === f.id) return;
+                    onMove(f.id);
+                    onClose();
+                  }}
+                >
+                  📁 {f.name}
+                </button>
+              ))}
+            </>
+          )}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export default function LibraryView({
   initialFolders,
   initialCards,
@@ -50,6 +214,9 @@ export default function LibraryView({
   const [creatingFolder, setCreatingFolder] = useState(false);
   const [dragOver, setDragOver] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [menuCardId, setMenuCardId] = useState<string | null>(null);
+  const [menuPanel, setMenuPanel] = useState<MenuPanel>('main');
+  const router = useRouter();
 
   const folderById = useMemo(() => Object.fromEntries(folders.map(f => [f.id, f])), [folders]);
 
@@ -79,6 +246,27 @@ export default function LibraryView({
 
     return list;
   }, [cards, scope, search, sortBy]);
+
+  const closeCardMenu = useCallback(() => {
+    setMenuCardId(null);
+    setMenuPanel('main');
+  }, []);
+
+  const openCardMenu = useCallback((id: string) => {
+    setMenuCardId(id);
+    setMenuPanel('main');
+  }, []);
+
+  const toggleCardMenu = useCallback(
+    (id: string) => {
+      if (menuCardId === id) {
+        closeCardMenu();
+      } else {
+        openCardMenu(id);
+      }
+    },
+    [menuCardId, closeCardMenu, openCardMenu]
+  );
 
   const handleCreateFolder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -177,9 +365,6 @@ export default function LibraryView({
     },
     [cards, handleMoveCard]
   );
-
-  const openHref = (c: LibraryCard) =>
-    c.item_type === 'card' ? `/card/${c.id}` : `/statblocks/${c.id}`;
 
   const scopeTitle =
     scope === 'all'
@@ -328,82 +513,92 @@ export default function LibraryView({
                 draggable
                 onDragStart={e => onDragStart(e, c.id)}
                 onDragEnd={onDragEnd}
-                className={`group flex flex-col rounded-xl border bg-gradient-to-b from-panel to-mid/95 p-5 sm:p-6 shadow-[0_8px_32px_rgba(0,0,0,0.35)] transition-all duration-200 ${
-                  draggingId === c.id
-                    ? 'scale-[0.98] border-gold/50 opacity-90'
-                    : 'border-bdr hover:border-gold/35 hover:shadow-[0_12px_40px_rgba(201,168,76,0.08)]'
-                }`}
+                className="list-none"
               >
-                <div className="mb-4 flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <h3 className="truncate font-[var(--font-cinzel),serif] text-base font-semibold text-gold">
-                      {cardSubtitle(c)}
-                    </h3>
-                    <p className="mt-0.5 truncate text-xs text-bronze">{c.title}</p>
-                  </div>
-                  <span
-                    className={`shrink-0 rounded-full border px-2 py-0.5 font-[var(--font-cinzel),serif] text-xs uppercase tracking-wider ${
-                      c.item_type === 'card'
-                        ? 'border-amber-700/50 bg-amber-950/40 text-amber-200'
-                        : 'border-violet-800/50 bg-violet-950/40 text-violet-200'
-                    }`}
-                  >
-                    {c.item_type === 'card' ? '⚔ Card' : '📜 Block'}
-                  </span>
-                </div>
-
-                <div className="mb-5 flex flex-wrap items-center gap-2 text-xs text-muted">
-                  <span>
-                    {c.folder_id ? (
-                      <>
-                        In <strong className="text-gold/90">{folderById[c.folder_id]?.name ?? '…'}</strong>
-                      </>
-                    ) : (
-                      <span className="italic">Unfiled</span>
-                    )}
-                  </span>
-                  <span className="text-muted/60">·</span>
-                  <time dateTime={c.created_at}>
-                    {new Date(c.created_at).toLocaleDateString(undefined, {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                    })}
-                  </time>
-                </div>
-
-                <div className="mt-auto flex flex-col gap-3 border-t border-bdr/80 pt-4 sm:flex-row sm:items-center">
-                  <select
-                    aria-label={`Move ${cardSubtitle(c)}`}
-                    className="min-w-0 flex-1 rounded-md border border-bdr bg-bg/80 px-2 py-1.5 font-[var(--font-cinzel),serif] text-xs uppercase tracking-wide text-gold-dark focus:border-gold-dark focus:outline-none"
-                    value={c.folder_id ?? '__unfiled__'}
-                    onChange={e => {
-                      const v = e.target.value;
-                      void handleMoveCard(c.id, v === '__unfiled__' ? null : v);
+                <div
+                  className={`group relative flex min-h-[8.5rem] flex-col rounded-xl border bg-gradient-to-b from-panel to-mid/95 shadow-[0_8px_32px_rgba(0,0,0,0.35)] transition-all duration-200 ${
+                    draggingId === c.id
+                      ? 'scale-[0.98] border-gold/50 opacity-90'
+                      : 'border-bdr hover:border-gold/35 hover:shadow-[0_12px_40px_rgba(201,168,76,0.08)]'
+                  }`}
+                >
+                  <LibraryCardOverflowMenu
+                    card={c}
+                    folders={folders}
+                    open={menuCardId === c.id}
+                    panel={menuCardId === c.id ? menuPanel : 'main'}
+                    onPanelChange={setMenuPanel}
+                    onToggle={() => toggleCardMenu(c.id)}
+                    onClose={closeCardMenu}
+                    onMove={toId => void handleMoveCard(c.id, toId)}
+                    onDelete={() => void handleDeleteCard(c.id)}
+                    menuButtonId={`library-card-menu-btn-${c.id}`}
+                    menuId={`library-card-menu-${c.id}`}
+                  />
+                  <div
+                    role="link"
+                    tabIndex={0}
+                    aria-label={`Open ${cardSubtitle(c)}`}
+                    className="flex min-h-0 flex-1 cursor-pointer flex-col p-5 pr-11 outline-none transition-colors hover:text-inherit focus-visible:ring-2 focus-visible:ring-gold/40 sm:p-6 sm:pr-12"
+                    onClick={e => {
+                      if (e.defaultPrevented) return;
+                      const href = openHref(c);
+                      if (e.metaKey || e.ctrlKey) {
+                        window.open(href, '_blank', 'noopener,noreferrer');
+                        return;
+                      }
+                      router.push(href);
+                    }}
+                    onAuxClick={e => {
+                      if (e.button === 1) {
+                        e.preventDefault();
+                        window.open(openHref(c), '_blank', 'noopener,noreferrer');
+                      }
+                    }}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        router.push(openHref(c));
+                      }
                     }}
                   >
-                    <option value="__unfiled__">📂 Unfiled</option>
-                    {folders.map(f => (
-                      <option key={f.id} value={f.id}>
-                        📁 {f.name}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="flex gap-2">
-                    <Link
-                      href={openHref(c)}
-                      className="panel-btn flex-1 justify-center border-gold/40 bg-gold/15 py-2 text-xs text-gold hover:bg-gold/25"
-                    >
-                      Open
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={() => void handleDeleteCard(c.id)}
-                      className="rounded-md border border-red-900/60 px-3 py-2 text-sm text-red-400 transition-colors hover:bg-red-950/50"
-                      title="Delete"
-                    >
-                      🗑
-                    </button>
+                    <div className="mb-3 flex min-w-0 flex-col gap-2">
+                      <div className="min-w-0">
+                        <h3 className="truncate font-[var(--font-cinzel),serif] text-base font-semibold text-gold">
+                          {cardSubtitle(c)}
+                        </h3>
+                        <p className="mt-0.5 truncate text-xs text-bronze">{c.title}</p>
+                      </div>
+                      <span
+                        className={`w-fit shrink-0 rounded-full border px-2 py-0.5 font-[var(--font-cinzel),serif] text-xs uppercase tracking-wider ${
+                          c.item_type === 'card'
+                            ? 'border-amber-700/50 bg-amber-950/40 text-amber-200'
+                            : 'border-violet-800/50 bg-violet-950/40 text-violet-200'
+                        }`}
+                      >
+                        {c.item_type === 'card' ? '⚔ Card' : '📜 Block'}
+                      </span>
+                    </div>
+
+                    <div className="mt-auto flex flex-wrap items-center gap-2 text-xs text-muted">
+                      <span>
+                        {c.folder_id ? (
+                          <>
+                            In <strong className="text-gold/90">{folderById[c.folder_id]?.name ?? '…'}</strong>
+                          </>
+                        ) : (
+                          <span className="italic">Unfiled</span>
+                        )}
+                      </span>
+                      <span className="text-muted/60">·</span>
+                      <time dateTime={c.created_at}>
+                        {new Date(c.created_at).toLocaleDateString(undefined, {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                      </time>
+                    </div>
                   </div>
                 </div>
               </li>

@@ -28,7 +28,7 @@ export default async function LibraryPage() {
             My Library
           </h1>
           <p className="mt-2 max-w-xl text-sm leading-relaxed text-bronze">
-            Organize saves into folders, drag items to move them, and open anything in the forge with one click.
+            Organize saves into folders, drag items to move them, and click a card to open it. Use the menu on each card for edit, move, or delete.
           </p>
         </header>
         <LibraryView initialFolders={foldersRes.data || []} initialCards={cardsRes.data || []} />
