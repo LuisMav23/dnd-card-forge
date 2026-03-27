@@ -1,9 +1,12 @@
+import { flattenDomForHtml2Canvas } from '@/lib/flattenDomForHtml2Canvas';
+
 /**
  * Renders a clone off-screen and captures it with html2canvas (same settings as Card Forge).
  */
 export async function exportCardToPng(cardElement: HTMLElement, nameForFile: string): Promise<void> {
   const base = (nameForFile || 'dnd-card').replace(/\s+/g, '-').toLowerCase();
   const clone = cardElement.cloneNode(true) as HTMLElement;
+  flattenDomForHtml2Canvas(cardElement, clone);
   Object.assign(clone.style, {
     position: 'fixed',
     left: '-9999px',

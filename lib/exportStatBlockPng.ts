@@ -1,9 +1,12 @@
+import { flattenDomForHtml2Canvas } from '@/lib/flattenDomForHtml2Canvas';
+
 /**
  * Clones a stat block DOM node off-screen and captures it with html2canvas (same settings as Stat Blocks forge).
  */
 export async function exportStatBlockToPng(blockElement: HTMLElement, nameForFile: string): Promise<void> {
   const base = (nameForFile || 'stat-block').replace(/\s+/g, '-').toLowerCase();
   const clone = blockElement.cloneNode(true) as HTMLElement;
+  flattenDomForHtml2Canvas(blockElement, clone);
   Object.assign(clone.style, {
     position: 'fixed',
     left: '-9999px',
