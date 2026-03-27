@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { resolveDefaultCardFolderId } from '@/lib/ensureLibrarySystemFolders';
 import { createClient } from '@/lib/supabase/server';
 
 export async function GET(request: Request) {
@@ -40,14 +41,30 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { title, itemType, cardData, folderId } = await request.json();
+    const body = await request.json();
+    const { title, itemType, cardData, folderId } = body;
+
+    let resolvedFolderId: string | null;
+    if (folderId === undefined) {
+      const { folderId: defId, error: folderErr } = await resolveDefaultCardFolderId(
+        supabase,
+        user.id,
+        itemType
+      );
+      if (folderErr) {
+        return NextResponse.json({ error: folderErr }, { status: 500 });
+      }
+      resolvedFolderId = defId;
+    } else {
+      resolvedFolderId = folderId === null || folderId === '' ? null : folderId;
+    }
 
     const { data, error } = await supabase
       .from('cards')
       .insert([
         {
           user_id: user.id,
-          folder_id: folderId || null,
+          folder_id: resolvedFolderId,
           title,
           item_type: itemType,
           data: cardData,

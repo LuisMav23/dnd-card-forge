@@ -16,22 +16,27 @@ export default function Header() {
 
   const links = [
     { href: '/home', label: 'Home' },
-    { href: '/card', label: 'Card Forge' },
-    { href: '/statblocks', label: 'Stat Blocks' },
+    { href: '/create', label: 'Create' },
     { href: '/library', label: 'My Library' },
-    { href: '/encounters', label: 'Encounters' },
-  ];
+  ] as const;
+
+  const navIsActive = (href: string) => {
+    if (href === '/create') {
+      return pathname === '/create' || pathname.startsWith('/create/');
+    }
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
 
   const linkClass = (href: string) =>
     `block min-h-[44px] w-full px-3 py-3 font-[var(--font-cinzel),serif] text-sm tracking-[.06em] uppercase transition-colors sm:min-h-0 sm:py-2.5 sm:text-[0.8rem] ${
-      pathname === href
+      navIsActive(href)
         ? 'text-gold [text-shadow:0_0_10px_rgba(201,168,76,.3)]'
         : 'text-bronze hover:bg-mid/80 hover:text-gold'
     }`;
 
   const linkClassDesktop = (href: string) =>
     `whitespace-nowrap font-[var(--font-cinzel),serif] text-xs tracking-[.06em] uppercase transition-colors sm:text-[0.8rem] ${
-      pathname === href
+      navIsActive(href)
         ? 'text-gold [text-shadow:0_0_10px_rgba(201,168,76,.3)]'
         : 'text-bronze hover:text-gold'
     }`;

@@ -4,10 +4,18 @@ create table if not exists
     id uuid not null default gen_random_uuid (),
     user_id uuid not null,
     name text not null,
+    description text null,
+    folder_kind text null,
     created_at timestamp with time zone not null default now(),
     constraint folders_pkey primary key (id),
-    constraint folders_user_id_fkey foreign key (user_id) references auth.users (id) on delete cascade
+    constraint folders_user_id_fkey foreign key (user_id) references auth.users (id) on delete cascade,
+    constraint folders_folder_kind_check
+      check (folder_kind is null or folder_kind in ('cards', 'statblocks', 'encounters'))
   );
+
+create unique index if not exists folders_user_id_folder_kind_key
+  on public.folders (user_id, folder_kind)
+  where folder_kind is not null;
 
 -- Create a table for cards
 create table if not exists

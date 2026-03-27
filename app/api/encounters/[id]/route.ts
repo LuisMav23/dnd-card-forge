@@ -99,12 +99,34 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  if (body.title === undefined && body.entries === undefined) {
+  if (body.title === undefined && body.entries === undefined && body.folderId === undefined) {
     return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
   }
 
   const now = new Date().toISOString();
-  const updates: { title?: string; updated_at: string } = { updated_at: now };
+  const updates: { title?: string; updated_at: string; folder_id?: string | null } = {
+    updated_at: now,
+  };
+
+  if (body.folderId !== undefined) {
+    if (body.folderId === null) {
+      updates.folder_id = null;
+    } else if (typeof body.folderId !== 'string' || !body.folderId.trim()) {
+      return NextResponse.json({ error: 'Invalid folder' }, { status: 400 });
+    } else {
+      const { data: folderRow, error: folderErr } = await supabase
+        .from('folders')
+        .select('id')
+        .eq('id', body.folderId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (folderErr || !folderRow) {
+        return NextResponse.json({ error: 'Invalid folder' }, { status: 400 });
+      }
+      updates.folder_id = body.folderId;
+    }
+  }
 
   if (body.title !== undefined) {
     const t = typeof body.title === 'string' ? body.title.trim() : '';

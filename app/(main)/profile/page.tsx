@@ -380,16 +380,10 @@ export default function ProfilePage() {
               <p className="text-sm text-bronze">No saves yet.</p>
               <div className="mt-4 flex flex-wrap justify-center gap-3">
                 <Link
-                  href="/card"
+                  href="/create"
                   className="panel-btn border-gold/30 bg-gold/10 text-gold hover:bg-gold/20"
                 >
-                  Card Forge
-                </Link>
-                <Link
-                  href="/statblocks"
-                  className="panel-btn border-gold/30 bg-gold/10 text-gold hover:bg-gold/20"
-                >
-                  Stat Blocks
+                  Create
                 </Link>
               </div>
             </div>

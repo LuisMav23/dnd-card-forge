@@ -62,6 +62,8 @@ export interface CreateEncounterBody {
 export interface PatchEncounterBody {
   title?: string;
   entries?: { statblockId: string; count: number }[];
+  /** Move encounter in library; null = no folder (visible under All items only) */
+  folderId?: string | null;
 }
 
 export interface PatchEntryRemainingBody {

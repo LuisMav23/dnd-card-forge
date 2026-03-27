@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { ensureLibrarySystemFolders } from '@/lib/ensureLibrarySystemFolders';
 import { createClient } from '@/lib/supabase/server';
 import type { CreateEncounterBody } from '@/lib/encounterTypes';
 
@@ -14,7 +15,7 @@ export async function GET() {
 
   const { data: rows, error } = await supabase
     .from('encounters')
-    .select('id, title, updated_at, encounter_entries ( id )')
+    .select('id, title, updated_at, folder_id, encounter_entries ( id )')
     .eq('user_id', user.id)
     .order('updated_at', { ascending: false });
 
@@ -26,6 +27,7 @@ export async function GET() {
     id: r.id,
     title: r.title,
     updated_at: r.updated_at,
+    folder_id: r.folder_id ?? null,
     entry_count: Array.isArray(r.encounter_entries) ? r.encounter_entries.length : 0,
   }));
 
@@ -85,6 +87,11 @@ export async function POST(request: Request) {
     }
   }
 
+  const { systemFolderIds, error: ensureErr } = await ensureLibrarySystemFolders(supabase, user.id);
+  if (ensureErr) {
+    return NextResponse.json({ error: ensureErr }, { status: 500 });
+  }
+
   const now = new Date().toISOString();
   const { data: enc, error: encErr } = await supabase
     .from('encounters')
@@ -92,6 +99,7 @@ export async function POST(request: Request) {
       user_id: user.id,
       title,
       updated_at: now,
+      folder_id: systemFolderIds.encounters,
     })
     .select('id')
     .single();

@@ -130,7 +130,7 @@ function CardDetailInner() {
               >
                 {downloadLabel}
               </button>
-              <Link href={`/card?library=${id}`} className="panel-btn text-gold">
+              <Link href={`/card/new?library=${id}`} className="panel-btn text-gold">
                 Edit card
               </Link>
             </div>

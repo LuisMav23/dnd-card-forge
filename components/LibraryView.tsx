@@ -2,13 +2,45 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState, useCallback, useRef, useEffect } from 'react';
+import { useMemo, useState, useCallback, useRef, useEffect, type ReactNode } from 'react';
 
-const DND_TYPE = 'application/x-dnd-card-forge-id';
+const DND_MIME = 'application/x-dnd-card-forge-library';
 
-interface Folder {
+type DndPayload = { entity: 'card' | 'encounter'; id: string };
+
+function parseDndPayload(raw: string): DndPayload | null {
+  try {
+    const o = JSON.parse(raw) as unknown;
+    if (
+      o &&
+      typeof o === 'object' &&
+      (o as DndPayload).entity === 'card' &&
+      typeof (o as DndPayload).id === 'string'
+    ) {
+      return { entity: 'card', id: (o as DndPayload).id };
+    }
+    if (
+      o &&
+      typeof o === 'object' &&
+      (o as DndPayload).entity === 'encounter' &&
+      typeof (o as DndPayload).id === 'string'
+    ) {
+      return { entity: 'encounter', id: (o as DndPayload).id };
+    }
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+const SYSTEM_KIND_ORDER = ['cards', 'statblocks', 'encounters'] as const;
+
+export interface Folder {
   id: string;
   name: string;
+  folder_kind?: string | null;
+  description?: string | null;
+  created_at?: string;
 }
 
 interface LibraryCard {
@@ -20,7 +52,22 @@ interface LibraryCard {
   created_at: string;
 }
 
-type Scope = 'all' | 'unfiled' | string;
+export interface LibraryEncounter {
+  id: string;
+  title: string;
+  folder_id: string | null;
+  created_at: string;
+  updated_at: string;
+  entry_count: number;
+}
+
+type Scope = 'all' | string;
+
+type ItemTypeFilter = 'all' | 'card' | 'statblock' | 'encounter';
+
+type GridItem =
+  | { type: 'card'; id: string; card: LibraryCard }
+  | { type: 'encounter'; id: string; encounter: LibraryEncounter };
 
 function cardSubtitle(c: LibraryCard): string {
   const d = c.data;
@@ -31,19 +78,275 @@ function cardSubtitle(c: LibraryCard): string {
   return c.title;
 }
 
-function countInFolder(cards: LibraryCard[], folderId: string | null): number {
-  return cards.filter(c => c.folder_id === folderId).length;
+function countInFolder(
+  cards: LibraryCard[],
+  encounters: LibraryEncounter[],
+  folderId: string | null
+): number {
+  return (
+    cards.filter(c => c.folder_id === folderId).length +
+    encounters.filter(e => e.folder_id === folderId).length
+  );
 }
 
-function openHref(c: LibraryCard) {
+/** System folders aggregate by item type, not physical folder_id. */
+function countInSystemFolder(folder: Folder, cards: LibraryCard[], encounters: LibraryEncounter[]): number {
+  if (folder.folder_kind === 'cards') {
+    return cards.filter(c => c.item_type === 'card').length;
+  }
+  if (folder.folder_kind === 'statblocks') {
+    return cards.filter(c => c.item_type === 'statblock').length;
+  }
+  if (folder.folder_kind === 'encounters') {
+    return encounters.length;
+  }
+  return countInFolder(cards, encounters, folder.id);
+}
+
+function openHrefCard(c: LibraryCard) {
   return c.item_type === 'card' ? `/card/${c.id}` : `/statblocks/${c.id}`;
 }
 
-function editHref(c: LibraryCard) {
-  return c.item_type === 'card' ? `/card?library=${c.id}` : `/statblocks?library=${c.id}`;
+function editHrefCard(c: LibraryCard) {
+  return c.item_type === 'card' ? `/card/new?library=${c.id}` : `/statblocks/new?library=${c.id}`;
 }
 
 type MenuPanel = 'main' | 'move';
+
+type FolderModalMode = 'create' | 'rename' | null;
+
+function FolderKebabMenu({
+  open,
+  onToggle,
+  onClose,
+  onRename,
+  onDuplicate,
+  onDelete,
+  menuButtonId,
+  menuId,
+}: {
+  open: boolean;
+  onToggle: () => void;
+  onClose: () => void;
+  onRename: () => void;
+  onDuplicate: () => void;
+  onDelete: (e: React.MouseEvent) => void;
+  menuButtonId: string;
+  menuId: string;
+}) {
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (rootRef.current?.contains(e.target as Node)) return;
+      onClose();
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('pointerdown', onPointerDown, true);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown, true);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [open, onClose]);
+
+  const menuItemClass =
+    'block w-full rounded-md px-3 py-2 text-left font-[var(--font-cinzel),serif] text-xs uppercase tracking-wide text-parch transition-colors hover:bg-gold/10 hover:text-gold';
+
+  return (
+    <div ref={rootRef} className="relative shrink-0">
+      <button
+        type="button"
+        id={menuButtonId}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls={open ? menuId : undefined}
+        className="mr-1 rounded p-1.5 text-muted transition-colors hover:bg-mid hover:text-gold"
+        aria-label="Folder actions"
+        onClick={e => {
+          e.stopPropagation();
+          onToggle();
+        }}
+      >
+        <span className="block px-0.5 font-bold leading-none tracking-widest text-gold/90" aria-hidden>
+          ⋮
+        </span>
+      </button>
+      {open ? (
+        <div
+          id={menuId}
+          role="menu"
+          aria-labelledby={menuButtonId}
+          className="absolute right-0 top-full z-40 mt-0.5 min-w-[10.5rem] rounded-lg border border-bdr bg-panel py-1 shadow-[0_12px_40px_rgba(0,0,0,0.45)]"
+        >
+          <button
+            type="button"
+            role="menuitem"
+            className={menuItemClass}
+            onClick={() => {
+              onClose();
+              onRename();
+            }}
+          >
+            Rename
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            className={menuItemClass}
+            onClick={() => {
+              onClose();
+              onDuplicate();
+            }}
+          >
+            Duplicate
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            className={`${menuItemClass} text-red-400 hover:bg-red-950/40 hover:text-red-300`}
+            onClick={e => {
+              onClose();
+              onDelete(e);
+            }}
+          >
+            Delete
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function FolderEditModal({
+  open,
+  mode,
+  name,
+  description,
+  saving,
+  onNameChange,
+  onDescriptionChange,
+  onSubmit,
+  onClose,
+  titleId,
+}: {
+  open: boolean;
+  mode: Exclude<FolderModalMode, null>;
+  name: string;
+  description: string;
+  saving: boolean;
+  onNameChange: (v: string) => void;
+  onDescriptionChange: (v: string) => void;
+  onSubmit: (e: React.FormEvent) => void;
+  onClose: () => void;
+  titleId: string;
+}) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const t = window.setTimeout(() => nameInputRef.current?.focus(), 0);
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      window.clearTimeout(t);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [open, onClose]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (panelRef.current?.contains(e.target as Node)) return;
+      onClose();
+    };
+    document.addEventListener('pointerdown', onPointerDown, true);
+    return () => document.removeEventListener('pointerdown', onPointerDown, true);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  const heading = mode === 'create' ? 'New folder' : 'Rename folder';
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
+    >
+      <div
+        ref={panelRef}
+        className="w-full max-w-md rounded-xl border border-bdr bg-panel p-6 shadow-[0_20px_60px_rgba(0,0,0,0.5)]"
+      >
+        <h2 id={titleId} className="font-[var(--font-cinzel),serif] text-lg font-semibold text-gold">
+          {heading}
+        </h2>
+        <form onSubmit={onSubmit} className="mt-4 flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <label
+              htmlFor="folder-modal-name"
+              className="font-[var(--font-cinzel),serif] text-xs uppercase tracking-[0.12em] text-gold-dark"
+            >
+              Name
+            </label>
+            <input
+              ref={nameInputRef}
+              id="folder-modal-name"
+              type="text"
+              value={name}
+              onChange={e => onNameChange(e.target.value)}
+              disabled={saving}
+              required
+              className="rounded-md border border-bdr bg-mid px-3 py-2 text-sm text-parch placeholder:text-placeholder/90 focus:border-gold-dark focus:outline-none focus:ring-2 focus:ring-gold/20"
+              placeholder="Folder name"
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label
+              htmlFor="folder-modal-desc"
+              className="font-[var(--font-cinzel),serif] text-xs uppercase tracking-[0.12em] text-gold-dark"
+            >
+              Description <span className="font-sans normal-case tracking-normal text-muted">(optional)</span>
+            </label>
+            <textarea
+              id="folder-modal-desc"
+              value={description}
+              onChange={e => onDescriptionChange(e.target.value)}
+              disabled={saving}
+              rows={3}
+              className="resize-y rounded-md border border-bdr bg-mid px-3 py-2 text-sm text-parch placeholder:text-placeholder/90 focus:border-gold-dark focus:outline-none focus:ring-2 focus:ring-gold/20"
+              placeholder="Notes for this folder…"
+            />
+          </div>
+          <div className="mt-2 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={saving}
+              className="rounded-md border border-bdr bg-transparent px-4 py-2 font-[var(--font-cinzel),serif] text-xs uppercase tracking-wider text-bronze hover:bg-mid hover:text-gold"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={saving || !name.trim()}
+              className="panel-btn px-4 py-2 text-xs disabled:opacity-40"
+            >
+              {saving ? 'Saving…' : mode === 'create' ? 'Create' : 'Save'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 function LibraryCardOverflowMenu({
   card,
@@ -54,6 +357,7 @@ function LibraryCardOverflowMenu({
   onToggle,
   onClose,
   onMove,
+  onDuplicate,
   onDelete,
   menuButtonId,
   menuId,
@@ -66,6 +370,7 @@ function LibraryCardOverflowMenu({
   onToggle: () => void;
   onClose: () => void;
   onMove: (folderId: string | null) => void;
+  onDuplicate: () => void;
   onDelete: () => void;
   menuButtonId: string;
   menuId: string;
@@ -124,7 +429,7 @@ function LibraryCardOverflowMenu({
           {panel === 'main' ? (
             <>
               <Link
-                href={editHref(card)}
+                href={editHrefCard(card)}
                 role="menuitem"
                 className={menuItemClass}
                 onClick={() => onClose()}
@@ -138,6 +443,17 @@ function LibraryCardOverflowMenu({
                 onClick={() => onPanelChange('move')}
               >
                 Move to
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                className={menuItemClass}
+                onClick={() => {
+                  onClose();
+                  onDuplicate();
+                }}
+              >
+                Duplicate
               </button>
               <button
                 type="button"
@@ -172,7 +488,7 @@ function LibraryCardOverflowMenu({
                   onClose();
                 }}
               >
-                📂 Unfiled
+                No folder
               </button>
               {folders.map(f => (
                 <button
@@ -187,7 +503,172 @@ function LibraryCardOverflowMenu({
                     onClose();
                   }}
                 >
-                  📁 {f.name}
+                  {f.name}
+                </button>
+              ))}
+            </>
+          )}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function LibraryEncounterOverflowMenu({
+  encounter,
+  folders,
+  open,
+  panel,
+  onPanelChange,
+  onToggle,
+  onClose,
+  onMove,
+  onDuplicate,
+  onDelete,
+  menuButtonId,
+  menuId,
+}: {
+  encounter: LibraryEncounter;
+  folders: Folder[];
+  open: boolean;
+  panel: MenuPanel;
+  onPanelChange: (p: MenuPanel) => void;
+  onToggle: () => void;
+  onClose: () => void;
+  onMove: (folderId: string | null) => void;
+  onDuplicate: () => void;
+  onDelete: () => void;
+  menuButtonId: string;
+  menuId: string;
+}) {
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (rootRef.current?.contains(e.target as Node)) return;
+      onClose();
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('pointerdown', onPointerDown, true);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown, true);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [open, onClose]);
+
+  const menuItemClass =
+    'block w-full rounded-md px-3 py-2 text-left font-[var(--font-cinzel),serif] text-xs uppercase tracking-wide text-parch transition-colors hover:bg-gold/10 hover:text-gold';
+
+  return (
+    <div ref={rootRef} className="absolute right-5 top-5 z-20 sm:right-6 sm:top-6">
+      <button
+        type="button"
+        id={menuButtonId}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls={open ? menuId : undefined}
+        className="rounded-md p-1.5 text-muted transition-colors hover:bg-mid hover:text-gold"
+        aria-label={`More actions for ${encounter.title}`}
+        onPointerDown={e => e.stopPropagation()}
+        onClick={e => {
+          e.preventDefault();
+          e.stopPropagation();
+          onToggle();
+        }}
+      >
+        <span className="block px-0.5 font-bold leading-none tracking-widest text-gold/90" aria-hidden>
+          ⋮
+        </span>
+      </button>
+      {open ? (
+        <div
+          id={menuId}
+          role="menu"
+          aria-labelledby={menuButtonId}
+          className="absolute right-0 top-full z-30 mt-1 min-w-[11rem] rounded-lg border border-bdr bg-panel py-1 shadow-[0_12px_40px_rgba(0,0,0,0.45)]"
+        >
+          {panel === 'main' ? (
+            <>
+              <Link
+                href={`/encounters/${encounter.id}/edit`}
+                role="menuitem"
+                className={menuItemClass}
+                onClick={() => onClose()}
+              >
+                Edit
+              </Link>
+              <button
+                type="button"
+                role="menuitem"
+                className={menuItemClass}
+                onClick={() => onPanelChange('move')}
+              >
+                Move to
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                className={menuItemClass}
+                onClick={() => {
+                  onClose();
+                  onDuplicate();
+                }}
+              >
+                Duplicate
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                className={`${menuItemClass} text-red-400 hover:bg-red-950/40 hover:text-red-300`}
+                onClick={() => {
+                  onClose();
+                  onDelete();
+                }}
+              >
+                Delete
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                className={menuItemClass}
+                onClick={() => onPanelChange('main')}
+              >
+                ← Back
+              </button>
+              <div className="my-1 border-t border-bdr/60" role="presentation" />
+              <button
+                type="button"
+                role="menuitem"
+                disabled={encounter.folder_id === null}
+                className={`${menuItemClass} disabled:cursor-not-allowed disabled:opacity-40`}
+                onClick={() => {
+                  if (encounter.folder_id === null) return;
+                  onMove(null);
+                  onClose();
+                }}
+              >
+                No folder
+              </button>
+              {folders.map(f => (
+                <button
+                  key={f.id}
+                  type="button"
+                  role="menuitem"
+                  disabled={encounter.folder_id === f.id}
+                  className={`${menuItemClass} disabled:cursor-not-allowed disabled:opacity-40`}
+                  onClick={() => {
+                    if (encounter.folder_id === f.id) return;
+                    onMove(f.id);
+                    onClose();
+                  }}
+                >
+                  {f.name}
                 </button>
               ))}
             </>
@@ -201,92 +682,230 @@ function LibraryCardOverflowMenu({
 export default function LibraryView({
   initialFolders,
   initialCards,
+  initialEncounters,
 }: {
   initialFolders: Folder[];
   initialCards: LibraryCard[];
+  initialEncounters: LibraryEncounter[];
 }) {
   const [folders, setFolders] = useState<Folder[]>(initialFolders);
   const [cards, setCards] = useState<LibraryCard[]>(initialCards);
+  const [encounters, setEncounters] = useState<LibraryEncounter[]>(initialEncounters);
   const [scope, setScope] = useState<Scope>('all');
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'name'>('newest');
-  const [newFolderName, setNewFolderName] = useState('');
-  const [creatingFolder, setCreatingFolder] = useState(false);
+  const [itemTypeFilter, setItemTypeFilter] = useState<ItemTypeFilter>('all');
+  const [folderModalMode, setFolderModalMode] = useState<FolderModalMode>(null);
+  const [folderModalRenameId, setFolderModalRenameId] = useState<string | null>(null);
+  const [modalFolderName, setModalFolderName] = useState('');
+  const [modalFolderDescription, setModalFolderDescription] = useState('');
+  const [modalFolderSaving, setModalFolderSaving] = useState(false);
+  const [folderKebabOpenId, setFolderKebabOpenId] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState<string | null>(null);
-  const [draggingId, setDraggingId] = useState<string | null>(null);
-  const [menuCardId, setMenuCardId] = useState<string | null>(null);
+  const [draggingPayload, setDraggingPayload] = useState<DndPayload | null>(null);
+  const [menuOpenKey, setMenuOpenKey] = useState<string | null>(null);
   const [menuPanel, setMenuPanel] = useState<MenuPanel>('main');
   const router = useRouter();
 
   const folderById = useMemo(() => Object.fromEntries(folders.map(f => [f.id, f])), [folders]);
 
-  const filteredSorted = useMemo(() => {
-    let list = cards.filter(c => {
-      if (scope === 'all') return true;
-      if (scope === 'unfiled') return c.folder_id === null;
-      return c.folder_id === scope;
+  const { systemFolders, customFolders } = useMemo(() => {
+    const system: Folder[] = [];
+    const custom: Folder[] = [];
+    for (const f of folders) {
+      const k = f.folder_kind;
+      if (k === 'cards' || k === 'statblocks' || k === 'encounters') {
+        system.push(f);
+      } else {
+        custom.push(f);
+      }
+    }
+    system.sort(
+      (a, b) =>
+        SYSTEM_KIND_ORDER.indexOf(a.folder_kind as (typeof SYSTEM_KIND_ORDER)[number]) -
+        SYSTEM_KIND_ORDER.indexOf(b.folder_kind as (typeof SYSTEM_KIND_ORDER)[number])
+    );
+    custom.sort((a, b) => {
+      const ta = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const tb = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return tb - ta;
     });
+    return { systemFolders: system, customFolders: custom };
+  }, [folders]);
+
+  const totalItems = cards.length + encounters.length;
+
+  const filteredSorted = useMemo(() => {
+    const scopeFolder = scope !== 'all' ? folderById[scope] : undefined;
+
+    const cardMatchesScope = (c: LibraryCard): boolean => {
+      if (scope === 'all') return true;
+      const kind = scopeFolder?.folder_kind;
+      if (kind === 'cards') return c.item_type === 'card';
+      if (kind === 'statblocks') return c.item_type === 'statblock';
+      if (kind === 'encounters') return false;
+      return c.folder_id === scope;
+    };
+
+    const encounterMatchesScope = (e: LibraryEncounter): boolean => {
+      if (scope === 'all') return true;
+      const kind = scopeFolder?.folder_kind;
+      if (kind === 'encounters') return true;
+      if (kind === 'cards' || kind === 'statblocks') return false;
+      return e.folder_id === scope;
+    };
+
+    let items: GridItem[] = [];
+    for (const c of cards) {
+      if (cardMatchesScope(c)) {
+        items.push({ type: 'card', id: c.id, card: c });
+      }
+    }
+    for (const enc of encounters) {
+      if (encounterMatchesScope(enc)) {
+        items.push({ type: 'encounter', id: enc.id, encounter: enc });
+      }
+    }
 
     const q = search.trim().toLowerCase();
     if (q) {
-      list = list.filter(c => {
-        const sub = cardSubtitle(c).toLowerCase();
-        return sub.includes(q) || c.title.toLowerCase().includes(q);
+      items = items.filter(it => {
+        if (it.type === 'card') {
+          const sub = cardSubtitle(it.card).toLowerCase();
+          return sub.includes(q) || it.card.title.toLowerCase().includes(q);
+        }
+        return it.encounter.title.toLowerCase().includes(q);
       });
     }
 
-    list = [...list].sort((a, b) => {
+    if (itemTypeFilter !== 'all') {
+      items = items.filter(it => {
+        if (itemTypeFilter === 'encounter') return it.type === 'encounter';
+        if (it.type !== 'card') return false;
+        return it.card.item_type === itemTypeFilter;
+      });
+    }
+
+    items = [...items].sort((a, b) => {
       if (sortBy === 'name') {
-        return cardSubtitle(a).localeCompare(cardSubtitle(b), undefined, { sensitivity: 'base' });
+        const na = a.type === 'card' ? cardSubtitle(a.card) : a.encounter.title;
+        const nb = b.type === 'card' ? cardSubtitle(b.card) : b.encounter.title;
+        return na.localeCompare(nb, undefined, { sensitivity: 'base' });
       }
-      const ta = new Date(a.created_at).getTime();
-      const tb = new Date(b.created_at).getTime();
+      const ta =
+        a.type === 'card'
+          ? new Date(a.card.created_at).getTime()
+          : new Date(a.encounter.created_at).getTime();
+      const tb =
+        b.type === 'card'
+          ? new Date(b.card.created_at).getTime()
+          : new Date(b.encounter.created_at).getTime();
       return sortBy === 'newest' ? tb - ta : ta - tb;
     });
 
-    return list;
-  }, [cards, scope, search, sortBy]);
+    return items;
+  }, [cards, encounters, scope, search, sortBy, itemTypeFilter, folderById]);
 
-  const closeCardMenu = useCallback(() => {
-    setMenuCardId(null);
+  const closeMenu = useCallback(() => {
+    setMenuOpenKey(null);
     setMenuPanel('main');
   }, []);
 
-  const openCardMenu = useCallback((id: string) => {
-    setMenuCardId(id);
-    setMenuPanel('main');
-  }, []);
-
-  const toggleCardMenu = useCallback(
-    (id: string) => {
-      if (menuCardId === id) {
-        closeCardMenu();
-      } else {
-        openCardMenu(id);
-      }
+  const toggleMenu = useCallback(
+    (key: string) => {
+      setMenuOpenKey(k => (k === key ? null : key));
+      setMenuPanel('main');
     },
-    [menuCardId, closeCardMenu, openCardMenu]
+    []
   );
 
-  const handleCreateFolder = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newFolderName.trim()) return;
-    setCreatingFolder(true);
-    try {
-      const res = await fetch('/api/folders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newFolderName.trim() }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+  const openCreateFolderModal = () => {
+    setFolderModalMode('create');
+    setFolderModalRenameId(null);
+    setModalFolderName('');
+    setModalFolderDescription('');
+  };
 
-      setFolders([data, ...folders]);
-      setNewFolderName('');
+  const openRenameFolderModal = (folder: Folder) => {
+    setFolderModalMode('rename');
+    setFolderModalRenameId(folder.id);
+    setModalFolderName(folder.name);
+    setModalFolderDescription(folder.description?.trim() ?? '');
+  };
+
+  const closeFolderModal = () => {
+    setFolderModalMode(null);
+    setFolderModalRenameId(null);
+    setModalFolderName('');
+    setModalFolderDescription('');
+  };
+
+  const handleFolderModalSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const name = modalFolderName.trim();
+    if (!name) return;
+    setModalFolderSaving(true);
+    try {
+      if (folderModalMode === 'create') {
+        const res = await fetch('/api/folders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name,
+            description: modalFolderDescription.trim() || null,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error ?? 'Failed to create folder');
+        setFolders(prev => [data as Folder, ...prev]);
+        closeFolderModal();
+        return;
+      }
+      if (folderModalMode === 'rename' && folderModalRenameId) {
+        const res = await fetch(`/api/folders/${folderModalRenameId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name,
+            description: modalFolderDescription.trim() || null,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error ?? 'Failed to update folder');
+        const updated = data as Folder;
+        setFolders(prev => prev.map(f => (f.id === updated.id ? { ...f, ...updated } : f)));
+        closeFolderModal();
+      }
     } catch (err) {
       console.error(err);
+      alert(err instanceof Error ? err.message : 'Folder save failed');
     } finally {
-      setCreatingFolder(false);
+      setModalFolderSaving(false);
+    }
+  };
+
+  const handleDuplicateFolder = async (folderId: string) => {
+    try {
+      const res = await fetch(`/api/folders/${folderId}/duplicate`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Duplicate failed');
+      const newFolder = data.folder as Folder;
+      const dupCards = (data.duplicatedCards ?? []) as LibraryCard[];
+      const dupEncRaw = data.duplicatedEncounters ?? [];
+      const dupEncounters: LibraryEncounter[] = dupEncRaw.map((row: Record<string, unknown>) => ({
+        id: String(row.id),
+        title: String(row.title ?? ''),
+        folder_id: (row.folder_id as string | null) ?? null,
+        created_at: String(row.created_at ?? new Date().toISOString()),
+        updated_at: String(row.updated_at ?? row.created_at ?? new Date().toISOString()),
+        entry_count: typeof row.entry_count === 'number' ? row.entry_count : 0,
+      }));
+      setFolders(prev => [newFolder, ...prev]);
+      setCards(prev => [...dupCards, ...prev]);
+      setEncounters(prev => [...dupEncounters, ...prev]);
+    } catch (err) {
+      console.error(err);
+      alert(err instanceof Error ? err.message : 'Failed to duplicate folder');
     }
   };
 
@@ -294,19 +913,24 @@ export default function LibraryView({
     e.stopPropagation();
     if (
       !confirm(
-        'Delete this folder? Items inside become unfiled (not deleted).'
+        'Delete this folder? Items keep no folder and stay visible under All items only.'
       )
     )
       return;
     try {
       const res = await fetch(`/api/folders/${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Failed to delete folder');
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to delete folder');
+      }
 
-      setFolders(folders.filter(f => f.id !== id));
+      setFolders(prev => prev.filter(f => f.id !== id));
       if (scope === id) setScope('all');
-      setCards(cards.map(c => (c.folder_id === id ? { ...c, folder_id: null } : c)));
+      setCards(prev => prev.map(c => (c.folder_id === id ? { ...c, folder_id: null } : c)));
+      setEncounters(prev => prev.map(en => (en.folder_id === id ? { ...en, folder_id: null } : en)));
     } catch (err) {
       console.error(err);
+      alert(err instanceof Error ? err.message : 'Failed to delete folder');
     }
   };
 
@@ -315,7 +939,18 @@ export default function LibraryView({
     try {
       const res = await fetch(`/api/cards/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Failed to delete item');
-      setCards(cards.filter(c => c.id !== id));
+      setCards(prev => prev.filter(c => c.id !== id));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDeleteEncounter = async (id: string) => {
+    if (!confirm('Delete this encounter?')) return;
+    try {
+      const res = await fetch(`/api/encounters/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to delete encounter');
+      setEncounters(prev => prev.filter(e => e.id !== id));
     } catch (err) {
       console.error(err);
     }
@@ -335,14 +970,31 @@ export default function LibraryView({
     }
   }, []);
 
-  const onDragStart = useCallback((e: React.DragEvent, id: string) => {
-    e.dataTransfer.setData(DND_TYPE, id);
+  const handleMoveEncounter = useCallback(async (encounterId: string, toFolderId: string | null) => {
+    try {
+      const res = await fetch(`/api/encounters/${encounterId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ folderId: toFolderId }),
+      });
+      if (!res.ok) throw new Error('Failed to move encounter');
+      setEncounters(prev =>
+        prev.map(e => (e.id === encounterId ? { ...e, folder_id: toFolderId } : e))
+      );
+    } catch (err) {
+      console.error('Error moving encounter', err);
+    }
+  }, []);
+
+  const onDragStart = useCallback((e: React.DragEvent, entity: 'card' | 'encounter', id: string) => {
+    const payload: DndPayload = { entity, id };
+    e.dataTransfer.setData(DND_MIME, JSON.stringify(payload));
     e.dataTransfer.effectAllowed = 'move';
-    setDraggingId(id);
+    setDraggingPayload(payload);
   }, []);
 
   const onDragEnd = useCallback(() => {
-    setDraggingId(null);
+    setDraggingPayload(null);
     setDragOver(null);
   }, []);
 
@@ -355,56 +1007,103 @@ export default function LibraryView({
   const onFolderDrop = useCallback(
     (e: React.DragEvent, targetFolderId: string | null) => {
       e.preventDefault();
-      const id = e.dataTransfer.getData(DND_TYPE);
+      const raw = e.dataTransfer.getData(DND_MIME);
+      const payload = parseDndPayload(raw);
       setDragOver(null);
-      setDraggingId(null);
-      if (!id) return;
-      const card = cards.find(c => c.id === id);
-      if (!card || card.folder_id === targetFolderId) return;
-      void handleMoveCard(id, targetFolderId);
+      setDraggingPayload(null);
+      if (!payload) return;
+
+      if (payload.entity === 'card') {
+        const card = cards.find(c => c.id === payload.id);
+        if (!card || card.folder_id === targetFolderId) return;
+        void handleMoveCard(payload.id, targetFolderId);
+      } else {
+        const enc = encounters.find(x => x.id === payload.id);
+        if (!enc || enc.folder_id === targetFolderId) return;
+        void handleMoveEncounter(payload.id, targetFolderId);
+      }
     },
-    [cards, handleMoveCard]
+    [cards, encounters, handleMoveCard, handleMoveEncounter]
   );
 
-  const scopeTitle =
-    scope === 'all'
-      ? 'All items'
-      : scope === 'unfiled'
-        ? 'Unfiled'
-        : folderById[scope]?.name ?? 'Folder';
+  const handleDuplicateCard = async (id: string) => {
+    try {
+      const res = await fetch(`/api/cards/${id}/duplicate`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Duplicate failed');
+      setCards(prev => [data as LibraryCard, ...prev]);
+    } catch (err) {
+      console.error(err);
+      alert(err instanceof Error ? err.message : 'Failed to duplicate item');
+    }
+  };
+
+  const handleDuplicateEncounter = async (id: string) => {
+    try {
+      const res = await fetch(`/api/encounters/${id}/duplicate`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Duplicate failed');
+      const row = data as Record<string, unknown>;
+      const enc: LibraryEncounter = {
+        id: String(row.id),
+        title: String(row.title ?? ''),
+        folder_id: (row.folder_id as string | null) ?? null,
+        created_at: String(row.created_at ?? new Date().toISOString()),
+        updated_at: String(row.updated_at ?? row.created_at ?? new Date().toISOString()),
+        entry_count: typeof row.entry_count === 'number' ? row.entry_count : 0,
+      };
+      setEncounters(prev => [enc, ...prev]);
+    } catch (err) {
+      console.error(err);
+      alert(err instanceof Error ? err.message : 'Failed to duplicate encounter');
+    }
+  };
+
+  const scopeTitle = scope === 'all' ? 'All items' : folderById[scope]?.name ?? 'Folder';
+  const scopeFolder = scope !== 'all' ? folderById[scope] : undefined;
+  const scopeDescription =
+    scopeFolder &&
+    scopeFolder.folder_kind == null &&
+    typeof scopeFolder.description === 'string' &&
+    scopeFolder.description.trim()
+      ? scopeFolder.description.trim()
+      : null;
+
+  const isDragging = draggingPayload !== null;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-6 lg:flex-row lg:gap-0">
-      {/* Sidebar */}
+      <FolderEditModal
+        open={folderModalMode !== null}
+        mode={folderModalMode ?? 'create'}
+        name={modalFolderName}
+        description={modalFolderDescription}
+        saving={modalFolderSaving}
+        onNameChange={setModalFolderName}
+        onDescriptionChange={setModalFolderDescription}
+        onSubmit={handleFolderModalSubmit}
+        onClose={closeFolderModal}
+        titleId="library-folder-modal-title"
+      />
+
       <aside className="flex w-full shrink-0 flex-col gap-4 border-b border-bdr pb-6 lg:w-72 lg:border-b-0 lg:border-r lg:pb-0 lg:pr-6">
-        <form onSubmit={handleCreateFolder} className="flex flex-col gap-2">
-          <label className="font-[var(--font-cinzel),serif] text-xs uppercase tracking-[0.12em] text-gold-dark">
+        <div className="flex flex-col gap-2">
+          <span className="font-[var(--font-cinzel),serif] text-xs uppercase tracking-[0.12em] text-gold-dark">
+            Folders
+          </span>
+          <button
+            type="button"
+            onClick={openCreateFolderModal}
+            className="panel-btn w-full px-3 py-2 text-xs"
+          >
             New folder
-          </label>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={newFolderName}
-              onChange={e => setNewFolderName(e.target.value)}
-              disabled={creatingFolder}
-              placeholder="Name…"
-              className="min-w-0 flex-1 rounded-md border border-bdr bg-mid px-3 py-2 text-sm text-parch placeholder:text-placeholder/90 focus:border-gold-dark focus:outline-none focus:ring-2 focus:ring-gold/20"
-            />
-            <button
-              type="submit"
-              disabled={creatingFolder || !newFolderName.trim()}
-              className="panel-btn shrink-0 px-3 py-2 text-xs disabled:opacity-40"
-            >
-              {creatingFolder ? '…' : '+'}
-            </button>
-          </div>
-        </form>
+          </button>
+        </div>
 
         <nav className="flex flex-col gap-1 font-[var(--font-cinzel),serif] text-sm">
           <ScopeRow
             label="All items"
-            icon="✦"
-            count={cards.length}
+            count={totalItems}
             active={scope === 'all'}
             dropKey="all"
             dragOver={dragOver}
@@ -416,25 +1115,11 @@ export default function LibraryView({
               setDragOver(null);
             }}
           />
-          <ScopeRow
-            label="Unfiled"
-            icon="📂"
-            count={countInFolder(cards, null)}
-            active={scope === 'unfiled'}
-            dropKey="unfiled"
-            dragOver={dragOver}
-            onSelect={() => setScope('unfiled')}
-            onDragOver={e => onFolderDragOver(e, 'unfiled')}
-            onDragLeave={() => setDragOver(null)}
-            onDrop={e => onFolderDrop(e, null)}
-            highlightDrop={draggingId !== null}
-          />
-          {folders.map(f => (
+          {systemFolders.map(f => (
             <ScopeRow
               key={f.id}
               label={f.name}
-              icon="📁"
-              count={countInFolder(cards, f.id)}
+              count={countInSystemFolder(f, cards, encounters)}
               active={scope === f.id}
               dropKey={f.id}
               dragOver={dragOver}
@@ -442,26 +1127,59 @@ export default function LibraryView({
               onDragOver={e => onFolderDragOver(e, f.id)}
               onDragLeave={() => setDragOver(null)}
               onDrop={e => onFolderDrop(e, f.id)}
-              highlightDrop={draggingId !== null}
-              onDelete={e => handleDeleteFolder(f.id, e)}
+              highlightDrop={isDragging}
+            />
+          ))}
+          {customFolders.map(f => (
+            <ScopeRow
+              key={f.id}
+              label={f.name}
+              count={countInFolder(cards, encounters, f.id)}
+              active={scope === f.id}
+              dropKey={f.id}
+              dragOver={dragOver}
+              onSelect={() => setScope(f.id)}
+              onDragOver={e => onFolderDragOver(e, f.id)}
+              onDragLeave={() => setDragOver(null)}
+              onDrop={e => onFolderDrop(e, f.id)}
+              highlightDrop={isDragging}
+              folderMenu={
+                f.folder_kind ? undefined : (
+                  <FolderKebabMenu
+                    open={folderKebabOpenId === f.id}
+                    onToggle={() =>
+                      setFolderKebabOpenId(id => (id === f.id ? null : f.id))
+                    }
+                    onClose={() => setFolderKebabOpenId(null)}
+                    onRename={() => openRenameFolderModal(f)}
+                    onDuplicate={() => void handleDuplicateFolder(f.id)}
+                    onDelete={e => void handleDeleteFolder(f.id, e)}
+                    menuButtonId={`library-folder-kebab-${f.id}`}
+                    menuId={`library-folder-kebab-menu-${f.id}`}
+                  />
+                )
+              }
             />
           ))}
         </nav>
 
         <p className="text-xs leading-relaxed text-bronze">
-          Drag cards onto a folder or <strong className="text-gold-dark">Unfiled</strong> to move them.
+          Drag items onto a folder to file them. Use <strong className="text-gold-dark">Move to → No folder</strong>{' '}
+          to clear folder; those items appear under All items only.
         </p>
       </aside>
 
-      {/* Main */}
       <section className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 lg:pl-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="font-[var(--font-cinzel),serif] text-xl font-semibold tracking-wide text-gold [text-shadow:0_0_12px_rgba(201,168,76,0.15)]">
               {scopeTitle}
             </h2>
+            {scopeDescription ? (
+              <p className="mt-1 line-clamp-2 text-sm text-bronze/90">{scopeDescription}</p>
+            ) : null}
             <p className="mt-1 text-sm text-bronze">
-              {filteredSorted.length} of {cards.length} shown
+              {filteredSorted.length} of {totalItems} shown
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -472,6 +1190,17 @@ export default function LibraryView({
               placeholder="Search…"
               className="min-w-[160px] flex-1 rounded-md border border-bdr bg-mid px-3 py-2 text-sm text-parch placeholder:text-placeholder/90 focus:border-gold-dark focus:outline-none focus:ring-2 focus:ring-gold/20 sm:max-w-xs sm:flex-none"
             />
+            <select
+              value={itemTypeFilter}
+              onChange={e => setItemTypeFilter(e.target.value as ItemTypeFilter)}
+              aria-label="Filter by item type"
+              className="min-w-[7.5rem] rounded-md border border-bdr bg-mid px-3 py-2 font-[var(--font-cinzel),serif] text-xs uppercase tracking-wider text-gold-dark focus:border-gold-dark focus:outline-none"
+            >
+              <option value="all">All types</option>
+              <option value="card">Cards</option>
+              <option value="statblock">Stat blocks</option>
+              <option value="encounter">Encounters</option>
+            </select>
             <select
               value={sortBy}
               onChange={e => setSortBy(e.target.value as 'newest' | 'oldest' | 'name')}
@@ -488,121 +1217,234 @@ export default function LibraryView({
           <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-bdr/80 bg-panel/40 px-6 py-16 text-center">
             <p className="font-[var(--font-cinzel),serif] text-gold-dark">Nothing here yet.</p>
             <p className="mt-2 max-w-sm text-sm text-bronze">
-              Save from Card Forge or Stat Blocks, or change filters / search.
+              Save from Card Forge, Stat Blocks, or Encounters, or change folder, type filter, sort, or search.
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <Link
-                href="/card"
+                href="/create"
                 className="panel-btn border-gold/30 bg-gold/10 text-gold hover:bg-gold/20"
               >
-                Open Card Forge
+                Create
               </Link>
               <Link
-                href="/statblocks"
-                className="panel-btn border-gold/30 bg-gold/10 text-gold hover:bg-gold/20"
+                href="/encounters"
+                className="panel-btn border-bdr bg-transparent text-gold-dark hover:bg-input hover:text-gold"
               >
-                Open Stat Blocks
+                Encounters
               </Link>
             </div>
           </div>
         ) : (
           <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {filteredSorted.map(c => (
-              <li
-                key={c.id}
-                draggable
-                onDragStart={e => onDragStart(e, c.id)}
-                onDragEnd={onDragEnd}
-                className="list-none"
-              >
-                <div
-                  className={`group relative flex min-h-[8.5rem] flex-col rounded-xl border bg-gradient-to-b from-panel to-mid/95 shadow-[0_8px_32px_rgba(0,0,0,0.35)] transition-all duration-200 ${
-                    draggingId === c.id
-                      ? 'scale-[0.98] border-gold/50 opacity-90'
-                      : 'border-bdr hover:border-gold/35 hover:shadow-[0_12px_40px_rgba(201,168,76,0.08)]'
-                  }`}
-                >
-                  <LibraryCardOverflowMenu
-                    card={c}
-                    folders={folders}
-                    open={menuCardId === c.id}
-                    panel={menuCardId === c.id ? menuPanel : 'main'}
-                    onPanelChange={setMenuPanel}
-                    onToggle={() => toggleCardMenu(c.id)}
-                    onClose={closeCardMenu}
-                    onMove={toId => void handleMoveCard(c.id, toId)}
-                    onDelete={() => void handleDeleteCard(c.id)}
-                    menuButtonId={`library-card-menu-btn-${c.id}`}
-                    menuId={`library-card-menu-${c.id}`}
-                  />
-                  <div
-                    role="link"
-                    tabIndex={0}
-                    aria-label={`Open ${cardSubtitle(c)}`}
-                    className="flex min-h-0 flex-1 cursor-pointer flex-col p-5 pr-11 outline-none transition-colors hover:text-inherit focus-visible:ring-2 focus-visible:ring-gold/40 sm:p-6 sm:pr-12"
-                    onClick={e => {
-                      if (e.defaultPrevented) return;
-                      const href = openHref(c);
-                      if (e.metaKey || e.ctrlKey) {
-                        window.open(href, '_blank', 'noopener,noreferrer');
-                        return;
-                      }
-                      router.push(href);
-                    }}
-                    onAuxClick={e => {
-                      if (e.button === 1) {
-                        e.preventDefault();
-                        window.open(openHref(c), '_blank', 'noopener,noreferrer');
-                      }
-                    }}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        router.push(openHref(c));
-                      }
-                    }}
+            {filteredSorted.map(it => {
+              if (it.type === 'card') {
+                const c = it.card;
+                const dragActive =
+                  draggingPayload?.entity === 'card' && draggingPayload.id === c.id;
+                const menuKey = `card:${c.id}`;
+                return (
+                  <li
+                    key={`card-${c.id}`}
+                    draggable
+                    onDragStart={e => onDragStart(e, 'card', c.id)}
+                    onDragEnd={onDragEnd}
+                    className="list-none"
                   >
-                    <div className="mb-3 flex min-w-0 flex-col gap-2">
-                      <div className="min-w-0">
-                        <h3 className="truncate font-[var(--font-cinzel),serif] text-base font-semibold text-gold">
-                          {cardSubtitle(c)}
-                        </h3>
-                        <p className="mt-0.5 truncate text-xs text-bronze">{c.title}</p>
-                      </div>
-                      <span
-                        className={`w-fit shrink-0 rounded-full border px-2 py-0.5 font-[var(--font-cinzel),serif] text-xs uppercase tracking-wider ${
-                          c.item_type === 'card'
-                            ? 'border-amber-700/50 bg-amber-950/40 text-amber-200'
-                            : 'border-violet-800/50 bg-violet-950/40 text-violet-200'
-                        }`}
+                    <div
+                      className={`group relative flex min-h-[8.5rem] flex-col rounded-xl border bg-gradient-to-b from-panel to-mid/95 shadow-[0_8px_32px_rgba(0,0,0,0.35)] transition-all duration-200 ${
+                        dragActive
+                          ? 'scale-[0.98] border-gold/50 opacity-90'
+                          : 'border-bdr hover:border-gold/35 hover:shadow-[0_12px_40px_rgba(201,168,76,0.08)]'
+                      }`}
+                    >
+                      <LibraryCardOverflowMenu
+                        card={c}
+                        folders={folders}
+                        open={menuOpenKey === menuKey}
+                        panel={menuOpenKey === menuKey ? menuPanel : 'main'}
+                        onPanelChange={setMenuPanel}
+                        onToggle={() => toggleMenu(menuKey)}
+                        onClose={closeMenu}
+                        onMove={toId => void handleMoveCard(c.id, toId)}
+                        onDuplicate={() => void handleDuplicateCard(c.id)}
+                        onDelete={() => void handleDeleteCard(c.id)}
+                        menuButtonId={`library-card-menu-btn-${c.id}`}
+                        menuId={`library-card-menu-${c.id}`}
+                      />
+                      <div
+                        role="link"
+                        tabIndex={0}
+                        aria-label={`Open ${cardSubtitle(c)}`}
+                        className="flex min-h-0 flex-1 cursor-pointer flex-col p-5 pr-11 outline-none transition-colors hover:text-inherit focus-visible:ring-2 focus-visible:ring-gold/40 sm:p-6 sm:pr-12"
+                        onClick={e => {
+                          if (e.defaultPrevented) return;
+                          const href = openHrefCard(c);
+                          if (e.metaKey || e.ctrlKey) {
+                            window.open(href, '_blank', 'noopener,noreferrer');
+                            return;
+                          }
+                          router.push(href);
+                        }}
+                        onAuxClick={e => {
+                          if (e.button === 1) {
+                            e.preventDefault();
+                            window.open(openHrefCard(c), '_blank', 'noopener,noreferrer');
+                          }
+                        }}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            router.push(openHrefCard(c));
+                          }
+                        }}
                       >
-                        {c.item_type === 'card' ? '⚔ Card' : '📜 Block'}
-                      </span>
-                    </div>
+                        <div className="mb-3 flex min-w-0 flex-col gap-2">
+                          <div className="min-w-0">
+                            <h3 className="truncate font-[var(--font-cinzel),serif] text-base font-semibold text-gold">
+                              {cardSubtitle(c)}
+                            </h3>
+                            <p className="mt-0.5 truncate text-xs text-bronze">{c.title}</p>
+                          </div>
+                          <span
+                            className={`w-fit shrink-0 rounded-full border px-2 py-0.5 font-[var(--font-cinzel),serif] text-xs uppercase tracking-wider ${
+                              c.item_type === 'card'
+                                ? 'border-amber-700/50 bg-amber-950/40 text-amber-200'
+                                : 'border-violet-800/50 bg-violet-950/40 text-violet-200'
+                            }`}
+                          >
+                            {c.item_type === 'card' ? 'Card' : 'Block'}
+                          </span>
+                        </div>
 
-                    <div className="mt-auto flex flex-wrap items-center gap-2 text-xs text-muted">
-                      <span>
-                        {c.folder_id ? (
-                          <>
-                            In <strong className="text-gold/90">{folderById[c.folder_id]?.name ?? '…'}</strong>
-                          </>
-                        ) : (
-                          <span className="italic">Unfiled</span>
-                        )}
-                      </span>
-                      <span className="text-muted/60">·</span>
-                      <time dateTime={c.created_at}>
-                        {new Date(c.created_at).toLocaleDateString(undefined, {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                        })}
-                      </time>
+                        <div className="mt-auto flex flex-wrap items-center gap-2 text-xs text-muted">
+                          <span>
+                            {c.folder_id ? (
+                              <>
+                                In{' '}
+                                <strong className="text-gold/90">
+                                  {folderById[c.folder_id]?.name ?? '…'}
+                                </strong>
+                              </>
+                            ) : (
+                              <span className="italic">No folder</span>
+                            )}
+                          </span>
+                          <span className="text-muted/60">·</span>
+                          <time dateTime={c.created_at}>
+                            {new Date(c.created_at).toLocaleDateString(undefined, {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                            })}
+                          </time>
+                        </div>
+                      </div>
+                    </div>
+                  </li>
+                );
+              }
+
+              const enc = it.encounter;
+              const dragActive =
+                draggingPayload?.entity === 'encounter' && draggingPayload.id === enc.id;
+              const menuKey = `encounter:${enc.id}`;
+              return (
+                <li
+                  key={`encounter-${enc.id}`}
+                  draggable
+                  onDragStart={e => onDragStart(e, 'encounter', enc.id)}
+                  onDragEnd={onDragEnd}
+                  className="list-none"
+                >
+                  <div
+                    className={`group relative flex min-h-[8.5rem] flex-col rounded-xl border bg-gradient-to-b from-panel to-mid/95 shadow-[0_8px_32px_rgba(0,0,0,0.35)] transition-all duration-200 ${
+                      dragActive
+                        ? 'scale-[0.98] border-gold/50 opacity-90'
+                        : 'border-bdr hover:border-gold/35 hover:shadow-[0_12px_40px_rgba(201,168,76,0.08)]'
+                    }`}
+                  >
+                    <LibraryEncounterOverflowMenu
+                      encounter={enc}
+                      folders={folders}
+                      open={menuOpenKey === menuKey}
+                      panel={menuOpenKey === menuKey ? menuPanel : 'main'}
+                      onPanelChange={setMenuPanel}
+                      onToggle={() => toggleMenu(menuKey)}
+                      onClose={closeMenu}
+                      onMove={toId => void handleMoveEncounter(enc.id, toId)}
+                      onDuplicate={() => void handleDuplicateEncounter(enc.id)}
+                      onDelete={() => void handleDeleteEncounter(enc.id)}
+                      menuButtonId={`library-enc-menu-btn-${enc.id}`}
+                      menuId={`library-enc-menu-${enc.id}`}
+                    />
+                    <div
+                      role="link"
+                      tabIndex={0}
+                      aria-label={`Open encounter ${enc.title}`}
+                      className="flex min-h-0 flex-1 cursor-pointer flex-col p-5 pr-11 outline-none transition-colors hover:text-inherit focus-visible:ring-2 focus-visible:ring-gold/40 sm:p-6 sm:pr-12"
+                      onClick={e => {
+                        if (e.defaultPrevented) return;
+                        const href = `/encounters/${enc.id}/edit`;
+                        if (e.metaKey || e.ctrlKey) {
+                          window.open(href, '_blank', 'noopener,noreferrer');
+                          return;
+                        }
+                        router.push(href);
+                      }}
+                      onAuxClick={e => {
+                        if (e.button === 1) {
+                          e.preventDefault();
+                          window.open(`/encounters/${enc.id}/edit`, '_blank', 'noopener,noreferrer');
+                        }
+                      }}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          router.push(`/encounters/${enc.id}/edit`);
+                        }
+                      }}
+                    >
+                      <div className="mb-3 flex min-w-0 flex-col gap-2">
+                        <div className="min-w-0">
+                          <h3 className="truncate font-[var(--font-cinzel),serif] text-base font-semibold text-gold">
+                            {enc.title}
+                          </h3>
+                          <p className="mt-0.5 text-xs text-bronze">
+                            {enc.entry_count === 1 ? '1 entry' : `${enc.entry_count} entries`}
+                          </p>
+                        </div>
+                        <span className="w-fit shrink-0 rounded-full border border-emerald-800/50 bg-emerald-950/40 px-2 py-0.5 font-[var(--font-cinzel),serif] text-xs uppercase tracking-wider text-emerald-200">
+                          Encounter
+                        </span>
+                      </div>
+
+                      <div className="mt-auto flex flex-wrap items-center gap-2 text-xs text-muted">
+                        <span>
+                          {enc.folder_id ? (
+                            <>
+                              In{' '}
+                              <strong className="text-gold/90">
+                                {folderById[enc.folder_id]?.name ?? '…'}
+                              </strong>
+                            </>
+                          ) : (
+                            <span className="italic">No folder</span>
+                          )}
+                        </span>
+                        <span className="text-muted/60">·</span>
+                        <time dateTime={enc.created_at}>
+                          {new Date(enc.created_at).toLocaleDateString(undefined, {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                          })}
+                        </time>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>
@@ -612,7 +1454,6 @@ export default function LibraryView({
 
 function ScopeRow({
   label,
-  icon,
   count,
   active,
   onSelect,
@@ -622,10 +1463,9 @@ function ScopeRow({
   dragOver,
   dropKey,
   highlightDrop,
-  onDelete,
+  folderMenu,
 }: {
   label: string;
-  icon: string;
   count: number;
   active: boolean;
   onSelect: () => void;
@@ -635,7 +1475,7 @@ function ScopeRow({
   dragOver: string | null;
   dropKey: string;
   highlightDrop?: boolean;
-  onDelete?: (e: React.MouseEvent) => void;
+  folderMenu?: ReactNode;
 }) {
   const isOver = dragOver === dropKey;
   return (
@@ -654,24 +1494,12 @@ function ScopeRow({
         onClick={onSelect}
         className={`flex min-w-0 flex-1 items-center gap-2 px-3 py-2.5 text-left transition-colors hover:text-gold ${active ? 'text-gold' : 'text-bronze'}`}
       >
-        <span className="shrink-0 opacity-90" aria-hidden>
-          {icon}
-        </span>
         <span className="min-w-0 flex-1 truncate font-medium">{label}</span>
         <span className="shrink-0 rounded-md bg-bg/50 px-1.5 py-0.5 text-xs tabular-nums text-gold/80">
           {count}
         </span>
       </button>
-      {onDelete && (
-        <button
-          type="button"
-          className="mr-1 shrink-0 rounded p-1.5 text-muted opacity-0 transition-all hover:bg-red-950/40 hover:text-red-400 group-hover:opacity-100"
-          onClick={onDelete}
-          title="Delete folder"
-        >
-          ×
-        </button>
-      )}
+      {folderMenu ? <div className="shrink-0">{folderMenu}</div> : null}
     </div>
   );
 }

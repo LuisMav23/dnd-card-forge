@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { fetchCardsForProfileAndActivity } from '@/lib/recentActivity';
 import { createClient } from '@/lib/supabase/server';
 
 const BIO_MAX = 500;
@@ -23,15 +24,14 @@ export async function GET() {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const { data: cards, error: cardsError } = await supabase
-    .from('cards')
-    .select('id, title, item_type, created_at, updated_at')
-    .eq('user_id', user.id)
-    .order('updated_at', { ascending: false })
-    .limit(12);
+  const { cards, error: cardsError } = await fetchCardsForProfileAndActivity(
+    supabase,
+    user.id,
+    30
+  );
 
   if (cardsError) {
-    return NextResponse.json({ error: cardsError.message }, { status: 500 });
+    return NextResponse.json({ error: cardsError }, { status: 500 });
   }
 
   return NextResponse.json({
@@ -45,7 +45,7 @@ export async function GET() {
       avatar_url: null,
       created_at: null,
     },
-    recentCreations: cards ?? [],
+    recentCreations: cards.slice(0, 12),
   });
 }
 

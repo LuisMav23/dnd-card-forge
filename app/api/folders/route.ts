@@ -30,12 +30,19 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { name } = await request.json();
+    const { name, description } = await request.json();
     if (!name) return NextResponse.json({ error: 'Name is required' }, { status: 400 });
+
+    const desc =
+      description === undefined || description === null
+        ? null
+        : typeof description === 'string'
+          ? description.trim() || null
+          : null;
 
     const { data, error } = await supabase
       .from('folders')
-      .insert([{ user_id: user.id, name }])
+      .insert([{ user_id: user.id, name: String(name).trim(), description: desc }])
       .select()
       .single();
 

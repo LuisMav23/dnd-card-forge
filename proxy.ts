@@ -1,7 +1,15 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-const PROTECTED_PREFIXES = ['/home', '/card', '/statblocks', '/library', '/profile', '/encounters'] as const;
+const PROTECTED_PREFIXES = [
+  '/home',
+  '/create',
+  '/card',
+  '/statblocks',
+  '/library',
+  '/profile',
+  '/encounters',
+] as const;
 const AUTH_ONLY_PATHS = ['/', '/signup'] as const;
 
 function isProtectedPath(pathname: string): boolean {

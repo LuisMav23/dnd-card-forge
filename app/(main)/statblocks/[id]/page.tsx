@@ -96,7 +96,7 @@ function StatBlockDetailInner() {
               >
                 {downloadLabel}
               </button>
-              <Link href={`/statblocks?library=${id}`} className="panel-btn text-gold">
+              <Link href={`/statblocks/new?library=${id}`} className="panel-btn text-gold">
                 Edit stat block
               </Link>
             </div>
