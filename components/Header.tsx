@@ -18,11 +18,15 @@ export default function Header() {
     { href: '/home', label: 'Home' },
     { href: '/create', label: 'Create' },
     { href: '/library', label: 'My Library' },
+    { href: '/explore', label: 'Explore' },
   ] as const;
 
   const navIsActive = (href: string) => {
     if (href === '/create') {
       return pathname === '/create' || pathname.startsWith('/create/');
+    }
+    if (href === '/explore') {
+      return pathname === '/explore' || pathname.startsWith('/explore/');
     }
     return pathname === href || pathname.startsWith(`${href}/`);
   };

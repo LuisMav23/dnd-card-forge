@@ -57,7 +57,30 @@ export async function PATCH(
     if (updates.cardData !== undefined) {
       payload.data = updates.cardData;
     }
-    if (payload.title !== undefined || payload.data !== undefined) {
+    if (updates.isPublished !== undefined) {
+      const want = Boolean(updates.isPublished);
+      payload.is_published = want;
+      if (want) {
+        payload.published_at = new Date().toISOString();
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('full_name')
+          .eq('id', user.id)
+          .maybeSingle();
+        const name =
+          typeof profile?.full_name === 'string' && profile.full_name.trim()
+            ? profile.full_name.trim()
+            : '';
+        payload.published_author_name = name;
+      } else {
+        payload.published_at = null;
+      }
+    }
+    if (
+      payload.title !== undefined ||
+      payload.data !== undefined ||
+      updates.isPublished !== undefined
+    ) {
       payload.updated_at = new Date().toISOString();
     }
 

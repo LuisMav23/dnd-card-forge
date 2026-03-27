@@ -50,6 +50,9 @@ interface LibraryCard {
   folder_id: string | null;
   data: Record<string, unknown> | null;
   created_at: string;
+  is_published?: boolean;
+  published_at?: string | null;
+  published_author_name?: string | null;
 }
 
 export interface LibraryEncounter {
@@ -359,6 +362,7 @@ function LibraryCardOverflowMenu({
   onMove,
   onDuplicate,
   onDelete,
+  onPublishToggle,
   menuButtonId,
   menuId,
 }: {
@@ -372,6 +376,7 @@ function LibraryCardOverflowMenu({
   onMove: (folderId: string | null) => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  onPublishToggle: (publish: boolean) => void;
   menuButtonId: string;
   menuId: string;
 }) {
@@ -455,6 +460,31 @@ function LibraryCardOverflowMenu({
               >
                 Duplicate
               </button>
+              {card.is_published ? (
+                <button
+                  type="button"
+                  role="menuitem"
+                  className={menuItemClass}
+                  onClick={() => {
+                    onClose();
+                    onPublishToggle(false);
+                  }}
+                >
+                  Unpublish
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  role="menuitem"
+                  className={menuItemClass}
+                  onClick={() => {
+                    onClose();
+                    onPublishToggle(true);
+                  }}
+                >
+                  Publish
+                </button>
+              )}
               <button
                 type="button"
                 role="menuitem"
@@ -1038,6 +1068,37 @@ export default function LibraryView({
     }
   };
 
+  const handlePublishCard = async (cardId: string, publish: boolean) => {
+    try {
+      const res = await fetch(`/api/cards/${cardId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isPublished: publish }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Failed to update');
+      setCards(prev =>
+        prev.map(c =>
+          c.id === cardId
+            ? {
+                ...c,
+                is_published: Boolean(data.is_published),
+                published_at: data.published_at ?? null,
+                published_author_name:
+                  typeof data.published_author_name === 'string'
+                    ? data.published_author_name
+                    : c.published_author_name ?? null,
+              }
+            : c
+        )
+      );
+      closeMenu();
+    } catch (err) {
+      console.error(err);
+      alert(err instanceof Error ? err.message : 'Failed to publish');
+    }
+  };
+
   const handleDuplicateEncounter = async (id: string) => {
     try {
       const res = await fetch(`/api/encounters/${id}/duplicate`, { method: 'POST' });
@@ -1268,6 +1329,7 @@ export default function LibraryView({
                         onMove={toId => void handleMoveCard(c.id, toId)}
                         onDuplicate={() => void handleDuplicateCard(c.id)}
                         onDelete={() => void handleDeleteCard(c.id)}
+                        onPublishToggle={pub => void handlePublishCard(c.id, pub)}
                         menuButtonId={`library-card-menu-btn-${c.id}`}
                         menuId={`library-card-menu-${c.id}`}
                       />
@@ -1305,15 +1367,22 @@ export default function LibraryView({
                             </h3>
                             <p className="mt-0.5 truncate text-xs text-bronze">{c.title}</p>
                           </div>
-                          <span
-                            className={`w-fit shrink-0 rounded-full border px-2 py-0.5 font-[var(--font-cinzel),serif] text-xs uppercase tracking-wider ${
-                              c.item_type === 'card'
-                                ? 'border-amber-700/50 bg-amber-950/40 text-amber-200'
-                                : 'border-violet-800/50 bg-violet-950/40 text-violet-200'
-                            }`}
-                          >
-                            {c.item_type === 'card' ? 'Card' : 'Block'}
-                          </span>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span
+                              className={`w-fit shrink-0 rounded-full border px-2 py-0.5 font-[var(--font-cinzel),serif] text-xs uppercase tracking-wider ${
+                                c.item_type === 'card'
+                                  ? 'border-amber-700/50 bg-amber-950/40 text-amber-200'
+                                  : 'border-violet-800/50 bg-violet-950/40 text-violet-200'
+                              }`}
+                            >
+                              {c.item_type === 'card' ? 'Card' : 'Block'}
+                            </span>
+                            {c.is_published ? (
+                              <span className="w-fit shrink-0 rounded-full border border-emerald-800/50 bg-emerald-950/40 px-2 py-0.5 font-[var(--font-cinzel),serif] text-[0.65rem] uppercase tracking-wider text-emerald-200">
+                                Public
+                              </span>
+                            ) : null}
+                          </div>
                         </div>
 
                         <div className="mt-auto flex flex-wrap items-center gap-2 text-xs text-muted">
@@ -1384,7 +1453,7 @@ export default function LibraryView({
                       className="flex min-h-0 flex-1 cursor-pointer flex-col p-5 pr-11 outline-none transition-colors hover:text-inherit focus-visible:ring-2 focus-visible:ring-gold/40 sm:p-6 sm:pr-12"
                       onClick={e => {
                         if (e.defaultPrevented) return;
-                        const href = `/encounters/${enc.id}/edit`;
+                        const href = `/encounters/${enc.id}`;
                         if (e.metaKey || e.ctrlKey) {
                           window.open(href, '_blank', 'noopener,noreferrer');
                           return;
@@ -1394,13 +1463,13 @@ export default function LibraryView({
                       onAuxClick={e => {
                         if (e.button === 1) {
                           e.preventDefault();
-                          window.open(`/encounters/${enc.id}/edit`, '_blank', 'noopener,noreferrer');
+                          window.open(`/encounters/${enc.id}`, '_blank', 'noopener,noreferrer');
                         }
                       }}
                       onKeyDown={e => {
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault();
-                          router.push(`/encounters/${enc.id}/edit`);
+                          router.push(`/encounters/${enc.id}`);
                         }
                       }}
                     >
