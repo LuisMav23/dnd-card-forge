@@ -7,6 +7,7 @@ import { FROM_LIBRARY_APPEND, isFromLibrarySearch } from '@/lib/fromLibraryNav';
 import { parseStatBlockFromLibraryRow, type LibraryStatBlockRow } from '@/lib/statBlockLoad';
 import type { StatBlockState } from '@/lib/statblockTypes';
 import { exportStatBlockToPng } from '@/lib/exportStatBlockPng';
+import { getDomPngExportButtonLabel } from '@/lib/domPngExportError';
 import StatBlockWikiView from '@/components/statblocks/StatBlockWikiView';
 import RouteSuspenseFallback from '@/components/ui/RouteSuspenseFallback';
 import WikiDetailBodySkeleton from '@/components/ui/skeletons/WikiDetailBodySkeleton';
@@ -40,7 +41,7 @@ function StatBlockDetailInner() {
       setTimeout(() => setDownloadLabel('⬇ Download stat block (PNG)'), 2000);
     } catch (err) {
       console.error(err);
-      setDownloadLabel('✕ Error — try again');
+      setDownloadLabel(getDomPngExportButtonLabel(err));
       setTimeout(() => setDownloadLabel('⬇ Download stat block (PNG)'), 2500);
     } finally {
       setDownloading(false);

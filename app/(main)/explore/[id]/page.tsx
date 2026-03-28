@@ -8,6 +8,7 @@ import { coerceRarity, hydrateCardPalette } from '@/lib/cardPalette';
 import { exploreCount } from '@/lib/exploreTypes';
 import { exportCardToPng } from '@/lib/exportCardPng';
 import { exportStatBlockToPng } from '@/lib/exportStatBlockPng';
+import { getDomPngExportButtonLabel } from '@/lib/domPngExportError';
 import { parseStatBlockFromLibraryRow, type LibraryStatBlockRow } from '@/lib/statBlockLoad';
 import type { StatBlockState } from '@/lib/statblockTypes';
 import { createClient } from '@/lib/supabase/client';
@@ -236,7 +237,7 @@ function ExplorePublishedInner() {
       setTimeout(() => setDownloadLabel('⬇ Download PNG'), 2000);
     } catch (err) {
       console.error(err);
-      setDownloadLabel('✕ Error');
+      setDownloadLabel(getDomPngExportButtonLabel(err));
       setTimeout(() => setDownloadLabel('⬇ Download PNG'), 2500);
     } finally {
       setDownloading(false);

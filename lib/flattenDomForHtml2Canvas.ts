@@ -83,6 +83,33 @@ function replaceBalancedCalls(input: string, funcName: string): string {
   return out;
 }
 
+/** True if the string still contains a modern color function html2canvas 1.4 cannot parse. */
+const HAS_MODERN_COLOR_FUNC = /(?:^|[^\w-])(?:color|oklch|lab|lch|hwb)\s*\(/i;
+
+/**
+ * Strip modern color syntax; if anything remains unparsed, return fallback (avoids html2canvas crash).
+ */
+function legacySafePaintValue(cssValue: string, fallback: string): string {
+  if (!cssValue || cssValue === 'none') {
+    return cssValue;
+  }
+  let v = stripModernColorFunctions(cssValue);
+  let guard = 0;
+  while (HAS_MODERN_COLOR_FUNC.test(v) && guard++ < 12) {
+    v = stripModernColorFunctions(v);
+  }
+  return HAS_MODERN_COLOR_FUNC.test(v) ? fallback : v;
+}
+
+function legacySafeColor(cssColor: string, opaqueFallback: string): string {
+  const v0 = stripModernColorFunctions(cssColor.trim());
+  const v = coerceColorToRgbString(v0);
+  if (!v || HAS_MODERN_COLOR_FUNC.test(v)) {
+    return opaqueFallback;
+  }
+  return v;
+}
+
 /** Replace all modern color() / oklch() / … spans until stable (e.g. nested in gradients). */
 export function stripModernColorFunctions(cssValue: string): string {
   if (!cssValue || cssValue === 'none') return cssValue;
@@ -106,21 +133,21 @@ function normalizeSvgPaint(value: string): string {
   const v = value.trim();
   if (!v || v === 'none') return v;
   if (/^url\(/i.test(v)) return v;
-  return coerceColorToRgbString(stripModernColorFunctions(v));
+  return legacySafeColor(stripModernColorFunctions(v), '#9a8a6a');
 }
 
 function applyComputedPaintOntoElement(origin: HTMLElement, target: HTMLElement): void {
   const s = getComputedStyle(origin);
-  target.style.color = coerceColorToRgbString(s.color);
-  target.style.backgroundColor = coerceColorToRgbString(s.backgroundColor);
-  target.style.backgroundImage = stripModernColorFunctions(s.backgroundImage);
+  target.style.color = legacySafeColor(s.color, '#1a140c');
+  target.style.backgroundColor = legacySafeColor(s.backgroundColor, 'transparent');
+  target.style.backgroundImage = legacySafePaintValue(s.backgroundImage, 'none');
   target.style.backgroundSize = s.backgroundSize;
   target.style.backgroundPosition = s.backgroundPosition;
   target.style.backgroundRepeat = s.backgroundRepeat;
-  target.style.borderTopColor = coerceColorToRgbString(s.borderTopColor);
-  target.style.borderRightColor = coerceColorToRgbString(s.borderRightColor);
-  target.style.borderBottomColor = coerceColorToRgbString(s.borderBottomColor);
-  target.style.borderLeftColor = coerceColorToRgbString(s.borderLeftColor);
+  target.style.borderTopColor = legacySafeColor(s.borderTopColor, '#3a3020');
+  target.style.borderRightColor = legacySafeColor(s.borderRightColor, '#3a3020');
+  target.style.borderBottomColor = legacySafeColor(s.borderBottomColor, '#3a3020');
+  target.style.borderLeftColor = legacySafeColor(s.borderLeftColor, '#3a3020');
   target.style.borderTopWidth = s.borderTopWidth;
   target.style.borderRightWidth = s.borderRightWidth;
   target.style.borderBottomWidth = s.borderBottomWidth;
@@ -129,14 +156,14 @@ function applyComputedPaintOntoElement(origin: HTMLElement, target: HTMLElement)
   target.style.borderRightStyle = s.borderRightStyle;
   target.style.borderBottomStyle = s.borderBottomStyle;
   target.style.borderLeftStyle = s.borderLeftStyle;
-  target.style.outlineColor = coerceColorToRgbString(s.outlineColor);
+  target.style.outlineColor = legacySafeColor(s.outlineColor, 'transparent');
   target.style.outlineStyle = s.outlineStyle;
   target.style.outlineWidth = s.outlineWidth;
-  target.style.textDecorationColor = coerceColorToRgbString(s.textDecorationColor);
-  target.style.boxShadow = stripModernColorFunctions(s.boxShadow);
-  target.style.textShadow = stripModernColorFunctions(s.textShadow);
-  target.style.filter = stripModernColorFunctions(s.filter);
-  target.style.borderImageSource = stripModernColorFunctions(s.borderImageSource);
+  target.style.textDecorationColor = legacySafeColor(s.textDecorationColor, '#1a140c');
+  target.style.boxShadow = legacySafePaintValue(s.boxShadow, 'none');
+  target.style.textShadow = legacySafePaintValue(s.textShadow, 'none');
+  target.style.filter = legacySafePaintValue(s.filter, 'none');
+  target.style.borderImageSource = legacySafePaintValue(s.borderImageSource, 'none');
 }
 
 /**

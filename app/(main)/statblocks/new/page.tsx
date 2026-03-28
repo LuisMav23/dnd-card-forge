@@ -14,6 +14,7 @@ import LoadingLibraryProgressBar from '@/components/ui/LoadingLibraryProgressBar
 import RouteSuspenseFallback from '@/components/ui/RouteSuspenseFallback';
 import { FROM_LIBRARY_QS, isFromLibrarySearch } from '@/lib/fromLibraryNav';
 import { exportStatBlockToPng } from '@/lib/exportStatBlockPng';
+import { getDomPngExportButtonLabel } from '@/lib/domPngExportError';
 import { useLibraryItemAutosave } from '@/hooks/useLibraryItemAutosave';
 
 function statBlockReducer(state: StatBlockState, action: StatBlockAction): StatBlockState {
@@ -236,7 +237,7 @@ function StatBlocksInner() {
       }, 2200);
     } catch (err) {
       console.error(err);
-      setExportLabel('✕ Error — Try Again');
+      setExportLabel(getDomPngExportButtonLabel(err));
       setExporting(false);
       setTimeout(() => setExportLabel('⬇ Export Stat Block as PNG'), 2500);
     }

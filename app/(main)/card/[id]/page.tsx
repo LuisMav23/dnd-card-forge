@@ -7,6 +7,7 @@ import { FROM_LIBRARY_APPEND, isFromLibrarySearch } from '@/lib/fromLibraryNav';
 import { CardState } from '@/lib/types';
 import { coerceRarity, hydrateCardPalette } from '@/lib/cardPalette';
 import { exportCardToPng } from '@/lib/exportCardPng';
+import { getDomPngExportButtonLabel } from '@/lib/domPngExportError';
 import CardWikiView from '@/components/cards/CardWikiView';
 import RouteSuspenseFallback from '@/components/ui/RouteSuspenseFallback';
 import WikiDetailBodySkeleton from '@/components/ui/skeletons/WikiDetailBodySkeleton';
@@ -74,7 +75,7 @@ function CardDetailInner() {
       setTimeout(() => setDownloadLabel('⬇ Download card (PNG)'), 2000);
     } catch (err) {
       console.error(err);
-      setDownloadLabel('✕ Error — try again');
+      setDownloadLabel(getDomPngExportButtonLabel(err));
       setTimeout(() => setDownloadLabel('⬇ Download card (PNG)'), 2500);
     } finally {
       setDownloading(false);

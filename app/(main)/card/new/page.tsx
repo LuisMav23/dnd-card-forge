@@ -7,6 +7,7 @@ import { CardState, CardAction, CardType } from '@/lib/types';
 import { CARD_TYPES, getDefaultFields } from '@/lib/cardConfig';
 import { coerceRarity, DEFAULT_CARD_PALETTE, hydrateCardPalette } from '@/lib/cardPalette';
 import { exportCardToPng } from '@/lib/exportCardPng';
+import { getDomPngExportButtonLabel } from '@/lib/domPngExportError';
 import TypeBar from '@/components/TypeBar';
 import ExamplePanel from '@/components/ExamplePanel';
 import FormPanel from '@/components/FormPanel';
@@ -202,7 +203,7 @@ function CardForgeInner() {
       }, 2200);
     } catch (err) {
       console.error(err);
-      setExportLabel('✕ Error — Try Again');
+      setExportLabel(getDomPngExportButtonLabel(err));
       setExporting(false);
       setTimeout(() => setExportLabel('⬇ Export Card as PNG'), 2500);
     }
