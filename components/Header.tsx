@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import AuthButton from './AuthButton';
 import LogoMark from './LogoMark';
+import NotificationBell from './NotificationBell';
 
 export default function Header() {
   const pathname = usePathname();
@@ -71,6 +72,7 @@ export default function Header() {
         </nav>
 
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
+          <NotificationBell />
           <AuthButton
             mobileAccountMount={mobileAuthMount}
             onCloseMobileNav={() => setNavOpen(false)}
