@@ -67,7 +67,7 @@ function StatBlockWikiScaledPreview({
   const scaledH = naturalH > 0 ? Math.ceil(naturalH * WIKI_SB_SCALE) : Math.ceil(480 * WIKI_SB_SCALE);
 
   return (
-    <div className="rounded-xl border border-bdr bg-prev px-2 py-4 sm:px-3">
+    <div className="rounded-xl border border-bdr bg-prev px-3 py-6 sm:px-5 sm:py-8">
       <div className="flex justify-center">
         <div
           className="overflow-hidden rounded-md border border-bdr/40 bg-mid/20 shadow-inner"
@@ -107,49 +107,51 @@ const StatBlockWikiView = forwardRef<HTMLDivElement, Props>(function StatBlockWi
   );
 
   return (
-    <article className="wiki-card-page mx-auto max-w-5xl px-4 py-8 sm:px-6">
-      <div className="rounded-2xl border border-bdr bg-panel/90 p-6 shadow-sm sm:p-8">
-        <div className="grid gap-8 lg:grid-cols-12 lg:gap-10">
-          <div className="flex flex-col gap-6 lg:col-span-5">
-            <header className="space-y-3">
-              <p className="font-[var(--font-cinzel),serif] text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-gold-dark">
+    <article className="wiki-card-page mx-auto max-w-5xl px-4 py-10 sm:px-8 sm:py-12">
+      <div className="rounded-2xl border border-bdr bg-panel/90 p-7 shadow-sm sm:p-10 lg:p-12">
+        <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
+          <div className="flex flex-col gap-8 lg:col-span-5">
+            <header className="space-y-4 pr-1">
+              <p className="font-[var(--font-cinzel),serif] text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-gold-dark">
                 {getStatBlockWikiSystemLabel(state.system)} · {getStatBlockWikiTypeLabel(state)}
               </p>
-              <h1 className="font-[var(--font-cinzel),serif] text-2xl font-bold tracking-wide text-gold sm:text-3xl">
+              <h1 className="font-[var(--font-cinzel),serif] text-2xl font-bold tracking-wide text-gold sm:text-4xl">
                 {name}
               </h1>
               {savedTitle && savedTitle.trim() !== name.trim() && (
                 <p className="text-sm text-muted">Library title: {savedTitle}</p>
               )}
-              <p className="text-sm leading-relaxed text-parch">{getStatBlockWikiSubtypeLine(state)}</p>
+              <p className="text-base leading-relaxed text-parch">{getStatBlockWikiSubtypeLine(state)}</p>
             </header>
             <div className="overflow-hidden rounded-xl border border-bdr bg-mid/40 shadow-inner">
               <div className="aspect-[4/5] max-h-[min(420px,55vh)] w-full">{artContent}</div>
             </div>
 
-            <section className="flex flex-col gap-3">
-              <h2 className="border-b border-bdr pb-2 font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-[0.22em] text-gold">
+            <section className="flex flex-col gap-4">
+              <h2 className="border-b border-bdr pb-3 font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-[0.22em] text-gold">
                 Stat block preview
               </h2>
               <StatBlockWikiScaledPreview state={state} exportRef={ref} />
             </section>
           </div>
 
-          <div className="flex flex-col gap-10 lg:col-span-7">
+          <div className="flex flex-col gap-12 lg:col-span-7">
             <div>
-              <h2 className="mb-4 border-b border-bdr pb-2 font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-[0.22em] text-gold">
+              <h2 className="mb-5 border-b border-bdr pb-3 font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-[0.22em] text-gold">
                 Statistics
               </h2>
-              <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {stats.map((row, i) => (
                   <div
                     key={`${row.label}-${i}`}
-                    className="rounded-lg border border-bdr bg-mid/30 px-3 py-2.5"
+                    className="rounded-xl border border-bdr bg-mid/30 px-4 py-4 sm:px-5 sm:py-4"
                   >
-                    <dt className="font-[var(--font-cinzel),serif] text-[0.65rem] font-semibold uppercase tracking-wider text-muted">
+                    <dt className="font-[var(--font-cinzel),serif] text-[0.7rem] font-semibold uppercase tracking-wider text-muted">
                       {row.label}
                     </dt>
-                    <dd className="mt-1 text-sm leading-snug text-parch">{row.value}</dd>
+                    <dd className="mt-2 font-[var(--font-cinzel),serif] text-lg font-semibold leading-snug text-gold sm:text-xl">
+                      {row.value}
+                    </dd>
                   </div>
                 ))}
               </dl>
@@ -157,7 +159,7 @@ const StatBlockWikiView = forwardRef<HTMLDivElement, Props>(function StatBlockWi
 
             {desc && (
               <section>
-                <h2 className="mb-3 border-b border-bdr pb-2 font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-[0.22em] text-gold">
+                <h2 className="mb-4 border-b border-bdr pb-3 font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-[0.22em] text-gold">
                   Description
                 </h2>
                 <blockquote className="border-l-2 border-gold-dark/60 pl-4 text-sm italic leading-relaxed text-parch">
@@ -168,23 +170,25 @@ const StatBlockWikiView = forwardRef<HTMLDivElement, Props>(function StatBlockWi
 
             {narratives.map(sec => (
               <section key={sec.title}>
-                <h2 className="mb-3 border-b border-bdr pb-2 font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-[0.22em] text-gold">
+                <h2 className="mb-4 border-b border-bdr pb-3 font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-[0.22em] text-gold">
                   {sec.title}
                 </h2>
-                <div className="whitespace-pre-wrap text-sm leading-relaxed text-parch">{sec.body}</div>
+                <div className="whitespace-pre-wrap text-sm leading-relaxed text-parch sm:text-base sm:leading-relaxed">
+                  {sec.body}
+                </div>
               </section>
             ))}
 
             {state.features.length > 0 && (
               <section>
-                <h2 className="mb-4 border-b border-bdr pb-2 font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-[0.22em] text-gold">
+                <h2 className="mb-5 border-b border-bdr pb-3 font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-[0.22em] text-gold">
                   Features
                 </h2>
-                <ul className="space-y-3">
+                <ul className="space-y-4">
                   {state.features.map(feat => (
                     <li
                       key={feat.id}
-                      className="rounded-lg border border-bdr bg-mid/25 px-3 py-2.5 text-sm text-parch"
+                      className="rounded-xl border border-bdr bg-mid/25 px-4 py-3.5 text-sm leading-relaxed text-parch"
                     >
                       <span
                         className={`mr-2 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded font-[var(--font-cinzel),serif] text-[0.65rem] font-bold uppercase ${

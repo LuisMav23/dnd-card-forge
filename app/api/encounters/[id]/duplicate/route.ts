@@ -45,6 +45,14 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
       title: `${baseTitle} (copy)`,
       updated_at: now,
       folder_id: encRow.folder_id ?? null,
+      thumbnail_url:
+        typeof encRow.thumbnail_url === 'string' && encRow.thumbnail_url.trim()
+          ? encRow.thumbnail_url.trim()
+          : null,
+      player_description:
+        typeof encRow.player_description === 'string' && encRow.player_description.trim()
+          ? encRow.player_description.trim().slice(0, 8000)
+          : null,
     })
     .select()
     .single();

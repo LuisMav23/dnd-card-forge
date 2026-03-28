@@ -66,6 +66,8 @@ export default function EditEncounterPage() {
         {detail && (
           <EncounterBuilderForm
             initialTitle={detail.title}
+            initialThumbnailUrl={detail.thumbnail_url}
+            initialPlayerDescription={detail.player_description ?? ''}
             initialRows={detail.entries.map(e => ({
               statblockId: e.statblock_id ?? '',
               count: e.count,
@@ -79,6 +81,8 @@ export default function EditEncounterPage() {
                 body: JSON.stringify({
                   title: payload.title,
                   entries: payload.entries,
+                  thumbnailUrl: payload.thumbnailUrl,
+                  playerDescription: payload.playerDescription || null,
                 }),
               });
               const data = await res.json();

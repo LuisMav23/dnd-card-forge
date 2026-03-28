@@ -88,6 +88,7 @@ export default function ProfilePage() {
   const [saveLabel, setSaveLabel] = useState('Save profile');
   const [error, setError] = useState<string | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
+  const [myUserId, setMyUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -101,6 +102,7 @@ export default function ProfilePage() {
         router.replace('/');
         return;
       }
+      setMyUserId(user.id);
       try {
         const res = await fetch('/api/profile', { cache: 'no-store' });
         const data = await res.json();
@@ -236,6 +238,34 @@ export default function ProfilePage() {
             <p className="mt-2 text-sm leading-relaxed text-bronze">
               Photo saves when you pick a file. Other details use Save profile.
             </p>
+            {myUserId && (
+              <nav className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm">
+                <Link
+                  href={`/users/${myUserId}`}
+                  className="text-gold underline-offset-2 hover:text-gold-light hover:underline"
+                >
+                  Public profile
+                </Link>
+                <Link
+                  href={`/users/${myUserId}/followers`}
+                  className="text-bronze underline-offset-2 hover:text-gold hover:underline"
+                >
+                  Followers
+                </Link>
+                <Link
+                  href={`/users/${myUserId}/following`}
+                  className="text-bronze underline-offset-2 hover:text-gold hover:underline"
+                >
+                  Following
+                </Link>
+                <Link
+                  href="/profile/favorites"
+                  className="text-bronze underline-offset-2 hover:text-gold hover:underline"
+                >
+                  Favorites
+                </Link>
+              </nav>
+            )}
           </header>
 
           <div className="mb-8 flex flex-col items-center gap-4 sm:flex-row sm:items-start">

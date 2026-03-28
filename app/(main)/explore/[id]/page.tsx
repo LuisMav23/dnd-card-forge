@@ -25,6 +25,12 @@ interface PublishedRow {
   view_count?: number | string;
   fork_count?: number | string;
   published_author_name: string | null;
+  author_id: string;
+  upvote_count: number;
+  downvote_count: number;
+  favorite_count: number;
+  viewer_vote: -1 | 0 | 1 | null;
+  viewer_favorited: boolean;
 }
 
 function parseCardStateFromRow(row: PublishedRow): CardState | null {
@@ -67,6 +73,7 @@ function ExplorePublishedInner() {
   const [forking, setForking] = useState(false);
   const [downloadLabel, setDownloadLabel] = useState('⬇ Download PNG');
   const [downloading, setDownloading] = useState(false);
+  const [reactionBusy, setReactionBusy] = useState(false);
   const exportRef = useRef<HTMLDivElement>(null);
 
   const supabase = createClient();
@@ -94,7 +101,21 @@ function ExplorePublishedInner() {
           setStatus('error');
           return;
         }
-        const data = (await res.json()) as PublishedRow;
+        const raw = (await res.json()) as PublishedRow & Record<string, unknown>;
+        const data: PublishedRow = {
+          ...raw,
+          author_id: typeof raw.author_id === 'string' ? raw.author_id : '',
+          upvote_count: Number(raw.upvote_count ?? 0),
+          downvote_count: Number(raw.downvote_count ?? 0),
+          favorite_count: Number(raw.favorite_count ?? 0),
+          viewer_vote:
+            raw.viewer_vote === 1 || raw.viewer_vote === -1 || raw.viewer_vote === 0
+              ? raw.viewer_vote
+              : raw.viewer_vote === null
+                ? null
+                : null,
+          viewer_favorited: Boolean(raw.viewer_favorited),
+        };
         if (data.item_type === 'card') {
           const parsed = parseCardStateFromRow(data);
           if (!parsed) {
@@ -126,6 +147,47 @@ function ExplorePublishedInner() {
       cancelled = true;
     };
   }, [id]);
+
+  const patchReaction = useCallback(
+    async (patch: { vote?: -1 | 0 | 1; favorited?: boolean }) => {
+      if (!id) return;
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        router.push('/');
+        return;
+      }
+      setReactionBusy(true);
+      try {
+        const res = await fetch(`/api/explore/${id}/reactions`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(patch),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error ?? 'Update failed');
+        setRow(prev =>
+          prev
+            ? {
+                ...prev,
+                upvote_count: data.upvote_count ?? prev.upvote_count,
+                downvote_count: data.downvote_count ?? prev.downvote_count,
+                favorite_count: data.favorite_count ?? prev.favorite_count,
+                viewer_vote: data.vote ?? prev.viewer_vote,
+                viewer_favorited: data.favorited ?? prev.viewer_favorited,
+              }
+            : null
+        );
+      } catch (e) {
+        console.error(e);
+        alert(e instanceof Error ? e.message : 'Could not update');
+      } finally {
+        setReactionBusy(false);
+      }
+    },
+    [id, router, supabase.auth]
+  );
 
   const handleFork = useCallback(async () => {
     if (!id) return;
@@ -183,42 +245,130 @@ function ExplorePublishedInner() {
 
   return (
     <div className="page-radial-soft flex min-h-0 flex-1 flex-col overflow-x-hidden bg-bg">
-      <div className="border-b border-bdr bg-panel/80 px-4 py-3">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3">
+      <div className="border-b border-bdr bg-panel/80 px-4 py-5 sm:px-6 sm:py-6">
+        <div className="mx-auto flex max-w-5xl flex-col gap-5">
           <Link
             href="/explore"
-            className="font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-wider text-gold-dark transition-colors hover:text-gold"
+            className="inline-flex w-fit shrink-0 font-[var(--font-cinzel),serif] text-sm font-semibold uppercase tracking-wider text-gold-dark transition-colors hover:text-gold"
           >
             ← Explore
           </Link>
           {status === 'ready' && row ? (
-            <div className="flex flex-wrap items-end justify-end gap-2 sm:items-center">
-              <div className="mr-auto hidden text-xs text-muted sm:mr-0 sm:block sm:text-right">
-                <span className="text-bronze">
-                  {row.published_author_name?.trim()
-                    ? `By ${row.published_author_name.trim()}`
-                    : 'Community'}{' '}
-                </span>
-                <span className="text-muted/70">
-                  · {exploreCount(row.view_count)} views · {exploreCount(row.fork_count)} forks
-                </span>
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between lg:gap-10">
+              <div className="min-w-0 space-y-3">
+                <p className="text-base leading-relaxed text-parch">
+                  <span className="text-muted">Published by </span>
+                  {row.published_author_name?.trim() ? (
+                    <Link
+                      href={`/users/${row.author_id}`}
+                      className="font-medium text-gold underline-offset-4 hover:text-gold-light hover:underline"
+                    >
+                      {row.published_author_name.trim()}
+                    </Link>
+                  ) : (
+                    <span className="font-medium text-bronze">Community</span>
+                  )}
+                </p>
+                <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-parch">
+                  <li className="flex flex-col gap-0.5 sm:block sm:whitespace-nowrap">
+                    <span className="text-[0.7rem] font-semibold uppercase tracking-wider text-muted">
+                      Views
+                    </span>
+                    <span className="tabular-nums sm:ml-1">{exploreCount(row.view_count)}</span>
+                  </li>
+                  <li className="flex flex-col gap-0.5 sm:block sm:whitespace-nowrap">
+                    <span className="text-[0.7rem] font-semibold uppercase tracking-wider text-muted">
+                      Forks
+                    </span>
+                    <span className="tabular-nums sm:ml-1">{exploreCount(row.fork_count)}</span>
+                  </li>
+                  <li className="flex flex-col gap-0.5 sm:block sm:whitespace-nowrap">
+                    <span className="text-[0.7rem] font-semibold uppercase tracking-wider text-muted">
+                      Up / down
+                    </span>
+                    <span className="tabular-nums sm:ml-1">
+                      {exploreCount(row.upvote_count)} / {exploreCount(row.downvote_count)}
+                    </span>
+                  </li>
+                  <li className="flex flex-col gap-0.5 sm:block sm:whitespace-nowrap">
+                    <span className="text-[0.7rem] font-semibold uppercase tracking-wider text-muted">
+                      Saves
+                    </span>
+                    <span className="tabular-nums sm:ml-1">{exploreCount(row.favorite_count)}</span>
+                  </li>
+                </ul>
               </div>
-              <button
-                type="button"
-                onClick={() => void handleDownload()}
-                disabled={downloading}
-                className="panel-btn border-bdr text-parch hover:border-gold/35 hover:text-gold disabled:opacity-50"
-              >
-                {downloadLabel}
-              </button>
-              <button
-                type="button"
-                onClick={() => void handleFork()}
-                disabled={forking}
-                className="panel-btn text-gold disabled:opacity-50"
-              >
-                {forkLabel}
-              </button>
+              <div className="flex flex-col gap-4 border-t border-bdr/60 pt-5 lg:border-t-0 lg:pt-0">
+                <div
+                  role="group"
+                  aria-label="Rate and save"
+                  className="flex flex-wrap gap-2.5"
+                >
+                  <button
+                    type="button"
+                    disabled={reactionBusy}
+                    title="Upvote"
+                    onClick={() =>
+                      void patchReaction({ vote: row.viewer_vote === 1 ? 0 : 1 })
+                    }
+                    className={`inline-flex h-11 min-w-[5.5rem] items-center justify-center rounded-lg border px-4 font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-wide transition-colors disabled:opacity-50 ${
+                      row.viewer_vote === 1
+                        ? 'border-gold/60 bg-gold/20 text-gold'
+                        : 'border-bdr bg-panel/80 text-bronze hover:border-gold/35 hover:text-parch'
+                    }`}
+                  >
+                    ▲ Up
+                  </button>
+                  <button
+                    type="button"
+                    disabled={reactionBusy}
+                    title="Downvote"
+                    onClick={() =>
+                      void patchReaction({ vote: row.viewer_vote === -1 ? 0 : -1 })
+                    }
+                    className={`inline-flex h-11 min-w-[5.5rem] items-center justify-center rounded-lg border px-4 font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-wide transition-colors disabled:opacity-50 ${
+                      row.viewer_vote === -1
+                        ? 'border-amber-800/60 bg-amber-950/50 text-amber-200'
+                        : 'border-bdr bg-panel/80 text-bronze hover:border-gold/35 hover:text-parch'
+                    }`}
+                  >
+                    ▼ Down
+                  </button>
+                  <button
+                    type="button"
+                    disabled={reactionBusy}
+                    title="Save to favorites"
+                    onClick={() =>
+                      void patchReaction({ favorited: !row.viewer_favorited })
+                    }
+                    className={`inline-flex h-11 min-w-[5.5rem] items-center justify-center rounded-lg border px-4 font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-wide transition-colors disabled:opacity-50 ${
+                      row.viewer_favorited
+                        ? 'border-pink-800/60 bg-pink-950/40 text-pink-200'
+                        : 'border-bdr bg-panel/80 text-bronze hover:border-gold/35 hover:text-parch'
+                    }`}
+                  >
+                    ♥ Save
+                  </button>
+                </div>
+                <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-stretch">
+                  <button
+                    type="button"
+                    onClick={() => void handleDownload()}
+                    disabled={downloading}
+                    className="panel-btn min-h-11 justify-center border-bdr text-parch hover:border-gold/35 hover:text-gold disabled:opacity-50 sm:min-w-[12rem]"
+                  >
+                    {downloadLabel}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleFork()}
+                    disabled={forking}
+                    className="panel-btn min-h-11 justify-center text-gold disabled:opacity-50 sm:min-w-[14rem]"
+                  >
+                    {forkLabel}
+                  </button>
+                </div>
+              </div>
             </div>
           ) : null}
         </div>

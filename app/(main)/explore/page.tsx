@@ -2,13 +2,22 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { exploreCount, type ExploreListItem, type ExploreSort } from '@/lib/exploreTypes';
+import ExploreItemCard from '@/components/explore/ExploreItemCard';
+import type { ExploreListItem, ExploreSort } from '@/lib/exploreTypes';
 
 async function fetchSection(sort: ExploreSort): Promise<ExploreListItem[]> {
   const res = await fetch(`/api/explore?sort=${sort}&limit=12`, { cache: 'no-store' });
   if (!res.ok) return [];
   const json = (await res.json()) as { items?: ExploreListItem[] };
   return json.items ?? [];
+}
+
+async function fetchFollowingFeed(): Promise<{ items: ExploreListItem[]; authed: boolean }> {
+  const res = await fetch('/api/me/following-feed?limit=12', { cache: 'no-store' });
+  if (res.status === 401) return { items: [], authed: false };
+  if (!res.ok) return { items: [], authed: true };
+  const json = (await res.json()) as { items?: ExploreListItem[] };
+  return { items: json.items ?? [], authed: true };
 }
 
 function ExploreSection({
@@ -31,51 +40,79 @@ function ExploreSection({
         <p className="mt-1 text-sm text-bronze">{subtitle}</p>
       </div>
       {loading ? (
-        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <li
               key={i}
-              className="h-28 animate-pulse rounded-xl border border-bdr/60 bg-panel/50"
-            />
+              className="overflow-hidden rounded-xl border border-bdr/60 bg-panel/50 shadow-[0_4px_20px_rgba(0,0,0,0.2)]"
+            >
+              <div className="aspect-[4/3] animate-pulse bg-mid/90" />
+              <div className="space-y-2 p-3">
+                <div className="h-4 w-3/4 animate-pulse rounded bg-mid/80" />
+                <div className="h-3 w-1/2 animate-pulse rounded bg-mid/60" />
+              </div>
+            </li>
           ))}
         </ul>
       ) : items.length === 0 ? (
         <p className="text-sm italic text-muted">Nothing published here yet.</p>
       ) : (
-        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {items.map(item => (
-            <li key={item.id} className="list-none">
-              <Link
-                href={`/explore/${item.id}`}
-                className="block rounded-xl border border-bdr bg-gradient-to-b from-panel to-mid/90 p-4 shadow-[0_6px_24px_rgba(0,0,0,0.25)] transition-colors hover:border-gold/35 hover:text-inherit"
-              >
-                <div className="flex min-w-0 flex-col gap-2">
-                  <h3 className="truncate font-[var(--font-cinzel),serif] text-sm font-semibold text-gold">
-                    {item.title}
-                  </h3>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span
-                      className={`rounded-full border px-2 py-0.5 font-[var(--font-cinzel),serif] text-[0.65rem] uppercase tracking-wider ${
-                        item.item_type === 'card'
-                          ? 'border-amber-700/50 bg-amber-950/40 text-amber-200'
-                          : 'border-violet-800/50 bg-violet-950/40 text-violet-200'
-                      }`}
-                    >
-                      {item.item_type === 'card' ? 'Card' : 'Stat block'}
-                    </span>
-                  </div>
-                  <p className="truncate text-xs text-bronze">
-                    {item.published_author_name?.trim()
-                      ? `By ${item.published_author_name.trim()}`
-                      : 'Community'}
-                  </p>
-                  <div className="mt-1 flex flex-wrap gap-3 text-[0.7rem] uppercase tracking-wider text-muted">
-                    <span>{exploreCount(item.view_count)} views</span>
-                    <span>{exploreCount(item.fork_count)} forks</span>
-                  </div>
-                </div>
-              </Link>
+            <ExploreItemCard key={item.id} item={item} />
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function FollowingFeedSection({
+  items,
+  loading,
+  authed,
+}: {
+  items: ExploreListItem[];
+  loading: boolean;
+  authed: boolean;
+}) {
+  return (
+    <section className="mb-14">
+      <div className="mb-4 border-b border-bdr/80 pb-3">
+        <h2 className="font-[var(--font-cinzel),serif] text-lg font-bold tracking-wide text-gold sm:text-xl">
+          From people you follow
+        </h2>
+        <p className="mt-1 text-sm text-bronze">Recently published work by creators you follow.</p>
+      </div>
+      {!authed ? (
+        <div className="rounded-xl border border-dashed border-bdr/80 bg-panel/40 p-6 text-center">
+          <p className="text-sm text-bronze">Sign in to see new posts from people you follow.</p>
+          <Link href="/" className="mt-4 inline-block panel-btn text-gold">
+            Sign in
+          </Link>
+        </div>
+      ) : loading ? (
+        <ul className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <li
+              key={i}
+              className="overflow-hidden rounded-xl border border-bdr/60 bg-panel/50 shadow-[0_4px_20px_rgba(0,0,0,0.2)]"
+            >
+              <div className="aspect-[4/3] animate-pulse bg-mid/90" />
+              <div className="space-y-2 p-3">
+                <div className="h-4 w-3/4 animate-pulse rounded bg-mid/80" />
+              </div>
             </li>
+          ))}
+        </ul>
+      ) : items.length === 0 ? (
+        <p className="text-sm italic text-muted">
+          No new publishes yet. Follow creators from their public profile, then check back here.
+        </p>
+      ) : (
+        <ul className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {items.map(item => (
+            <ExploreItemCard key={item.id} item={item} />
           ))}
         </ul>
       )}
@@ -85,9 +122,30 @@ function ExploreSection({
 
 export default function ExplorePage() {
   const [loading, setLoading] = useState(true);
+  const [followingLoading, setFollowingLoading] = useState(true);
   const [newItems, setNewItems] = useState<ExploreListItem[]>([]);
   const [forkedItems, setForkedItems] = useState<ExploreListItem[]>([]);
   const [popularItems, setPopularItems] = useState<ExploreListItem[]>([]);
+  const [followingItems, setFollowingItems] = useState<ExploreListItem[]>([]);
+  const [followingAuthed, setFollowingAuthed] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setFollowingLoading(true);
+      try {
+        const ff = await fetchFollowingFeed();
+        if (cancelled) return;
+        setFollowingItems(ff.items);
+        setFollowingAuthed(ff.authed);
+      } finally {
+        if (!cancelled) setFollowingLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -134,6 +192,12 @@ export default function ExplorePage() {
             Publish my own
           </Link>
         </header>
+
+        <FollowingFeedSection
+          items={followingItems}
+          loading={followingLoading}
+          authed={followingAuthed}
+        />
 
         <ExploreSection
           title="New"

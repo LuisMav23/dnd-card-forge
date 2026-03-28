@@ -3,6 +3,25 @@ import { ensureLibrarySystemFolders } from '@/lib/ensureLibrarySystemFolders';
 import { createClient } from '@/lib/supabase/server';
 import type { CreateEncounterBody } from '@/lib/encounterTypes';
 
+const PLAYER_DESCRIPTION_MAX = 8000;
+const THUMBNAIL_URL_MAX = 2048;
+
+function parseOptionalThumbnailUrl(raw: unknown): { ok: true; value: string | null } | { ok: false } {
+  if (raw === undefined) return { ok: true, value: null };
+  if (raw === null) return { ok: true, value: null };
+  if (typeof raw !== 'string') return { ok: false };
+  const t = raw.trim();
+  return { ok: true, value: t ? t.slice(0, THUMBNAIL_URL_MAX) : null };
+}
+
+function parseOptionalPlayerDescription(raw: unknown): { ok: true; value: string | null } | { ok: false } {
+  if (raw === undefined) return { ok: true, value: null };
+  if (raw === null) return { ok: true, value: null };
+  if (typeof raw !== 'string') return { ok: false };
+  const t = raw.trim();
+  return { ok: true, value: t ? t.slice(0, PLAYER_DESCRIPTION_MAX) : null };
+}
+
 export async function GET() {
   const supabase = await createClient();
   const {
@@ -87,6 +106,17 @@ export async function POST(request: Request) {
     }
   }
 
+  const thumbParsed = parseOptionalThumbnailUrl(body.thumbnailUrl);
+  if (!thumbParsed.ok) {
+    return NextResponse.json({ error: 'Invalid thumbnailUrl' }, { status: 400 });
+  }
+  const descParsed = parseOptionalPlayerDescription(body.playerDescription);
+  if (!descParsed.ok) {
+    return NextResponse.json({ error: 'Invalid playerDescription' }, { status: 400 });
+  }
+  const thumbnailUrl = thumbParsed.value;
+  const playerDescription = descParsed.value;
+
   const { systemFolderIds, error: ensureErr } = await ensureLibrarySystemFolders(supabase, user.id);
   if (ensureErr) {
     return NextResponse.json({ error: ensureErr }, { status: 500 });
@@ -100,6 +130,8 @@ export async function POST(request: Request) {
       title,
       updated_at: now,
       folder_id: systemFolderIds.encounters,
+      thumbnail_url: thumbnailUrl,
+      player_description: playerDescription,
     })
     .select('id')
     .single();

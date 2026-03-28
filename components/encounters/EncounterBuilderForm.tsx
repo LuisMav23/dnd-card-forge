@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import EncounterThumbnailUpload from '@/components/encounters/EncounterThumbnailUpload';
 import EncounterBuilderLibrarySkeleton from '@/components/ui/skeletons/EncounterBuilderLibrarySkeleton';
 import { labelForStatblockCard } from './statblockLabel';
 
@@ -18,22 +19,35 @@ function newKey() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
+export type EncounterBuilderPayload = {
+  title: string;
+  entries: { statblockId: string; count: number }[];
+  thumbnailUrl: string | null;
+  playerDescription: string;
+};
+
 interface Props {
   initialTitle: string;
   initialRows: { statblockId: string; count: number }[];
+  initialThumbnailUrl?: string | null;
+  initialPlayerDescription?: string | null;
   submitLabel: string;
   cancelHref: string;
-  onSubmit: (payload: { title: string; entries: { statblockId: string; count: number }[] }) => Promise<void>;
+  onSubmit: (payload: EncounterBuilderPayload) => Promise<void>;
 }
 
 export default function EncounterBuilderForm({
   initialTitle,
   initialRows,
+  initialThumbnailUrl = null,
+  initialPlayerDescription = '',
   submitLabel,
   cancelHref,
   onSubmit,
 }: Props) {
   const [title, setTitle] = useState(initialTitle);
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(initialThumbnailUrl ?? null);
+  const [playerDescription, setPlayerDescription] = useState(initialPlayerDescription ?? '');
   const [rows, setRows] = useState<BuilderRow[]>(() =>
     initialRows.length > 0
       ? initialRows.map(r => ({ key: newKey(), statblockId: r.statblockId, count: r.count }))
@@ -115,6 +129,8 @@ export default function EncounterBuilderForm({
       await onSubmit({
         title: t,
         entries: rows.map(r => ({ statblockId: r.statblockId, count: r.count })),
+        thumbnailUrl,
+        playerDescription: playerDescription.trim(),
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Save failed');
@@ -137,6 +153,26 @@ export default function EncounterBuilderForm({
           className="encounter-form-control mt-2 w-full rounded-md border border-bdr-2 px-3 py-2 font-[var(--font-crimson),Georgia,serif] text-base placeholder:text-placeholder focus:border-gold-dark focus:outline-none focus:ring-2 focus:ring-gold/15"
           placeholder="e.g. Crypt ambush"
           maxLength={200}
+        />
+      </div>
+
+      <EncounterThumbnailUpload imageUrl={thumbnailUrl} onImageChange={setThumbnailUrl} />
+
+      <div>
+        <label htmlFor="enc-player-desc" className="block font-[var(--font-cinzel),serif] text-xs uppercase tracking-wider text-gold-dark">
+          Description for players
+        </label>
+        <p className="mt-1 text-xs text-muted">
+          Scene setup, read-aloud, or table notes. Shown on the live encounter page; anyone running the session can edit it there too.
+        </p>
+        <textarea
+          id="enc-player-desc"
+          value={playerDescription}
+          onChange={e => setPlayerDescription(e.target.value)}
+          rows={5}
+          maxLength={8000}
+          placeholder="Optional — e.g. The bridge groans underfoot; mist hides the far shore…"
+          className="encounter-form-control mt-2 w-full resize-y rounded-md border border-bdr-2 px-3 py-2 font-[var(--font-crimson),Georgia,serif] text-base leading-relaxed placeholder:text-placeholder focus:border-gold-dark focus:outline-none focus:ring-2 focus:ring-gold/15"
         />
       </div>
 

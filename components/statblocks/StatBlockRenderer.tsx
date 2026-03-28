@@ -2,6 +2,7 @@
 
 import React, { forwardRef } from 'react';
 import { StatBlockState } from '@/lib/statblockTypes';
+import { crossOriginForImgSrc } from '@/lib/crossOriginForImgSrc';
 import { statBlockPaletteCssVars } from '@/lib/statBlockPalette';
 
 interface Props {
@@ -39,7 +40,12 @@ const DaggerheartStatBlock = forwardRef<HTMLDivElement, Props>(({ state }, ref) 
       <div className="sb-header">
         <div className="sb-header-left">
           {state.image ? (
-            <img src={state.image} alt="Stat block art" className="sb-header-img" />
+            <img
+              src={state.image}
+              alt="Stat block art"
+              className="sb-header-img"
+              crossOrigin={crossOriginForImgSrc(state.image)}
+            />
           ) : (
             <span className="sb-header-icon">{state.icon}</span>
           )}
@@ -251,7 +257,12 @@ const DndStatBlock = forwardRef<HTMLDivElement, Props>(({ state }, ref) => {
       <div className="sb-header">
         <div className="sb-header-left">
           {state.image ? (
-            <img src={state.image} alt="Stat block art" className="sb-header-img" />
+            <img
+              src={state.image}
+              alt="Stat block art"
+              className="sb-header-img"
+              crossOrigin={crossOriginForImgSrc(state.image)}
+            />
           ) : (
             <span className="sb-header-icon">{state.icon}</span>
           )}

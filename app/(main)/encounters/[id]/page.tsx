@@ -34,6 +34,8 @@ export default function EncounterSessionPage() {
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [resettingAll, setResettingAll] = useState(false);
+  const [playerDescDraft, setPlayerDescDraft] = useState('');
+  const [descSaving, setDescSaving] = useState(false);
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -43,10 +45,13 @@ export default function EncounterSessionPage() {
       const res = await fetch(`/api/encounters/${id}`, { cache: 'no-store' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Not found');
-      setDetail(data as EncounterDetail);
+      const d = data as EncounterDetail;
+      setDetail(d);
+      setPlayerDescDraft(d.player_description ?? '');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Load failed');
       setDetail(null);
+      setPlayerDescDraft('');
     } finally {
       setLoading(false);
     }
@@ -115,6 +120,28 @@ export default function EncounterSessionPage() {
     },
     [id, load]
   );
+
+  const savePlayerDescription = async () => {
+    if (!id) return;
+    setDescSaving(true);
+    try {
+      const trimmed = playerDescDraft.trim();
+      const res = await fetch(`/api/encounters/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playerDescription: trimmed.length > 0 ? trimmed : null }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Save failed');
+      setDetail(prev =>
+        prev ? { ...prev, player_description: trimmed.length > 0 ? trimmed : null } : null
+      );
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Save failed');
+    } finally {
+      setDescSaving(false);
+    }
+  };
 
   const resetAll = async () => {
     if (!detail?.entries.length) return;
@@ -196,6 +223,40 @@ export default function EncounterSessionPage() {
             </div>
           )}
         </div>
+
+        {detail && (
+          <section
+            className="mx-auto mb-2 w-full max-w-[1600px] rounded-xl border border-bdr/80 bg-panel/40 px-4 py-4 sm:px-5"
+            aria-labelledby="enc-player-desc-heading"
+          >
+            <h2
+              id="enc-player-desc-heading"
+              className="font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-wider text-gold-dark"
+            >
+              Description for players
+            </h2>
+            <p className="mt-1 text-xs text-muted">
+              Scene setup, read-aloud, or notes for the table. Save anytime during the session.
+            </p>
+            <textarea
+              value={playerDescDraft}
+              onChange={e => setPlayerDescDraft(e.target.value)}
+              maxLength={8000}
+              rows={5}
+              className="encounter-form-control mt-3 w-full max-w-2xl resize-y rounded-md border border-bdr-2 bg-input px-3 py-2 font-[var(--font-crimson),Georgia,serif] text-sm leading-relaxed text-fg placeholder:text-placeholder focus:border-gold-dark focus:outline-none focus:ring-2 focus:ring-gold/15"
+              placeholder="Optional — add or update what players should know or hear…"
+              aria-label="Player-facing encounter description"
+            />
+            <button
+              type="button"
+              onClick={() => void savePlayerDescription()}
+              disabled={descSaving}
+              className="panel-btn mt-3 text-sm text-gold disabled:opacity-50"
+            >
+              {descSaving ? 'Saving…' : 'Save description'}
+            </button>
+          </section>
+        )}
 
         <div className="mx-auto w-full max-w-[1600px]">
           {loading && (

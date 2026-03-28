@@ -4,7 +4,12 @@ import { createClient } from '@/lib/supabase/client';
 import { CARD_ASSETS_BUCKET } from '@/lib/storage/constants';
 import { pathFromCardAssetPublicUrl } from '@/lib/storage/paths';
 
-export type UserAssetKind = 'card-art' | 'card-texture' | 'statblock-art' | 'profile-avatar';
+export type UserAssetKind =
+  | 'card-art'
+  | 'card-texture'
+  | 'statblock-art'
+  | 'profile-avatar'
+  | 'encounter-thumbnail';
 
 function extForBlob(blob: Blob): string {
   const t = blob.type || 'image/png';

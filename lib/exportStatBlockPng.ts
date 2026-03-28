@@ -1,3 +1,4 @@
+import { downloadCanvasAsPng } from '@/lib/downloadCanvasPng';
 import { flattenDomForHtml2Canvas } from '@/lib/flattenDomForHtml2Canvas';
 
 /**
@@ -29,10 +30,7 @@ export async function exportStatBlockToPng(blockElement: HTMLElement, nameForFil
       logging: false,
     });
 
-    const link = document.createElement('a');
-    link.download = `${base}-statblock.png`;
-    link.href = canvas.toDataURL('image/png', 1.0);
-    link.click();
+    await downloadCanvasAsPng(canvas, `${base}-statblock.png`);
   } finally {
     document.body.removeChild(clone);
   }

@@ -8,6 +8,12 @@ export type ExploreListItem = {
   view_count: number | string;
   fork_count: number | string;
   published_author_name: string | null;
+  /** From card `data.image` when present */
+  thumbnail_url: string | null;
+  author_id: string;
+  upvote_count: number;
+  downvote_count: number;
+  favorite_count: number;
 };
 
 export function exploreCount(v: number | string | null | undefined): number {

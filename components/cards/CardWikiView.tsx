@@ -38,15 +38,15 @@ const CardWikiView = forwardRef<HTMLDivElement, Props>(function CardWikiView({ s
   );
 
   return (
-    <article className="wiki-card-page mx-auto max-w-5xl px-4 py-8 sm:px-6">
-      <div className="rounded-2xl border border-bdr bg-panel/90 p-6 shadow-sm sm:p-8">
-        <div className="grid gap-8 lg:grid-cols-12 lg:gap-10">
-          <div className="flex flex-col gap-6 lg:col-span-5">
-            <header className="space-y-3">
-              <p className="font-[var(--font-cinzel),serif] text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-gold-dark">
+    <article className="wiki-card-page mx-auto max-w-5xl px-4 py-10 sm:px-8 sm:py-12">
+      <div className="rounded-2xl border border-bdr bg-panel/90 p-7 shadow-sm sm:p-10 lg:p-12">
+        <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
+          <div className="flex flex-col gap-8 lg:col-span-5">
+            <header className="space-y-4 pr-1">
+              <p className="font-[var(--font-cinzel),serif] text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-gold-dark">
                 {cfg.label}
               </p>
-              <h1 className="font-[var(--font-cinzel),serif] text-2xl font-bold tracking-wide text-gold sm:text-3xl">
+              <h1 className="font-[var(--font-cinzel),serif] text-2xl font-bold tracking-wide text-gold sm:text-4xl">
                 {name}
               </h1>
               {savedTitle && savedTitle.trim() !== name.trim() && (
@@ -73,11 +73,11 @@ const CardWikiView = forwardRef<HTMLDivElement, Props>(function CardWikiView({ s
               <div className="aspect-[4/5] max-h-[min(420px,55vh)] w-full">{artContent}</div>
             </div>
 
-            <section className="flex flex-col gap-3">
-              <h2 className="border-b border-bdr pb-2 font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-[0.22em] text-gold">
+            <section className="flex flex-col gap-4">
+              <h2 className="border-b border-bdr pb-3 font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-[0.22em] text-gold">
                 Card preview
               </h2>
-              <div className="overflow-hidden rounded-xl border border-bdr bg-prev px-2 py-4 sm:px-3">
+              <div className="overflow-hidden rounded-xl border border-bdr bg-prev px-3 py-6 sm:px-5 sm:py-8">
                 <div className="mx-auto flex w-[290px] max-w-full justify-center">
                   <div className="card-scale-wrap">
                     <CardRenderer ref={ref} state={state} />
@@ -87,35 +87,37 @@ const CardWikiView = forwardRef<HTMLDivElement, Props>(function CardWikiView({ s
             </section>
           </div>
 
-          <div className="flex flex-col gap-10 lg:col-span-7">
+          <div className="flex flex-col gap-12 lg:col-span-7">
             <div>
-              <h2 className="mb-4 border-b border-bdr pb-2 font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-[0.22em] text-gold">
+              <h2 className="mb-5 border-b border-bdr pb-3 font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-[0.22em] text-gold">
                 Statistics
               </h2>
               {stats.length === 0 ? (
                 <p className="text-sm text-muted">No stat blocks defined.</p>
               ) : (
-                <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {stats.map((s, i) => (
                     <div
                       key={i}
-                      className="rounded-lg border border-bdr/80 bg-mid/50 px-4 py-3"
+                      className="rounded-xl border border-bdr/80 bg-mid/50 px-4 py-4 sm:px-5"
                     >
-                      <dt className="font-[var(--font-cinzel),serif] text-[0.65rem] font-semibold uppercase tracking-wider text-gold-dark">
+                      <dt className="font-[var(--font-cinzel),serif] text-[0.7rem] font-semibold uppercase tracking-wider text-muted">
                         {s.label}
                       </dt>
-                      <dd className="mt-1 text-lg font-semibold text-parch">{s.value}</dd>
+                      <dd className="mt-2 font-[var(--font-cinzel),serif] text-lg font-semibold text-gold sm:text-xl">
+                        {s.value}
+                      </dd>
                     </div>
                   ))}
                 </dl>
               )}
 
               {state.type === 'sidekick' && (
-                <div className="mt-8">
-                  <h3 className="mb-3 font-[var(--font-cinzel),serif] text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-gold-dark">
+                <div className="mt-10">
+                  <h3 className="mb-4 font-[var(--font-cinzel),serif] text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-gold-dark">
                     Ability scores
                   </h3>
-                  <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                     {(['str', 'dex', 'con', 'int', 'wis', 'cha'] as const).map(ab => (
                       <div
                         key={ab}
@@ -135,7 +137,7 @@ const CardWikiView = forwardRef<HTMLDivElement, Props>(function CardWikiView({ s
             </div>
 
             <section>
-              <h2 className="mb-4 border-b border-bdr pb-2 font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-[0.22em] text-gold">
+              <h2 className="mb-5 border-b border-bdr pb-3 font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-[0.22em] text-gold">
                 Description
               </h2>
               {f.flavor?.trim() ? (
@@ -152,17 +154,17 @@ const CardWikiView = forwardRef<HTMLDivElement, Props>(function CardWikiView({ s
             </section>
 
             <section>
-              <h2 className="mb-4 border-b border-bdr pb-2 font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-[0.22em] text-gold">
+              <h2 className="mb-5 border-b border-bdr pb-3 font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-[0.22em] text-gold">
                 Features and additional information
               </h2>
               {featureRows.length === 0 ? (
                 <p className="text-sm text-muted">No extra properties beyond the summary above.</p>
               ) : (
-                <dl className="space-y-3">
+                <dl className="space-y-4">
                   {featureRows.map((row, i) => (
                     <div
                       key={`${row.label}-${i}`}
-                      className="flex flex-col gap-1 rounded-lg border border-bdr/70 bg-mid/30 px-4 py-3 sm:flex-row sm:gap-6"
+                      className="flex flex-col gap-2 rounded-xl border border-bdr/70 bg-mid/30 px-4 py-3.5 sm:flex-row sm:gap-6"
                     >
                       <dt className="shrink-0 font-[var(--font-cinzel),serif] text-[0.7rem] font-semibold uppercase tracking-wider text-gold-dark sm:w-44">
                         {row.label}

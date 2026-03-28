@@ -8,7 +8,7 @@ export type RecentActivityItem = {
   href: string;
   createdAt: string;
   updatedAt: string;
-  /** Main art URL from saved JSON (`image`); encounters have none. */
+  /** Main art URL from saved JSON (`image`) or encounter `thumbnail_url`. */
   thumbnailUrl: string | null;
 };
 
@@ -17,6 +17,7 @@ type EncounterRow = {
   title: string;
   created_at: string;
   updated_at: string;
+  thumbnail_url: string | null;
 };
 
 const FETCH_LIMIT = 30;
@@ -117,6 +118,7 @@ export function mergeCardsAndEncountersIntoActivity(
   }
 
   for (const row of encounters) {
+    const encThumb = row.thumbnail_url?.trim() || null;
     items.push({
       id: row.id,
       title: row.title?.trim() || 'Untitled',
@@ -125,7 +127,7 @@ export function mergeCardsAndEncountersIntoActivity(
       href: `/encounters/${row.id}/edit`,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
-      thumbnailUrl: null,
+      thumbnailUrl: encThumb,
     });
   }
 
@@ -139,7 +141,7 @@ export async function fetchEncountersForActivity(
 ): Promise<{ encounters: EncounterRow[]; error: string | null }> {
   const { data, error } = await supabase
     .from('encounters')
-    .select('id, title, created_at, updated_at')
+    .select('id, title, created_at, updated_at, thumbnail_url')
     .eq('user_id', userId)
     .order('updated_at', { ascending: false })
     .limit(FETCH_LIMIT);

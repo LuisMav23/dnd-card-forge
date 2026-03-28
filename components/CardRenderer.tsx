@@ -4,6 +4,7 @@ import React, { forwardRef } from 'react';
 import { CardState } from '@/lib/types';
 import { CARD_TYPES, getTypebar, getCost } from '@/lib/cardConfig';
 import { cardPaletteCssVars } from '@/lib/cardPalette';
+import { crossOriginForImgSrc } from '@/lib/crossOriginForImgSrc';
 import { GEMS, abilityMod } from '@/lib/utils';
 
 const CornerSVG = () => (
@@ -32,7 +33,7 @@ const CardRenderer = forwardRef<HTMLDivElement, Props>(({ state }, ref) => {
     .filter(s => s.label && s.value);
 
   const artContent = state.image ? (
-    <img src={state.image} alt="Card art" />
+    <img src={state.image} alt="Card art" crossOrigin={crossOriginForImgSrc(state.image)} />
   ) : (
     <div className="c-art-ph">{state.icon}</div>
   );
@@ -42,7 +43,12 @@ const CardRenderer = forwardRef<HTMLDivElement, Props>(({ state }, ref) => {
   const bgBlock =
     state.backgroundTexture ? (
       <div className="card-bg card-bg--textured">
-        <img className="card-bg-tex-img" src={state.backgroundTexture} alt="" />
+        <img
+          className="card-bg-tex-img"
+          src={state.backgroundTexture}
+          alt=""
+          crossOrigin={crossOriginForImgSrc(state.backgroundTexture)}
+        />
         <div className="card-bg-tex-wash" aria-hidden />
       </div>
     ) : (

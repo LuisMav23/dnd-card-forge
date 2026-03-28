@@ -1,3 +1,4 @@
+import { downloadCanvasAsPng } from '@/lib/downloadCanvasPng';
 import { flattenDomForHtml2Canvas } from '@/lib/flattenDomForHtml2Canvas';
 
 /**
@@ -32,10 +33,7 @@ export async function exportCardToPng(cardElement: HTMLElement, nameForFile: str
       logging: false,
     });
 
-    const link = document.createElement('a');
-    link.download = `${base}-card.png`;
-    link.href = canvas.toDataURL('image/png', 1.0);
-    link.click();
+    await downloadCanvasAsPng(canvas, `${base}-card.png`);
   } finally {
     document.body.removeChild(clone);
   }

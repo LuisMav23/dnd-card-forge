@@ -33,6 +33,8 @@ export default function NewEncounterPage() {
               body: JSON.stringify({
                 title: payload.title,
                 entries: payload.entries,
+                thumbnailUrl: payload.thumbnailUrl,
+                playerDescription: payload.playerDescription || null,
               }),
             });
             const data = await res.json();

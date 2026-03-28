@@ -37,3 +37,11 @@ export function storagePathsFromLibraryCardRow(itemType: string, data: unknown):
   if (itemType === 'statblock') return storagePathsFromStatblockData(data);
   return storagePathsFromCardData(data);
 }
+
+/** Storage path only if URL is in our bucket under the given user prefix. */
+export function ownedCardAssetStoragePath(url: string | null | undefined, userId: string): string | null {
+  const p = pathFromCardAssetPublicUrl(url);
+  if (!p) return null;
+  const prefix = `${userId}/`;
+  return p.startsWith(prefix) ? p : null;
+}

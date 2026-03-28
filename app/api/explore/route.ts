@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
+import { mapPublishedRowToExploreItem, type PublishedCardExploreRow } from '@/lib/exploreItemMap';
 import { createClient } from '@/lib/supabase/server';
 
 const LIST_FIELDS =
-  'id, title, item_type, published_at, view_count, fork_count, published_author_name';
+  'id, title, item_type, user_id, published_at, view_count, fork_count, published_author_name, data, upvote_count, downvote_count, favorite_count';
 
 const SORTS = ['new', 'forked', 'popular'] as const;
 type SortKey = (typeof SORTS)[number];
@@ -60,5 +61,9 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ items: data ?? [], sort, limit, offset });
+  const items = (data ?? []).map(row =>
+    mapPublishedRowToExploreItem(row as PublishedCardExploreRow)
+  );
+
+  return NextResponse.json({ items, sort, limit, offset });
 }

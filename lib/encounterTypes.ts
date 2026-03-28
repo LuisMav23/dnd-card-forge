@@ -51,12 +51,18 @@ export interface EncounterDetail {
   title: string;
   created_at: string;
   updated_at: string;
+  /** Supabase Storage public URL; optional cover */
+  thumbnail_url: string | null;
+  /** Shown on session view; editable during play */
+  player_description: string | null;
   entries: EncounterEntryDetail[];
 }
 
 export interface CreateEncounterBody {
   title: string;
   entries: { statblockId: string; count: number }[];
+  thumbnailUrl?: string | null;
+  playerDescription?: string | null;
 }
 
 export interface PatchEncounterBody {
@@ -64,6 +70,9 @@ export interface PatchEncounterBody {
   entries?: { statblockId: string; count: number }[];
   /** Move encounter in library; null = no folder (visible under All items only) */
   folderId?: string | null;
+  thumbnailUrl?: string | null;
+  /** Set or clear (empty string) player-facing notes */
+  playerDescription?: string | null;
 }
 
 export interface PatchEntryRemainingBody {

@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import type { PatchEncounterBody } from '@/lib/encounterTypes';
 import { mapEntryRow } from '@/lib/encounterApiHelpers';
+import { ownedCardAssetStoragePath } from '@/lib/storage/paths';
+import { removeStorageObjectsServer } from '@/lib/storage/removeStorageObjectsServer';
+
+const PLAYER_DESCRIPTION_MAX = 8000;
 
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
@@ -16,7 +20,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
 
   const { data: enc, error: encErr } = await supabase
     .from('encounters')
-    .select('id, user_id, title, created_at, updated_at')
+    .select('id, user_id, title, created_at, updated_at, thumbnail_url, player_description')
     .eq('id', id)
     .eq('user_id', user.id)
     .maybeSingle();
@@ -63,6 +67,8 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     title: enc.title,
     created_at: enc.created_at,
     updated_at: enc.updated_at,
+    thumbnail_url: enc.thumbnail_url ?? null,
+    player_description: enc.player_description ?? null,
     entries,
   });
 }
@@ -80,7 +86,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
 
   const { data: enc, error: encErr } = await supabase
     .from('encounters')
-    .select('id')
+    .select('id, thumbnail_url')
     .eq('id', id)
     .eq('user_id', user.id)
     .maybeSingle();
@@ -99,14 +105,55 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  if (body.title === undefined && body.entries === undefined && body.folderId === undefined) {
+  if (
+    body.title === undefined &&
+    body.entries === undefined &&
+    body.folderId === undefined &&
+    body.thumbnailUrl === undefined &&
+    body.playerDescription === undefined
+  ) {
     return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
   }
 
   const now = new Date().toISOString();
-  const updates: { title?: string; updated_at: string; folder_id?: string | null } = {
+  const updates: {
+    title?: string;
+    updated_at: string;
+    folder_id?: string | null;
+    thumbnail_url?: string | null;
+    player_description?: string | null;
+  } = {
     updated_at: now,
   };
+
+  if (body.thumbnailUrl !== undefined) {
+    const prevPath = ownedCardAssetStoragePath(enc.thumbnail_url, user.id);
+    let next: string | null;
+    if (body.thumbnailUrl === null) {
+      next = null;
+    } else if (typeof body.thumbnailUrl === 'string') {
+      const t = body.thumbnailUrl.trim();
+      next = t.length > 0 ? t : null;
+    } else {
+      return NextResponse.json({ error: 'Invalid thumbnailUrl' }, { status: 400 });
+    }
+    updates.thumbnail_url = next;
+    const nextPath = ownedCardAssetStoragePath(next, user.id);
+    if (prevPath && prevPath !== nextPath) {
+      await removeStorageObjectsServer([prevPath]);
+    }
+  }
+
+  if (body.playerDescription !== undefined) {
+    if (body.playerDescription === null) {
+      updates.player_description = null;
+    } else if (typeof body.playerDescription === 'string') {
+      const t = body.playerDescription.trim();
+      updates.player_description = t.length === 0 ? null : t.slice(0, PLAYER_DESCRIPTION_MAX);
+    } else {
+      return NextResponse.json({ error: 'Invalid playerDescription' }, { status: 400 });
+    }
+  }
 
   if (body.folderId !== undefined) {
     if (body.folderId === null) {
@@ -207,10 +254,30 @@ export async function DELETE(_request: Request, context: { params: Promise<{ id:
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const { data: row, error: fetchErr } = await supabase
+    .from('encounters')
+    .select('thumbnail_url')
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (fetchErr) {
+    return NextResponse.json({ error: fetchErr.message }, { status: 500 });
+  }
+  if (!row) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
+  const thumbPath = ownedCardAssetStoragePath(row.thumbnail_url, user.id);
+
   const { error } = await supabase.from('encounters').delete().eq('id', id).eq('user_id', user.id);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  if (thumbPath) {
+    await removeStorageObjectsServer([thumbPath]);
   }
 
   return NextResponse.json({ ok: true });
