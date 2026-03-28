@@ -17,7 +17,11 @@ export default async function LibraryPage() {
 
   const [foldersRes, cardsRes, encountersRes] = await Promise.all([
     supabase.from('folders').select('*').order('created_at', { ascending: false }),
-    supabase.from('cards').select('*').order('created_at', { ascending: false }),
+    supabase
+      .from('cards')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false }),
     supabase
       .from('encounters')
       .select('id, title, created_at, updated_at, folder_id, thumbnail_url, encounter_entries ( id )')

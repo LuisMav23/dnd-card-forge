@@ -13,7 +13,11 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const folderId = searchParams.get('folderId');
 
-  let query = supabase.from('cards').select('*').order('created_at', { ascending: false });
+  let query = supabase
+    .from('cards')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false });
 
   if (folderId !== null) {
     if (folderId === 'null' || folderId === '') {
