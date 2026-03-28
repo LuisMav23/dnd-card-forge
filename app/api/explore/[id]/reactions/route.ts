@@ -42,15 +42,20 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   const { data: card, error: cardErr } = await supabase
     .from('cards')
-    .select('id')
+    .select('id, user_id, is_published')
     .eq('id', cardId)
-    .eq('is_published', true)
     .maybeSingle();
 
   if (cardErr) {
     return NextResponse.json({ error: cardErr.message }, { status: 500 });
   }
   if (!card) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
+  const canReact =
+    Boolean(card.is_published) || (typeof card.user_id === 'string' && card.user_id === user.id);
+  if (!canReact) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 

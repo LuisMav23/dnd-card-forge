@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
 const PUBLISHED_FIELDS =
-  'id, title, item_type, data, published_at, view_count, fork_count, published_author_name, user_id, upvote_count, downvote_count, favorite_count';
+  'id, title, item_type, data, published_at, view_count, fork_count, published_author_name, user_id, upvote_count, downvote_count, favorite_count, is_published';
 
 function countField(v: unknown): number {
   if (v == null) return 0;
@@ -22,7 +22,11 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data, error } = await supabase
+  let data:
+    | (Record<string, unknown> & { user_id: string; is_published?: boolean })
+    | null = null;
+
+  const { data: publishedRow, error: pubErr } = await supabase
     .from('cards')
     .select(PUBLISHED_FIELDS)
     .eq('id', id)
@@ -30,9 +34,29 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     .in('item_type', ['card', 'statblock'])
     .maybeSingle();
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  if (pubErr) {
+    return NextResponse.json({ error: pubErr.message }, { status: 500 });
   }
+
+  if (publishedRow) {
+    data = publishedRow as Record<string, unknown> & { user_id: string; is_published?: boolean };
+  } else if (user) {
+    const { data: ownRow, error: ownErr } = await supabase
+      .from('cards')
+      .select(PUBLISHED_FIELDS)
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .in('item_type', ['card', 'statblock'])
+      .maybeSingle();
+
+    if (ownErr) {
+      return NextResponse.json({ error: ownErr.message }, { status: 500 });
+    }
+    if (ownRow) {
+      data = ownRow as Record<string, unknown> & { user_id: string; is_published?: boolean };
+    }
+  }
+
   if (!data) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
@@ -59,6 +83,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   return NextResponse.json({
     ...rest,
     author_id: authorId,
+    is_published: Boolean(row.is_published),
     upvote_count: countField(row.upvote_count),
     downvote_count: countField(row.downvote_count),
     favorite_count: countField(row.favorite_count),

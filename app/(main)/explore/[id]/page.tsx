@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { CardState } from '@/lib/types';
 import { coerceRarity, hydrateCardPalette } from '@/lib/cardPalette';
-import { exploreCount } from '@/lib/exploreTypes';
 import { exportCardToPng } from '@/lib/exportCardPng';
 import { exportStatBlockToPng } from '@/lib/exportStatBlockPng';
 import { getDomPngExportButtonLabel } from '@/lib/domPngExportError';
@@ -13,6 +12,8 @@ import { parseStatBlockFromLibraryRow, type LibraryStatBlockRow } from '@/lib/st
 import type { StatBlockState } from '@/lib/statblockTypes';
 import { createClient } from '@/lib/supabase/client';
 import CardWikiView from '@/components/cards/CardWikiView';
+import ExploreCommentsSection from '@/components/explore/ExploreCommentsSection';
+import ExplorePublishedActionsBar from '@/components/explore/ExplorePublishedActionsBar';
 import StatBlockWikiView from '@/components/statblocks/StatBlockWikiView';
 import RouteSuspenseFallback from '@/components/ui/RouteSuspenseFallback';
 import WikiDetailBodySkeleton from '@/components/ui/skeletons/WikiDetailBodySkeleton';
@@ -27,6 +28,8 @@ interface PublishedRow {
   fork_count?: number | string;
   published_author_name: string | null;
   author_id: string;
+  /** False when only the owner can open this explore URL (unpublished draft with retained social stats). */
+  is_published: boolean;
   upvote_count: number;
   downvote_count: number;
   favorite_count: number;
@@ -75,17 +78,28 @@ function ExplorePublishedInner() {
   const [downloadLabel, setDownloadLabel] = useState('⬇ Download PNG');
   const [downloading, setDownloading] = useState(false);
   const [reactionBusy, setReactionBusy] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const exportRef = useRef<HTMLDivElement>(null);
 
   const supabase = createClient();
 
   useEffect(() => {
-    if (!id) {
-      setStatus('error');
-      return;
-    }
+    let cancelled = false;
+    void (async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!cancelled) setCurrentUserId(user?.id ?? null);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [supabase.auth]);
+
+  useEffect(() => {
+    if (!id || status !== 'ready' || !row || row.id !== id || !row.is_published) return;
     void fetch(`/api/explore/${id}/view`, { method: 'POST' }).catch(() => {});
-  }, [id]);
+  }, [id, status, row?.id, row?.is_published]);
 
   useEffect(() => {
     if (!id) {
@@ -106,6 +120,7 @@ function ExplorePublishedInner() {
         const data: PublishedRow = {
           ...raw,
           author_id: typeof raw.author_id === 'string' ? raw.author_id : '',
+          is_published: raw.is_published !== false,
           upvote_count: Number(raw.upvote_count ?? 0),
           downvote_count: Number(raw.downvote_count ?? 0),
           favorite_count: Number(raw.favorite_count ?? 0),
@@ -246,8 +261,8 @@ function ExplorePublishedInner() {
 
   return (
     <div className="page-radial-soft flex min-h-0 flex-1 flex-col overflow-x-hidden bg-bg">
-      <div className="border-b border-bdr bg-panel/80 px-4 py-5 sm:px-6 sm:py-6">
-        <div className="mx-auto flex max-w-5xl flex-col gap-5">
+      <div className="border-b border-bdr bg-panel/80 px-4 py-4 sm:px-6">
+        <div className="mx-auto flex max-w-5xl flex-col gap-2">
           <Link
             href="/explore"
             className="inline-flex w-fit shrink-0 font-[var(--font-cinzel),serif] text-sm font-semibold uppercase tracking-wider text-gold-dark transition-colors hover:text-gold"
@@ -255,122 +270,17 @@ function ExplorePublishedInner() {
             ← Explore
           </Link>
           {status === 'ready' && row ? (
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between lg:gap-10">
-              <div className="min-w-0 space-y-3">
-                <p className="text-base leading-relaxed text-parch">
-                  <span className="text-muted">Published by </span>
-                  {row.published_author_name?.trim() ? (
-                    <Link
-                      href={`/users/${row.author_id}`}
-                      className="font-medium text-gold underline-offset-4 hover:text-gold-light hover:underline"
-                    >
-                      {row.published_author_name.trim()}
-                    </Link>
-                  ) : (
-                    <span className="font-medium text-bronze">Community</span>
-                  )}
+            <>
+              <h1 className="font-[var(--font-cinzel),serif] text-lg font-bold leading-snug text-gold sm:text-xl">
+                {row.title}
+              </h1>
+              {!row.is_published ? (
+                <p className="rounded-lg border border-amber-900/50 bg-amber-950/35 px-3 py-2 text-sm text-amber-100/95">
+                  Unpublished — only you can see this preview. Votes, saves, and comments stay on the item
+                  and return when you publish again.
                 </p>
-                <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-parch">
-                  <li className="flex flex-col gap-0.5 sm:block sm:whitespace-nowrap">
-                    <span className="text-[0.7rem] font-semibold uppercase tracking-wider text-muted">
-                      Views
-                    </span>
-                    <span className="tabular-nums sm:ml-1">{exploreCount(row.view_count)}</span>
-                  </li>
-                  <li className="flex flex-col gap-0.5 sm:block sm:whitespace-nowrap">
-                    <span className="text-[0.7rem] font-semibold uppercase tracking-wider text-muted">
-                      Forks
-                    </span>
-                    <span className="tabular-nums sm:ml-1">{exploreCount(row.fork_count)}</span>
-                  </li>
-                  <li className="flex flex-col gap-0.5 sm:block sm:whitespace-nowrap">
-                    <span className="text-[0.7rem] font-semibold uppercase tracking-wider text-muted">
-                      Up / down
-                    </span>
-                    <span className="tabular-nums sm:ml-1">
-                      {exploreCount(row.upvote_count)} / {exploreCount(row.downvote_count)}
-                    </span>
-                  </li>
-                  <li className="flex flex-col gap-0.5 sm:block sm:whitespace-nowrap">
-                    <span className="text-[0.7rem] font-semibold uppercase tracking-wider text-muted">
-                      Saves
-                    </span>
-                    <span className="tabular-nums sm:ml-1">{exploreCount(row.favorite_count)}</span>
-                  </li>
-                </ul>
-              </div>
-              <div className="flex flex-col gap-4 border-t border-bdr/60 pt-5 lg:border-t-0 lg:pt-0">
-                <div
-                  role="group"
-                  aria-label="Rate and save"
-                  className="flex flex-wrap gap-2.5"
-                >
-                  <button
-                    type="button"
-                    disabled={reactionBusy}
-                    title="Upvote"
-                    onClick={() =>
-                      void patchReaction({ vote: row.viewer_vote === 1 ? 0 : 1 })
-                    }
-                    className={`inline-flex h-11 min-w-[5.5rem] items-center justify-center rounded-lg border px-4 font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-wide transition-colors disabled:opacity-50 ${
-                      row.viewer_vote === 1
-                        ? 'border-gold/60 bg-gold/20 text-gold'
-                        : 'border-bdr bg-panel/80 text-bronze hover:border-gold/35 hover:text-parch'
-                    }`}
-                  >
-                    ▲ Up
-                  </button>
-                  <button
-                    type="button"
-                    disabled={reactionBusy}
-                    title="Downvote"
-                    onClick={() =>
-                      void patchReaction({ vote: row.viewer_vote === -1 ? 0 : -1 })
-                    }
-                    className={`inline-flex h-11 min-w-[5.5rem] items-center justify-center rounded-lg border px-4 font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-wide transition-colors disabled:opacity-50 ${
-                      row.viewer_vote === -1
-                        ? 'border-amber-800/60 bg-amber-950/50 text-amber-200'
-                        : 'border-bdr bg-panel/80 text-bronze hover:border-gold/35 hover:text-parch'
-                    }`}
-                  >
-                    ▼ Down
-                  </button>
-                  <button
-                    type="button"
-                    disabled={reactionBusy}
-                    title="Save to favorites"
-                    onClick={() =>
-                      void patchReaction({ favorited: !row.viewer_favorited })
-                    }
-                    className={`inline-flex h-11 min-w-[5.5rem] items-center justify-center rounded-lg border px-4 font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-wide transition-colors disabled:opacity-50 ${
-                      row.viewer_favorited
-                        ? 'border-pink-800/60 bg-pink-950/40 text-pink-200'
-                        : 'border-bdr bg-panel/80 text-bronze hover:border-gold/35 hover:text-parch'
-                    }`}
-                  >
-                    ♥ Save
-                  </button>
-                </div>
-                <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-stretch">
-                  <button
-                    type="button"
-                    onClick={() => void handleDownload()}
-                    disabled={downloading}
-                    className="panel-btn min-h-11 justify-center border-bdr text-parch hover:border-gold/35 hover:text-gold disabled:opacity-50 sm:min-w-[12rem]"
-                  >
-                    {downloadLabel}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void handleFork()}
-                    disabled={forking}
-                    className="panel-btn min-h-11 justify-center text-gold disabled:opacity-50 sm:min-w-[14rem]"
-                  >
-                    {forkLabel}
-                  </button>
-                </div>
-              </div>
-            </div>
+              ) : null}
+            </>
           ) : null}
         </div>
       </div>
@@ -397,6 +307,28 @@ function ExplorePublishedInner() {
 
       {status === 'ready' && statState && row && (
         <StatBlockWikiView ref={exportRef} state={statState} savedTitle={row.title} />
+      )}
+
+      {status === 'ready' && row && (
+        <>
+          <ExplorePublishedActionsBar
+            row={row}
+            reactionBusy={reactionBusy}
+            onVoteUp={() => void patchReaction({ vote: row.viewer_vote === 1 ? 0 : 1 })}
+            onVoteDown={() => void patchReaction({ vote: row.viewer_vote === -1 ? 0 : -1 })}
+            onToggleSave={() => void patchReaction({ favorited: !row.viewer_favorited })}
+            downloadLabel={downloadLabel}
+            downloading={downloading}
+            onDownload={() => void handleDownload()}
+            forkLabel={forkLabel}
+            forking={forking}
+            onFork={() => void handleFork()}
+            forkEnabled={
+              row.is_published && (currentUserId == null || currentUserId !== row.author_id)
+            }
+          />
+          <ExploreCommentsSection cardId={id} />
+        </>
       )}
 
       <footer className="mt-auto flex-shrink-0 border-t border-bdr px-3 py-2 text-center font-[var(--font-cinzel),serif] text-[0.7rem] italic leading-snug tracking-wide text-muted sm:text-xs">
