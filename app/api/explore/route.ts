@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 const LIST_FIELDS =
   'id, title, item_type, user_id, published_at, view_count, fork_count, published_author_name, data, upvote_count, downvote_count, favorite_count';
 
-const SORTS = ['new', 'forked', 'popular'] as const;
+const SORTS = ['new', 'forked', 'popular', 'rated'] as const;
 type SortKey = (typeof SORTS)[number];
 
 function clampLimit(raw: string | null): number {
@@ -46,6 +46,12 @@ export async function GET(request: Request) {
       ascending: false,
       nullsFirst: false,
     });
+  } else if (sort === 'rated') {
+    query = query
+      .or('upvote_count.gt.0,downvote_count.gt.0')
+      .order('rating_net', { ascending: false })
+      .order('upvote_count', { ascending: false })
+      .order('published_at', { ascending: false, nullsFirst: false });
   } else {
     query = query.order('view_count', { ascending: false }).order('published_at', {
       ascending: false,

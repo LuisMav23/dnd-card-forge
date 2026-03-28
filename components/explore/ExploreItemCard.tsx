@@ -1,7 +1,21 @@
 import Link from 'next/link';
 import { exploreCount, type ExploreListItem } from '@/lib/exploreTypes';
 
-export default function ExploreItemCard({ item }: { item: ExploreListItem }) {
+function rankBadgeClass(rank: number): string {
+  if (rank === 1) return 'border-amber-400/70 text-amber-100';
+  if (rank === 2) return 'border-slate-300/60 text-slate-200';
+  if (rank === 3) return 'border-amber-800/55 text-amber-200/95';
+  return 'border-gold/50 text-gold';
+}
+
+export default function ExploreItemCard({
+  item,
+  rank,
+}: {
+  item: ExploreListItem;
+  /** 1-based; shows a leaderboard badge on the thumbnail when set */
+  rank?: number;
+}) {
   return (
     <li className="list-none flex h-full min-h-0 flex-col">
       <div className="group flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-bdr bg-panel/90 shadow-[0_4px_20px_rgba(0,0,0,0.2)] transition-colors hover:border-gold/40 hover:shadow-[0_8px_28px_rgba(201,168,76,0.12)]">
@@ -10,6 +24,14 @@ export default function ExploreItemCard({ item }: { item: ExploreListItem }) {
           className="flex min-h-0 min-w-0 flex-1 flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/40"
         >
           <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-mid/90">
+            {rank != null && rank >= 1 ? (
+              <span
+                className={`absolute left-2 top-2 z-10 flex h-8 min-w-8 items-center justify-center rounded-full border bg-bg/90 px-1.5 font-[var(--font-cinzel),serif] text-[0.7rem] font-bold shadow-md backdrop-blur-sm ${rankBadgeClass(rank)}`}
+                aria-label={`Rank ${rank}`}
+              >
+                #{rank}
+              </span>
+            ) : null}
             {item.thumbnail_url ? (
               <img
                 src={item.thumbnail_url}

@@ -3,11 +3,24 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import ExploreItemCard from '@/components/explore/ExploreItemCard';
+import ExploreTopRatedRow from '@/components/explore/ExploreTopRatedRow';
 import type { ExploreListItem, ExploreSort } from '@/lib/exploreTypes';
 import { ITEM_CARD_GRID_CLASS } from '@/lib/itemCardGrid';
 
+const TOP_RATED_LIST_CLASS = 'flex flex-col gap-3';
+
 async function fetchSection(sort: ExploreSort): Promise<ExploreListItem[]> {
   const res = await fetch(`/api/explore?sort=${sort}&limit=12`, { cache: 'no-store' });
+  if (!res.ok) return [];
+  const json = (await res.json()) as { items?: ExploreListItem[] };
+  return json.items ?? [];
+}
+
+async function fetchRatedByType(itemType: 'card' | 'statblock', limit: number): Promise<ExploreListItem[]> {
+  const res = await fetch(
+    `/api/explore?sort=rated&item_type=${itemType}&limit=${limit}`,
+    { cache: 'no-store' }
+  );
   if (!res.ok) return [];
   const json = (await res.json()) as { items?: ExploreListItem[] };
   return json.items ?? [];
@@ -63,6 +76,85 @@ function ExploreSection({
             <ExploreItemCard key={item.id} item={item} />
           ))}
         </ul>
+      )}
+    </section>
+  );
+}
+
+function LeaderboardSection({
+  topCards,
+  topStatblocks,
+  loading,
+}: {
+  topCards: ExploreListItem[];
+  topStatblocks: ExploreListItem[];
+  loading: boolean;
+}) {
+  const skeleton = (
+    <ul className={TOP_RATED_LIST_CLASS}>
+      {Array.from({ length: 4 }).map((_, i) => (
+        <li
+          key={i}
+          className="flex min-h-[5.75rem] flex-row overflow-hidden rounded-xl border border-bdr/60 bg-panel/50 shadow-[0_4px_20px_rgba(0,0,0,0.2)]"
+        >
+          <div className="w-[min(38%,10.5rem)] shrink-0 animate-pulse bg-mid/90 sm:w-44" />
+          <div className="flex min-w-0 flex-1 flex-col justify-center gap-2 p-3 sm:pl-4">
+            <div className="h-4 w-4/5 max-w-xs animate-pulse rounded bg-mid/80" />
+            <div className="h-3 w-24 animate-pulse rounded bg-mid/60" />
+            <div className="mt-1 h-3 w-3/5 animate-pulse rounded bg-mid/50" />
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+
+  return (
+    <section className="mb-14">
+      <div className="mb-4 border-b border-bdr/80 pb-3">
+        <h2 className="font-[var(--font-cinzel),serif] text-lg font-bold tracking-wide text-gold sm:text-xl">
+          Top Rated
+        </h2>
+        <p className="mt-1 text-sm text-bronze">
+          Highest-rated published work by net score (upvotes minus downvotes), then total upvotes, then
+          publish date.
+        </p>
+      </div>
+      {loading ? (
+        <div className="grid gap-10 lg:grid-cols-2">
+          <div>{skeleton}</div>
+          <div>{skeleton}</div>
+        </div>
+      ) : (
+        <div className="grid gap-10 lg:grid-cols-2">
+          <div>
+            <h3 className="mb-3 font-[var(--font-cinzel),serif] text-sm font-semibold uppercase tracking-[0.2em] text-gold-dark">
+              Spell cards
+            </h3>
+            {topCards.length === 0 ? (
+              <p className="text-sm italic text-muted">No rated spell cards yet. Vote on explore previews.</p>
+            ) : (
+              <ul className={TOP_RATED_LIST_CLASS}>
+                {topCards.map((item, i) => (
+                  <ExploreTopRatedRow key={item.id} item={item} rank={i + 1} />
+                ))}
+              </ul>
+            )}
+          </div>
+          <div>
+            <h3 className="mb-3 font-[var(--font-cinzel),serif] text-sm font-semibold uppercase tracking-[0.2em] text-gold-dark">
+              Stat blocks
+            </h3>
+            {topStatblocks.length === 0 ? (
+              <p className="text-sm italic text-muted">No rated stat blocks yet. Vote on explore previews.</p>
+            ) : (
+              <ul className={TOP_RATED_LIST_CLASS}>
+                {topStatblocks.map((item, i) => (
+                  <ExploreTopRatedRow key={item.id} item={item} rank={i + 1} />
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
       )}
     </section>
   );
@@ -128,6 +220,8 @@ export default function ExplorePage() {
   const [newItems, setNewItems] = useState<ExploreListItem[]>([]);
   const [forkedItems, setForkedItems] = useState<ExploreListItem[]>([]);
   const [popularItems, setPopularItems] = useState<ExploreListItem[]>([]);
+  const [leaderboardCards, setLeaderboardCards] = useState<ExploreListItem[]>([]);
+  const [leaderboardStatblocks, setLeaderboardStatblocks] = useState<ExploreListItem[]>([]);
   const [followingItems, setFollowingItems] = useState<ExploreListItem[]>([]);
   const [followingAuthed, setFollowingAuthed] = useState(true);
 
@@ -154,15 +248,19 @@ export default function ExplorePage() {
     (async () => {
       setLoading(true);
       try {
-        const [n, f, p] = await Promise.all([
+        const [n, f, p, lbCard, lbSb] = await Promise.all([
           fetchSection('new'),
           fetchSection('forked'),
           fetchSection('popular'),
+          fetchRatedByType('card', 8),
+          fetchRatedByType('statblock', 8),
         ]);
         if (cancelled) return;
         setNewItems(n);
         setForkedItems(f);
         setPopularItems(p);
+        setLeaderboardCards(lbCard);
+        setLeaderboardStatblocks(lbSb);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -199,6 +297,12 @@ export default function ExplorePage() {
           items={followingItems}
           loading={followingLoading}
           authed={followingAuthed}
+        />
+
+        <LeaderboardSection
+          topCards={leaderboardCards}
+          topStatblocks={leaderboardStatblocks}
+          loading={loading}
         />
 
         <ExploreSection

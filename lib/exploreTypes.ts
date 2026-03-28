@@ -1,4 +1,4 @@
-export type ExploreSort = 'new' | 'forked' | 'popular';
+export type ExploreSort = 'new' | 'forked' | 'popular' | 'rated';
 
 export type ExploreListItem = {
   id: string;
