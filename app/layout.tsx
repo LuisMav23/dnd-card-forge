@@ -22,6 +22,9 @@ const crimsonText = Crimson_Text({
 export const metadata: Metadata = {
   title: 'Card Forge',
   description: 'Spells · Armor · Weapons · Items · Sidekicks · Anything — Export PNG',
+  icons: {
+    icon: '/logo.svg',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

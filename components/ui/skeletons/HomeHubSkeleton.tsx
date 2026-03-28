@@ -1,4 +1,5 @@
 import Skeleton from '@/components/ui/Skeleton';
+import { ITEM_CARD_GRID_CLASS } from '@/lib/itemCardGrid';
 
 export default function HomeHubSkeleton() {
   return (
@@ -14,16 +15,16 @@ export default function HomeHubSkeleton() {
       <div className="mt-10">
         <Skeleton className="h-5 w-40" />
         <Skeleton className="mt-2 h-3 w-64 max-w-full" />
-        <ul className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+        <ul className={`mt-6 ${ITEM_CARD_GRID_CLASS}`}>
           {[1, 2, 3, 4, 5, 6].map(i => (
-            <li key={i} className="overflow-hidden rounded-xl border border-bdr/50 bg-panel/40">
-              <Skeleton className="aspect-[4/3] w-full rounded-none" />
-              <div className="space-y-2 p-3">
+            <li
+              key={i}
+              className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-bdr/50 bg-panel/40"
+            >
+              <Skeleton className="aspect-[4/3] w-full shrink-0 rounded-none" />
+              <div className="flex min-h-0 flex-1 flex-col justify-between gap-2 p-3">
                 <Skeleton className="h-4 w-full" />
-                <div className="flex items-center gap-2">
-                  <Skeleton className="h-5 w-5 shrink-0 rounded-full" />
-                  <Skeleton className="h-3 flex-1" />
-                </div>
+                <Skeleton className="mt-auto h-3 w-4/5 max-w-full" />
               </div>
             </li>
           ))}

@@ -70,12 +70,49 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     mapPublishedRowToExploreItem(row as PublishedCardExploreRow)
   );
 
+  const is_self = Boolean(user && user.id === id);
+  const favorites_public = Boolean(
+    (profileRow as { favorites_public?: boolean }).favorites_public
+  );
+
+  let favorites: ReturnType<typeof mapPublishedRowToExploreItem>[] = [];
+  if (is_self || favorites_public) {
+    const { data: favIdRows, error: favErr } = await supabase.rpc(
+      'get_user_public_favorite_card_ids',
+      { p_user_id: id, p_limit: 48 }
+    );
+    if (favErr) {
+      return NextResponse.json({ error: favErr.message }, { status: 500 });
+    }
+    const idRows = Array.isArray(favIdRows) ? favIdRows : [];
+    const cardIds = idRows
+      .map((r: { card_id?: string }) => r.card_id)
+      .filter((cid): cid is string => Boolean(cid));
+    if (cardIds.length > 0) {
+      const { data: favCards, error: cardsErr } = await supabase
+        .from('cards')
+        .select(LIST_FIELDS)
+        .eq('is_published', true)
+        .in('id', cardIds);
+      if (cardsErr) {
+        return NextResponse.json({ error: cardsErr.message }, { status: 500 });
+      }
+      const byId = new Map((favCards ?? []).map(r => [r.id as string, r]));
+      const ordered = cardIds
+        .map(cid => byId.get(cid))
+        .filter(Boolean) as PublishedCardExploreRow[];
+      favorites = ordered.map(row => mapPublishedRowToExploreItem(row));
+    }
+  }
+
   return NextResponse.json({
     profile: profileRow,
     published,
+    favorites,
+    favorites_public,
     follower_count,
     following_count,
     is_following,
-    is_self: Boolean(user && user.id === id),
+    is_self,
   });
 }

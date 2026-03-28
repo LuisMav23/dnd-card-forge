@@ -19,6 +19,7 @@ import {
   getStatBlockWikiTypeLabel,
 } from '@/lib/statBlockWikiContent';
 import StatBlockRenderer from '@/components/statblocks/StatBlockRenderer';
+import WikiClickableArt from '@/components/wiki/WikiClickableArt';
 
 const WIKI_SB_SCALE = 0.39;
 const SB_CARD_LAYOUT_WIDTH = 700;
@@ -98,14 +99,6 @@ const StatBlockWikiView = forwardRef<HTMLDivElement, Props>(function StatBlockWi
   const narratives = getStatBlockWikiNarrativeSections(state);
   const desc = f.description?.trim();
 
-  const artContent = state.image ? (
-    <img src={state.image} alt="" className="h-full min-h-[220px] w-full object-cover" />
-  ) : (
-    <div className="flex h-full min-h-[220px] w-full items-center justify-center bg-mid/80 text-7xl">
-      {state.icon}
-    </div>
-  );
-
   return (
     <article className="wiki-card-page mx-auto max-w-5xl px-4 py-10 sm:px-8 sm:py-12">
       <div className="rounded-2xl border border-bdr bg-panel/90 p-7 shadow-sm sm:p-10 lg:p-12">
@@ -123,9 +116,12 @@ const StatBlockWikiView = forwardRef<HTMLDivElement, Props>(function StatBlockWi
               )}
               <p className="text-base leading-relaxed text-parch">{getStatBlockWikiSubtypeLine(state)}</p>
             </header>
-            <div className="overflow-hidden rounded-xl border border-bdr bg-mid/40 shadow-inner">
-              <div className="aspect-[4/5] max-h-[min(420px,55vh)] w-full">{artContent}</div>
-            </div>
+            <WikiClickableArt
+              src={state.image}
+              alt={`${name} stat block art`}
+              frameClassName="aspect-square mx-auto w-full max-w-sm"
+              placeholder={<span aria-hidden>{state.icon}</span>}
+            />
 
             <section className="flex flex-col gap-4">
               <h2 className="border-b border-bdr pb-3 font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-[0.22em] text-gold">

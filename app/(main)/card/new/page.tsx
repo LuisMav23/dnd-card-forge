@@ -2,7 +2,7 @@
 
 import { Suspense, useReducer, useRef, useCallback, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { CardState, CardAction, CardType } from '@/lib/types';
 import { CARD_TYPES, getDefaultFields } from '@/lib/cardConfig';
 import { coerceRarity, DEFAULT_CARD_PALETTE, hydrateCardPalette } from '@/lib/cardPalette';
@@ -14,6 +14,8 @@ import LivePreview from '@/components/LivePreview';
 import ForgeLibraryLoadSkeleton from '@/components/ui/ForgeLibraryLoadSkeleton';
 import LoadingLibraryProgressBar from '@/components/ui/LoadingLibraryProgressBar';
 import RouteSuspenseFallback from '@/components/ui/RouteSuspenseFallback';
+import { FROM_LIBRARY_QS, isFromLibrarySearch } from '@/lib/fromLibraryNav';
+import { useLibraryItemAutosave } from '@/hooks/useLibraryItemAutosave';
 
 function cardReducer(state: CardState, action: CardAction): CardState {
   switch (action.type) {
@@ -72,29 +74,79 @@ const initialState: CardState = {
   fields: getDefaultFields('spell'),
 };
 
+const NEW_CARD_BASELINE_SERIALIZED = JSON.stringify(initialState);
+
 function CardForgeInner() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const libraryId = searchParams.get('library');
+  const fromLibrary = isFromLibrarySearch(searchParams);
+  const previewBackHref = libraryId
+    ? `/card/${libraryId}${fromLibrary ? FROM_LIBRARY_QS : ''}`
+    : '/card';
 
   const [state, dispatch] = useReducer(cardReducer, initialState);
   const cardRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
   const [exportLabel, setExportLabel] = useState('⬇ Export Card as PNG');
 
-  const [saving, setSaving] = useState(false);
-  const saveBase = libraryId ? '💾 Update in Library' : '💾 Save to Library';
-  const [saveLabel, setSaveLabel] = useState(saveBase);
-
   const [loadState, setLoadState] = useState<'idle' | 'loading' | 'error' | 'ready'>(() =>
     libraryId ? 'loading' : 'ready'
   );
 
-  useEffect(() => {
-    setSaveLabel(libraryId ? '💾 Update in Library' : '💾 Save to Library');
-  }, [libraryId]);
+  const persistPost = useCallback(
+    async ({ title, payload }: { title: string; payload: CardState }) => {
+      const res = await fetch('/api/cards', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          itemType: 'card',
+          cardData: payload,
+        }),
+      });
+      const data = (await res.json()) as { id?: string; error?: string };
+      if (!res.ok) throw new Error(data.error || 'Failed to save card');
+      if (!data.id) throw new Error('Save did not return an id');
+      return { id: data.id };
+    },
+    []
+  );
+
+  const persistPatch = useCallback(
+    async ({ id, title, payload }: { id: string; title: string; payload: CardState }) => {
+      const res = await fetch(`/api/cards/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, cardData: payload }),
+      });
+      const data = (await res.json()) as { error?: string };
+      if (!res.ok) throw new Error(data.error || 'Failed to update');
+    },
+    []
+  );
+
+  const { skipLibraryFetchIdRef, persistManual, saving, saveLabel, autosaveHint } =
+    useLibraryItemAutosave({
+      state,
+      libraryIdFromUrl: libraryId,
+      loadState,
+      fromLibrary,
+      router,
+      newItemBaselineSerialized: NEW_CARD_BASELINE_SERIALIZED,
+      forgeNewPath: '/card/new',
+      getTitle: () => state.fields.name || 'Untitled Card',
+      persistPost,
+      persistPatch,
+    });
 
   useEffect(() => {
     if (!libraryId) {
+      setLoadState('ready');
+      return;
+    }
+    if (skipLibraryFetchIdRef.current === libraryId) {
+      skipLibraryFetchIdRef.current = null;
       setLoadState('ready');
       return;
     }
@@ -156,54 +208,6 @@ function CardForgeInner() {
     }
   }, [state.fields.name]);
 
-  const handleSave = useCallback(async () => {
-    if (libraryId && loadState !== 'ready') return;
-    setSaving(true);
-    setSaveLabel('⏳ Saving…');
-    const reset = libraryId ? '💾 Update in Library' : '💾 Save to Library';
-    try {
-      if (libraryId) {
-        const res = await fetch(`/api/cards/${libraryId}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            title: state.fields.name || 'Untitled Card',
-            cardData: state,
-          }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to update');
-        setSaveLabel('✓ Updated!');
-      } else {
-        const res = await fetch('/api/cards', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            title: state.fields.name || 'Untitled Card',
-            itemType: 'card',
-            cardData: state,
-          }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to save card');
-        setSaveLabel('✓ Saved!');
-      }
-    } catch (err: unknown) {
-      console.error(err);
-      const msg = err instanceof Error ? err.message : '';
-      if (msg === 'Unauthorized') {
-        setSaveLabel('✕ Please login first');
-      } else {
-        setSaveLabel('✕ Error saving');
-      }
-    } finally {
-      setTimeout(() => {
-        setSaveLabel(reset);
-        setSaving(false);
-      }, 2500);
-    }
-  }, [state, libraryId, loadState]);
-
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden">
       {!libraryId && (
@@ -219,7 +223,7 @@ function CardForgeInner() {
       {libraryId && (
         <div className="border-b border-bdr bg-panel/80 px-4 py-2">
           <Link
-            href={`/card/${libraryId}`}
+            href={previewBackHref}
             className="inline-flex font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-wider text-gold-dark transition-colors hover:text-gold"
           >
             ← Back to preview
@@ -257,10 +261,11 @@ function CardForgeInner() {
             onExport={handleExport}
             exporting={exporting}
             exportLabel={exportLabel}
-            onSave={handleSave}
+            onSave={persistManual}
             saving={saving}
             saveLabel={saveLabel}
             saveDisabled={Boolean(libraryId && loadState !== 'ready')}
+            autosaveHint={autosaveHint}
           />
           <LivePreview ref={cardRef} state={state} />
         </div>

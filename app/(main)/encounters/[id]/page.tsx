@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import EncounterSessionEntry from '@/components/encounters/EncounterSessionEntry';
 import { EncounterSessionLinesSkeleton } from '@/components/ui/skeletons/EncounterSessionSkeleton';
@@ -28,7 +28,12 @@ function mergeEffects(raw: unknown): EncounterEffect[] {
 
 export default function EncounterSessionPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const id = typeof params.id === 'string' ? params.id : '';
+  const fromLibrary = searchParams.get('from') === 'library';
+  const backHref = fromLibrary ? '/library' : '/encounters';
+  const backLabel = fromLibrary ? '← Library' : '← Encounters';
+  const sessionQs = fromLibrary ? '?from=library' : '';
   const [detail, setDetail] = useState<EncounterDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -178,10 +183,10 @@ export default function EncounterSessionPage() {
         <div className="mx-auto flex w-full max-w-[1600px] flex-wrap items-start justify-between gap-4 px-0">
           <div>
             <Link
-              href="/encounters"
+              href={backHref}
               className="font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-wider text-gold-dark hover:text-gold"
             >
-              ← Encounters
+              {backLabel}
             </Link>
             {loading && (
               <div className="mt-3 space-y-2" aria-hidden>
@@ -209,7 +214,10 @@ export default function EncounterSessionPage() {
           )}
           {detail && (
             <div className="flex flex-wrap gap-2">
-              <Link href={`/encounters/${id}/edit`} className="panel-btn text-sm text-bronze">
+              <Link
+                href={`/encounters/${id}/edit${sessionQs}`}
+                className="panel-btn text-sm text-bronze"
+              >
                 Edit encounter
               </Link>
               <button
@@ -242,19 +250,21 @@ export default function EncounterSessionPage() {
               value={playerDescDraft}
               onChange={e => setPlayerDescDraft(e.target.value)}
               maxLength={8000}
-              rows={5}
-              className="encounter-form-control mt-3 w-full max-w-2xl resize-y rounded-md border border-bdr-2 bg-input px-3 py-2 font-[var(--font-crimson),Georgia,serif] text-sm leading-relaxed text-fg placeholder:text-placeholder focus:border-gold-dark focus:outline-none focus:ring-2 focus:ring-gold/15"
+              rows={6}
+              className="encounter-form-control mt-3 min-h-[8rem] w-full resize-y rounded-md border border-bdr-2 bg-input px-3 py-2 font-[var(--font-crimson),Georgia,serif] text-sm leading-relaxed text-fg placeholder:text-placeholder focus:border-gold-dark focus:outline-none focus:ring-2 focus:ring-gold/15 sm:min-h-[9rem]"
               placeholder="Optional — add or update what players should know or hear…"
               aria-label="Player-facing encounter description"
             />
-            <button
-              type="button"
-              onClick={() => void savePlayerDescription()}
-              disabled={descSaving}
-              className="panel-btn mt-3 text-sm text-gold disabled:opacity-50"
-            >
-              {descSaving ? 'Saving…' : 'Save description'}
-            </button>
+            <div className="mt-3 flex justify-end border-t border-bdr/50 pt-3">
+              <button
+                type="button"
+                onClick={() => void savePlayerDescription()}
+                disabled={descSaving}
+                className="panel-btn text-sm text-gold disabled:opacity-50"
+              >
+                {descSaving ? 'Saving…' : 'Save description'}
+              </button>
+            </div>
           </section>
         )}
 
@@ -268,8 +278,8 @@ export default function EncounterSessionPage() {
           {error && (
             <div>
               <p className="text-sm text-red-300">{error}</p>
-              <Link href="/encounters" className="mt-4 inline-block text-gold underline">
-                Back to list
+              <Link href={backHref} className="mt-4 inline-block text-gold underline">
+                {fromLibrary ? 'Back to library' : 'Back to list'}
               </Link>
             </div>
           )}

@@ -49,7 +49,7 @@ export default function ProfileFavoritesPage() {
           href="/profile"
           className="font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-wider text-gold-dark hover:text-gold"
         >
-          ← Profile settings
+          ← Profile
         </Link>
         <h1 className="mt-6 font-[var(--font-cinzel),serif] text-2xl font-bold text-gold">Favorites</h1>
         <p className="mt-2 text-sm text-bronze">Published items you saved from Explore.</p>

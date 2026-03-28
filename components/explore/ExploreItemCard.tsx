@@ -3,13 +3,13 @@ import { exploreCount, type ExploreListItem } from '@/lib/exploreTypes';
 
 export default function ExploreItemCard({ item }: { item: ExploreListItem }) {
   return (
-    <li className="list-none">
-      <div className="group flex flex-col overflow-hidden rounded-xl border border-bdr bg-panel/90 shadow-[0_4px_20px_rgba(0,0,0,0.2)] transition-colors hover:border-gold/40 hover:shadow-[0_8px_28px_rgba(201,168,76,0.12)]">
+    <li className="list-none flex h-full min-h-0 flex-col">
+      <div className="group flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-bdr bg-panel/90 shadow-[0_4px_20px_rgba(0,0,0,0.2)] transition-colors hover:border-gold/40 hover:shadow-[0_8px_28px_rgba(201,168,76,0.12)]">
         <Link
           href={`/explore/${item.id}`}
-          className="flex min-w-0 flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/40"
+          className="flex min-h-0 min-w-0 flex-1 flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/40"
         >
-          <div className="relative aspect-[4/3] w-full overflow-hidden bg-mid/90">
+          <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-mid/90">
             {item.thumbnail_url ? (
               <img
                 src={item.thumbnail_url}
@@ -27,7 +27,7 @@ export default function ExploreItemCard({ item }: { item: ExploreListItem }) {
               </div>
             )}
           </div>
-          <div className="flex min-w-0 flex-col gap-2 p-3 pt-2.5">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 p-3 pt-2.5">
             <h3 className="truncate font-[var(--font-cinzel),serif] text-[0.8rem] font-bold leading-tight text-gold group-hover:text-gold-light">
               {item.title}
             </h3>
@@ -44,7 +44,7 @@ export default function ExploreItemCard({ item }: { item: ExploreListItem }) {
             </div>
           </div>
         </Link>
-        <div className="flex min-w-0 flex-col gap-1.5 px-3 pb-3 pt-0">
+        <div className="mt-auto flex min-h-0 shrink-0 flex-col gap-1.5 px-3 pb-3 pt-0">
           <p className="truncate text-[0.7rem] text-bronze">
             {item.published_author_name?.trim() ? (
               <>

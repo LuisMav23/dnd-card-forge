@@ -26,6 +26,7 @@ export default function NewEncounterPage() {
           initialRows={[]}
           submitLabel="Create encounter"
           cancelHref="/encounters"
+          autosave={{ encounterId: null, loadState: 'ready', fromLibrary: false, router }}
           onSubmit={async payload => {
             const res = await fetch('/api/encounters', {
               method: 'POST',

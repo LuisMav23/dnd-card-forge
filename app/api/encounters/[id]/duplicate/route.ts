@@ -88,5 +88,9 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
     updated_at: newEnc.updated_at,
     folder_id: newEnc.folder_id ?? null,
     entry_count: entries.length,
+    thumbnail_url:
+      typeof newEnc.thumbnail_url === 'string' && newEnc.thumbnail_url.trim()
+        ? newEnc.thumbnail_url.trim()
+        : null,
   });
 }

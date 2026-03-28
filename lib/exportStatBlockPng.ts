@@ -1,5 +1,5 @@
 import { downloadCanvasAsPng } from '@/lib/downloadCanvasPng';
-import { flattenDomForHtml2Canvas } from '@/lib/flattenDomForHtml2Canvas';
+import { flattenDomForHtml2Canvas, selfFlattenHtml2CanvasTree } from '@/lib/flattenDomForHtml2Canvas';
 
 /**
  * Clones a stat block DOM node off-screen and captures it with html2canvas (same settings as Stat Blocks forge).
@@ -28,6 +28,11 @@ export async function exportStatBlockToPng(blockElement: HTMLElement, nameForFil
       allowTaint: true,
       backgroundColor: null,
       logging: false,
+      onclone: (_doc, element) => {
+        if (element instanceof HTMLElement) {
+          selfFlattenHtml2CanvasTree(element);
+        }
+      },
     });
 
     await downloadCanvasAsPng(canvas, `${base}-statblock.png`);

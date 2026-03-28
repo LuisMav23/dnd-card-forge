@@ -50,6 +50,7 @@ create table if not exists
     country text null,
     bio text null,
     avatar_url text null,
+    favorites_public boolean not null default false,
     created_at timestamp with time zone not null default now(),
     constraint user_profiles_pkey primary key (id),
     constraint user_profiles_id_fkey foreign key (id) references auth.users (id) on delete cascade

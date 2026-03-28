@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import EncounterThumbnailUpload from '@/components/encounters/EncounterThumbnailUpload';
 import EncounterBuilderLibrarySkeleton from '@/components/ui/skeletons/EncounterBuilderLibrarySkeleton';
+import { useEncounterAutosave, type EncounterAutosaveLoadState } from '@/hooks/useEncounterAutosave';
+import type { CreateEncounterBody, EncounterBuilderPayload } from '@/lib/encounterTypes';
 import { labelForStatblockCard } from './statblockLabel';
 
 type LibraryRow = {
@@ -19,11 +21,13 @@ function newKey() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-export type EncounterBuilderPayload = {
-  title: string;
-  entries: { statblockId: string; count: number }[];
-  thumbnailUrl: string | null;
-  playerDescription: string;
+export type { EncounterBuilderPayload };
+
+export type EncounterBuilderAutosaveConfig = {
+  encounterId: string | null;
+  loadState: EncounterAutosaveLoadState;
+  fromLibrary: boolean;
+  router: { replace: (href: string) => void };
 };
 
 interface Props {
@@ -34,6 +38,7 @@ interface Props {
   submitLabel: string;
   cancelHref: string;
   onSubmit: (payload: EncounterBuilderPayload) => Promise<void>;
+  autosave?: EncounterBuilderAutosaveConfig;
 }
 
 export default function EncounterBuilderForm({
@@ -44,6 +49,7 @@ export default function EncounterBuilderForm({
   submitLabel,
   cancelHref,
   onSubmit,
+  autosave,
 }: Props) {
   const [title, setTitle] = useState(initialTitle);
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(initialThumbnailUrl ?? null);
@@ -57,6 +63,61 @@ export default function EncounterBuilderForm({
   const [loadingLib, setLoadingLib] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const encounterPayload = useMemo(
+    (): EncounterBuilderPayload => ({
+      title,
+      entries: rows.map(r => ({ statblockId: r.statblockId, count: r.count })),
+      thumbnailUrl,
+      playerDescription,
+    }),
+    [title, rows, thumbnailUrl, playerDescription]
+  );
+
+  const persistPost = useCallback(async (body: CreateEncounterBody) => {
+    const res = await fetch('/api/encounters', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: body.title,
+        entries: body.entries,
+        thumbnailUrl: body.thumbnailUrl,
+        playerDescription: body.playerDescription,
+      }),
+    });
+    const data = (await res.json()) as { id?: string; error?: string };
+    if (!res.ok) throw new Error(data.error || 'Could not create');
+    if (!data.id) throw new Error('Create did not return an id');
+    return { id: data.id };
+  }, []);
+
+  const persistPatch = useCallback(async (encId: string, body: CreateEncounterBody) => {
+    const res = await fetch(`/api/encounters/${encId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: body.title,
+        entries: body.entries,
+        thumbnailUrl: body.thumbnailUrl,
+        playerDescription: body.playerDescription,
+      }),
+    });
+    const data = (await res.json()) as { error?: string };
+    if (!res.ok) throw new Error(data.error || 'Could not save');
+  }, []);
+
+  const noopRouter = useMemo(() => ({ replace: () => undefined }), []);
+
+  const { autosaveHint, autosaveBusy } = useEncounterAutosave({
+    enabled: Boolean(autosave),
+    payload: encounterPayload,
+    encounterIdFromUrl: autosave?.encounterId ?? null,
+    loadState: autosave?.loadState ?? 'ready',
+    fromLibrary: autosave?.fromLibrary ?? false,
+    router: autosave?.router ?? noopRouter,
+    persistPost,
+    persistPatch,
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -255,9 +316,16 @@ export default function EncounterBuilderForm({
       </div>
 
       {error && <p className="text-sm text-red-300">{error}</p>}
+      {autosaveHint ? (
+        <p className="text-center text-[0.65rem] leading-snug text-muted">{autosaveHint}</p>
+      ) : null}
 
       <div className="flex flex-wrap gap-3">
-        <button type="submit" disabled={saving || options.length === 0} className="panel-btn text-gold disabled:opacity-50">
+        <button
+          type="submit"
+          disabled={saving || autosaveBusy || options.length === 0}
+          className="panel-btn text-gold disabled:opacity-50"
+        >
           {saving ? 'Saving…' : submitLabel}
         </button>
         <Link href={cancelHref} className="panel-btn text-bronze">

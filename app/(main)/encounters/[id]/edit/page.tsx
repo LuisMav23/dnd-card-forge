@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import EncounterBuilderForm from '@/components/encounters/EncounterBuilderForm';
 import { EncounterFormFieldsSkeleton } from '@/components/ui/skeletons/EncounterFormSkeleton';
@@ -9,8 +9,12 @@ import type { EncounterDetail } from '@/lib/encounterTypes';
 
 export default function EditEncounterPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const id = typeof params.id === 'string' ? params.id : '';
   const router = useRouter();
+  const fromLibrary = searchParams.get('from') === 'library';
+  const sessionQs = fromLibrary ? '?from=library' : '';
+  const listHref = fromLibrary ? '/library' : '/encounters';
   const [detail, setDetail] = useState<EncounterDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -41,7 +45,7 @@ export default function EditEncounterPage() {
       <main className="flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto px-4 py-6 sm:px-8 sm:py-10">
         <div className="mx-auto mb-8 w-full max-w-2xl">
           <Link
-            href={`/encounters/${id}`}
+            href={`/encounters/${id}${sessionQs}`}
             className="font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-wider text-gold-dark hover:text-gold"
           >
             ← Session view
@@ -58,8 +62,8 @@ export default function EditEncounterPage() {
         {error && (
           <div className="mx-auto max-w-2xl">
             <p className="text-sm text-red-300">{error}</p>
-            <Link href="/encounters" className="mt-4 inline-block text-gold underline">
-              Back to list
+            <Link href={listHref} className="mt-4 inline-block text-gold underline">
+              {fromLibrary ? 'Back to library' : 'Back to list'}
             </Link>
           </div>
         )}
@@ -73,7 +77,13 @@ export default function EditEncounterPage() {
               count: e.count,
             })).filter(r => r.statblockId)}
             submitLabel="Save changes"
-            cancelHref={`/encounters/${id}`}
+            cancelHref={`/encounters/${id}${sessionQs}`}
+            autosave={{
+              encounterId: id,
+              loadState: 'ready',
+              fromLibrary,
+              router,
+            }}
             onSubmit={async payload => {
               const res = await fetch(`/api/encounters/${id}`, {
                 method: 'PATCH',
@@ -87,7 +97,7 @@ export default function EditEncounterPage() {
               });
               const data = await res.json();
               if (!res.ok) throw new Error(data.error || 'Could not save');
-              router.push(`/encounters/${id}`);
+              router.push(`/encounters/${id}${sessionQs}`);
               router.refresh();
             }}
           />

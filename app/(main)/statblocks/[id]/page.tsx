@@ -2,7 +2,8 @@
 
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
+import { FROM_LIBRARY_APPEND, isFromLibrarySearch } from '@/lib/fromLibraryNav';
 import { parseStatBlockFromLibraryRow, type LibraryStatBlockRow } from '@/lib/statBlockLoad';
 import type { StatBlockState } from '@/lib/statblockTypes';
 import { exportStatBlockToPng } from '@/lib/exportStatBlockPng';
@@ -12,7 +13,14 @@ import WikiDetailBodySkeleton from '@/components/ui/skeletons/WikiDetailBodySkel
 
 function StatBlockDetailInner() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const id = typeof params.id === 'string' ? params.id : '';
+  const fromLibrary = isFromLibrarySearch(searchParams);
+  const backHref = fromLibrary ? '/library' : '/statblocks';
+  const backLabel = fromLibrary ? '← Library' : '← Stat blocks';
+  const editHref = fromLibrary
+    ? `/statblocks/new?library=${id}${FROM_LIBRARY_APPEND}`
+    : `/statblocks/new?library=${id}`;
 
   const [status, setStatus] = useState<'loading' | 'ready' | 'error' | 'unauthorized'>('loading');
   const [state, setState] = useState<StatBlockState | null>(null);
@@ -81,10 +89,10 @@ function StatBlockDetailInner() {
       <div className="border-b border-bdr bg-panel/80 px-4 py-3">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3">
           <Link
-            href="/library"
+            href={backHref}
             className="font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-wider text-gold-dark transition-colors hover:text-gold"
           >
-            ← Library
+            {backLabel}
           </Link>
           {status === 'ready' && id ? (
             <div className="flex flex-wrap items-center justify-end gap-2">
@@ -96,7 +104,7 @@ function StatBlockDetailInner() {
               >
                 {downloadLabel}
               </button>
-              <Link href={`/statblocks/new?library=${id}`} className="panel-btn text-gold">
+              <Link href={editHref} className="panel-btn text-gold">
                 Edit stat block
               </Link>
             </div>
@@ -123,8 +131,8 @@ function StatBlockDetailInner() {
       {status === 'error' && (
         <div className="mx-auto max-w-md px-4 py-16 text-center">
           <p className="text-parch">This stat block could not be loaded or is not a valid stat block.</p>
-          <Link href="/library" className="mt-4 inline-block panel-btn">
-            Back to library
+          <Link href={backHref} className="mt-4 inline-block panel-btn">
+            {fromLibrary ? 'Back to library' : 'Back to stat blocks'}
           </Link>
         </div>
       )}

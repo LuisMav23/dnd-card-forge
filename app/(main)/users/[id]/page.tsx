@@ -13,6 +13,7 @@ type PublicProfile = {
   bio: string | null;
   avatar_url: string | null;
   created_at: string | null;
+  favorites_public?: boolean;
 };
 
 export default function PublicUserProfilePage() {
@@ -23,6 +24,8 @@ export default function PublicUserProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [published, setPublished] = useState<ExploreListItem[]>([]);
+  const [favorites, setFavorites] = useState<ExploreListItem[]>([]);
+  const [favoritesPublic, setFavoritesPublic] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [isFollowing, setIsFollowing] = useState(false);
@@ -46,6 +49,8 @@ export default function PublicUserProfilePage() {
       if (!res.ok) throw new Error(data.error || 'Not found');
       setProfile(data.profile as PublicProfile);
       setPublished(Array.isArray(data.published) ? data.published : []);
+      setFavorites(Array.isArray(data.favorites) ? data.favorites : []);
+      setFavoritesPublic(Boolean(data.favorites_public));
       setFollowerCount(Number(data.follower_count ?? 0));
       setFollowingCount(Number(data.following_count ?? 0));
       setIsFollowing(Boolean(data.is_following));
@@ -80,6 +85,8 @@ export default function PublicUserProfilePage() {
       if (sync.ok) {
         setFollowerCount(Number(d.follower_count ?? 0));
         setIsFollowing(Boolean(d.is_following));
+        setFavorites(Array.isArray(d.favorites) ? d.favorites : []);
+        setFavoritesPublic(Boolean(d.favorites_public));
       }
     } catch (e) {
       alert(e instanceof Error ? e.message : 'Request failed');
@@ -94,12 +101,22 @@ export default function PublicUserProfilePage() {
   return (
     <div className="page-radial-soft flex min-h-0 flex-1 flex-col overflow-x-hidden bg-bg">
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-8 sm:py-10">
-        <Link
-          href="/explore"
-          className="font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-wider text-gold-dark hover:text-gold"
-        >
-          ← Explore
-        </Link>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Link
+            href="/explore"
+            className="font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-wider text-gold-dark hover:text-gold"
+          >
+            ← Explore
+          </Link>
+          {!loading && profile && isSelf ? (
+            <Link
+              href="/profile/edit"
+              className="panel-btn shrink-0 border-gold/35 bg-gold/10 text-center text-xs text-gold hover:bg-gold/20 sm:text-sm"
+            >
+              Edit profile
+            </Link>
+          ) : null}
+        </div>
 
         {loading && (
           <div className="mt-8 animate-pulse space-y-4">
@@ -201,6 +218,38 @@ export default function PublicUserProfilePage() {
                 </ul>
               )}
             </section>
+
+            {(isSelf || favoritesPublic) && (
+              <section className="mt-12" aria-labelledby="favorites-heading">
+                <h2
+                  id="favorites-heading"
+                  className="font-[var(--font-cinzel),serif] text-lg font-bold tracking-wide text-gold"
+                >
+                  Favorites
+                </h2>
+                <p className="mt-1 text-sm text-bronze">
+                  Published items saved from Explore{!favoritesPublic && isSelf ? ' (only visible to you)' : ''}.
+                </p>
+                {isSelf && !favoritesPublic ? (
+                  <p className="mt-2 text-sm text-muted">
+                    Turn on <span className="text-bronze">Public favorites</span> in{' '}
+                    <Link href="/profile/edit" className="text-gold underline-offset-2 hover:underline">
+                      Edit profile
+                    </Link>{' '}
+                    to show this list on your profile to everyone.
+                  </p>
+                ) : null}
+                {favorites.length === 0 ? (
+                  <p className="mt-6 text-sm italic text-muted">No favorites yet.</p>
+                ) : (
+                  <ul className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {favorites.map(item => (
+                      <ExploreItemCard key={item.id} item={item} />
+                    ))}
+                  </ul>
+                )}
+              </section>
+            )}
           </>
         )}
       </main>

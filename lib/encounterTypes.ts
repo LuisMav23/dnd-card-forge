@@ -58,6 +58,14 @@ export interface EncounterDetail {
   entries: EncounterEntryDetail[];
 }
 
+/** Shape produced by EncounterBuilderForm for create/update. */
+export type EncounterBuilderPayload = {
+  title: string;
+  entries: { statblockId: string; count: number }[];
+  thumbnailUrl: string | null;
+  playerDescription: string;
+};
+
 export interface CreateEncounterBody {
   title: string;
   entries: { statblockId: string; count: number }[];

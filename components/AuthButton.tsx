@@ -46,10 +46,10 @@ function avatarUrlFromUser(user: User): string | null {
 }
 
 const accountLinkClass =
-  'block px-3 py-2.5 font-[var(--font-cinzel),serif] text-xs tracking-[.08em] uppercase text-bronze transition-colors hover:bg-mid hover:text-gold';
+  'block px-3 py-2.5 font-[var(--font-cinzel),serif] text-xs tracking-[.08em] uppercase text-ink transition-colors hover:bg-mid hover:text-gold-dark dark:text-bronze dark:hover:text-gold';
 
 const accountBtnClass =
-  'w-full px-3 py-2.5 text-left font-[var(--font-cinzel),serif] text-xs tracking-[.08em] uppercase text-bronze transition-colors hover:bg-mid hover:text-red-400';
+  'w-full px-3 py-2.5 text-left font-[var(--font-cinzel),serif] text-xs tracking-[.08em] uppercase text-ink transition-colors hover:bg-mid hover:text-red-500 dark:text-bronze';
 
 export type AuthButtonProps = {
   /** Target node inside mobile hamburger nav; account block is portaled here below `lg` */
@@ -188,7 +188,7 @@ export default function AuthButton({ mobileAccountMount, onCloseMobileNav }: Aut
                 </span>
               )}
             </span>
-            <span className="min-w-0 flex-1 font-[var(--font-cinzel),serif] text-sm font-semibold leading-snug text-gold">
+            <span className="min-w-0 flex-1 font-[var(--font-cinzel),serif] text-sm font-semibold leading-snug text-ink dark:text-gold">
               {displayName}
             </span>
           </div>
@@ -199,7 +199,7 @@ export default function AuthButton({ mobileAccountMount, onCloseMobileNav }: Aut
               </p>
             ) : null}
             <Link
-              href="/profile"
+              href={`/users/${user.id}`}
               role="menuitem"
               className={accountLinkClass}
               onClick={() => onCloseMobileNav?.()}
@@ -224,7 +224,7 @@ export default function AuthButton({ mobileAccountMount, onCloseMobileNav }: Aut
         <div className="relative hidden shrink-0 lg:block" ref={menuRef}>
           <button
             type="button"
-            className="flex max-w-[min(100vw-8rem,14rem)] items-center gap-2 rounded-lg border border-bdr bg-panel/80 py-1 pl-1 pr-2.5 transition-colors hover:border-gold-dark/60 hover:bg-mid sm:max-w-[16rem] sm:pr-3"
+            className="flex max-w-[min(100vw-8rem,14rem)] items-center gap-2 rounded-lg border border-bdr-2 bg-panel/90 py-1 pl-1 pr-2.5 transition-colors hover:border-gold-dark hover:bg-mid sm:max-w-[16rem] sm:pr-3 dark:border-bdr dark:hover:border-gold-dark/60"
             aria-expanded={menuOpen}
             aria-haspopup="menu"
             aria-controls="user-account-menu"
@@ -245,10 +245,10 @@ export default function AuthButton({ mobileAccountMount, onCloseMobileNav }: Aut
                 </span>
               )}
             </span>
-            <span className="min-w-0 truncate text-left font-[var(--font-cinzel),serif] text-[0.7rem] font-semibold tracking-wide text-bronze sm:text-xs">
+            <span className="min-w-0 truncate text-left font-[var(--font-cinzel),serif] text-[0.7rem] font-semibold tracking-wide text-ink sm:text-xs dark:text-bronze">
               {displayName}
             </span>
-            <span className="shrink-0 text-[0.6rem] text-muted" aria-hidden>
+            <span className="shrink-0 text-[0.6rem] text-gold-dark dark:text-muted" aria-hidden>
               {menuOpen ? '▲' : '▼'}
             </span>
           </button>
@@ -266,7 +266,7 @@ export default function AuthButton({ mobileAccountMount, onCloseMobileNav }: Aut
                 </p>
               ) : null}
               <Link
-                href="/profile"
+                href={`/users/${user.id}`}
                 role="menuitem"
                 className={accountLinkClass}
                 onClick={() => setMenuOpen(false)}
@@ -290,7 +290,7 @@ export default function AuthButton({ mobileAccountMount, onCloseMobileNav }: Aut
       <ThemeToggle />
       <Link
         href="/"
-        className="whitespace-nowrap font-[var(--font-cinzel),serif] text-xs tracking-[.08em] uppercase text-gold transition-colors hover:text-gold-light sm:text-sm"
+        className="whitespace-nowrap font-[var(--font-cinzel),serif] text-xs font-semibold tracking-[.08em] uppercase text-gold-dark transition-colors hover:text-gold sm:text-sm dark:font-normal dark:text-gold dark:hover:text-gold-light"
       >
         Sign in
       </Link>

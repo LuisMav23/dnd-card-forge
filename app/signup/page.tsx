@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ThemeToggle from '@/components/ThemeToggle';
+import LogoMark from '@/components/LogoMark';
 
 export default function SignupPage() {
   const [email, setEmail] = useState('');
@@ -64,6 +65,9 @@ export default function SignupPage() {
       <div className="relative mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-4">
         <div className="rounded-xl border border-bdr bg-panel/95 p-5 shadow-[0_0_0_1px_rgba(201,168,76,0.08),0_24px_48px_rgba(0,0,0,0.55)] backdrop-blur-sm sm:p-10">
           <div className="mb-8 text-center">
+            <div className="mx-auto mb-3 flex justify-center text-gold-dark dark:text-gold">
+              <LogoMark className="h-14 w-14 sm:h-16 sm:w-16" />
+            </div>
             <p className="mb-2 font-[var(--font-cinzel),serif] text-xs uppercase tracking-[0.35em] text-gold-dark">
               Begin your journey
             </p>

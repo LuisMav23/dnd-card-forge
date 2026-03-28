@@ -3,6 +3,9 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState, useCallback, useRef, useEffect, type ReactNode } from 'react';
+import { crossOriginForImgSrc } from '@/lib/crossOriginForImgSrc';
+import { FROM_LIBRARY_APPEND, FROM_LIBRARY_QS } from '@/lib/fromLibraryNav';
+import { ITEM_CARD_GRID_CLASS } from '@/lib/itemCardGrid';
 
 const DND_MIME = 'application/x-dnd-card-forge-library';
 
@@ -62,6 +65,7 @@ export interface LibraryEncounter {
   created_at: string;
   updated_at: string;
   entry_count: number;
+  thumbnail_url?: string | null;
 }
 
 type Scope = 'all' | string;
@@ -79,6 +83,53 @@ function cardSubtitle(c: LibraryCard): string {
     if (fields?.name?.trim()) return fields.name.trim();
   }
   return c.title;
+}
+
+/** Published/home activity use the same image field on card JSON. */
+function libraryCardThumbUrl(c: LibraryCard): string | undefined {
+  const d = c.data;
+  if (!d || typeof d !== 'object') return undefined;
+  const raw = d as { image?: unknown };
+  return typeof raw.image === 'string' && raw.image.trim() ? raw.image.trim() : undefined;
+}
+
+/** Matches [`app/(main)/home/page.tsx`](app/(main)/home/page.tsx) recent-activity tile image area (full-width strip on stacked cards). */
+function LibraryItemThumbnail({
+  imageUrl,
+  label,
+}: {
+  imageUrl?: string | null;
+  label: string;
+}) {
+  const frameClass =
+    'relative aspect-[4/3] w-full shrink-0 overflow-hidden rounded-t-xl bg-mid/90';
+  const trimmed = imageUrl?.trim();
+  if (trimmed) {
+    return (
+      <div className={frameClass}>
+        <img
+          src={trimmed}
+          alt=""
+          crossOrigin={crossOriginForImgSrc(trimmed)}
+          className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
+        />
+        <span className="sr-only">{label} thumbnail</span>
+      </div>
+    );
+  }
+  return (
+    <div className={frameClass} title={label}>
+      <div className="flex h-full w-full flex-col items-center justify-center gap-1 px-2 text-center">
+        <span className="text-2xl text-gold-dark/25" aria-hidden>
+          ◇
+        </span>
+        <span className="font-[var(--font-cinzel),serif] text-[0.65rem] font-semibold uppercase tracking-wider text-muted">
+          No image
+        </span>
+      </div>
+      <span className="sr-only">{label} thumbnail</span>
+    </div>
+  );
 }
 
 function countInFolder(
@@ -107,11 +158,14 @@ function countInSystemFolder(folder: Folder, cards: LibraryCard[], encounters: L
 }
 
 function openHrefCard(c: LibraryCard) {
-  return c.item_type === 'card' ? `/card/${c.id}` : `/statblocks/${c.id}`;
+  const path = c.item_type === 'card' ? `/card/${c.id}` : `/statblocks/${c.id}`;
+  return `${path}${FROM_LIBRARY_QS}`;
 }
 
 function editHrefCard(c: LibraryCard) {
-  return c.item_type === 'card' ? `/card/new?library=${c.id}` : `/statblocks/new?library=${c.id}`;
+  const path =
+    c.item_type === 'card' ? `/card/new?library=${c.id}` : `/statblocks/new?library=${c.id}`;
+  return `${path}${FROM_LIBRARY_APPEND}`;
 }
 
 type MenuPanel = 'main' | 'move';
@@ -404,14 +458,20 @@ function LibraryCardOverflowMenu({
     'block w-full rounded-md px-3 py-2 text-left font-[var(--font-cinzel),serif] text-xs uppercase tracking-wide text-parch transition-colors hover:bg-gold/10 hover:text-gold';
 
   return (
-    <div ref={rootRef} className="absolute right-5 top-5 z-20 sm:right-6 sm:top-6">
+    <div
+      ref={rootRef}
+      className="relative z-10 shrink-0"
+      onClick={e => e.stopPropagation()}
+      onPointerDown={e => e.stopPropagation()}
+      onAuxClick={e => e.stopPropagation()}
+    >
       <button
         type="button"
         id={menuButtonId}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={open ? menuId : undefined}
-        className="rounded-md p-1.5 text-muted transition-colors hover:bg-mid hover:text-gold"
+        className="-mr-1 rounded-md p-1.5 text-muted transition-colors hover:bg-mid hover:text-gold"
         aria-label={`More actions for ${itemLabel}`}
         onPointerDown={e => e.stopPropagation()}
         onClick={e => {
@@ -429,7 +489,7 @@ function LibraryCardOverflowMenu({
           id={menuId}
           role="menu"
           aria-labelledby={menuButtonId}
-          className="absolute right-0 top-full z-30 mt-1 min-w-[11rem] rounded-lg border border-bdr bg-panel py-1 shadow-[0_12px_40px_rgba(0,0,0,0.45)]"
+          className="absolute right-0 top-full z-[100] mt-1.5 min-w-[11rem] rounded-lg border border-bdr bg-panel py-1 shadow-[0_12px_40px_rgba(0,0,0,0.45)]"
         >
           {panel === 'main' ? (
             <>
@@ -594,14 +654,20 @@ function LibraryEncounterOverflowMenu({
     'block w-full rounded-md px-3 py-2 text-left font-[var(--font-cinzel),serif] text-xs uppercase tracking-wide text-parch transition-colors hover:bg-gold/10 hover:text-gold';
 
   return (
-    <div ref={rootRef} className="absolute right-5 top-5 z-20 sm:right-6 sm:top-6">
+    <div
+      ref={rootRef}
+      className="relative z-10 shrink-0"
+      onClick={e => e.stopPropagation()}
+      onPointerDown={e => e.stopPropagation()}
+      onAuxClick={e => e.stopPropagation()}
+    >
       <button
         type="button"
         id={menuButtonId}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={open ? menuId : undefined}
-        className="rounded-md p-1.5 text-muted transition-colors hover:bg-mid hover:text-gold"
+        className="-mr-1 rounded-md p-1.5 text-muted transition-colors hover:bg-mid hover:text-gold"
         aria-label={`More actions for ${encounter.title}`}
         onPointerDown={e => e.stopPropagation()}
         onClick={e => {
@@ -619,12 +685,12 @@ function LibraryEncounterOverflowMenu({
           id={menuId}
           role="menu"
           aria-labelledby={menuButtonId}
-          className="absolute right-0 top-full z-30 mt-1 min-w-[11rem] rounded-lg border border-bdr bg-panel py-1 shadow-[0_12px_40px_rgba(0,0,0,0.45)]"
+          className="absolute right-0 top-full z-[100] mt-1.5 min-w-[11rem] rounded-lg border border-bdr bg-panel py-1 shadow-[0_12px_40px_rgba(0,0,0,0.45)]"
         >
           {panel === 'main' ? (
             <>
               <Link
-                href={`/encounters/${encounter.id}/edit`}
+                href={`/encounters/${encounter.id}/edit${FROM_LIBRARY_QS}`}
                 role="menuitem"
                 className={menuItemClass}
                 onClick={() => onClose()}
@@ -929,6 +995,10 @@ export default function LibraryView({
         created_at: String(row.created_at ?? new Date().toISOString()),
         updated_at: String(row.updated_at ?? row.created_at ?? new Date().toISOString()),
         entry_count: typeof row.entry_count === 'number' ? row.entry_count : 0,
+        thumbnail_url:
+          typeof row.thumbnail_url === 'string' && row.thumbnail_url.trim()
+            ? row.thumbnail_url.trim()
+            : null,
       }));
       setFolders(prev => [newFolder, ...prev]);
       setCards(prev => [...dupCards, ...prev]);
@@ -1112,6 +1182,10 @@ export default function LibraryView({
         created_at: String(row.created_at ?? new Date().toISOString()),
         updated_at: String(row.updated_at ?? row.created_at ?? new Date().toISOString()),
         entry_count: typeof row.entry_count === 'number' ? row.entry_count : 0,
+        thumbnail_url:
+          typeof row.thumbnail_url === 'string' && row.thumbnail_url.trim()
+            ? row.thumbnail_url.trim()
+            : null,
       };
       setEncounters(prev => [enc, ...prev]);
     } catch (err) {
@@ -1296,48 +1370,37 @@ export default function LibraryView({
             </div>
           </div>
         ) : (
-          <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <ul className={ITEM_CARD_GRID_CLASS}>
             {filteredSorted.map(it => {
               if (it.type === 'card') {
                 const c = it.card;
+                const cardThumb = libraryCardThumbUrl(c);
                 const dragActive =
                   draggingPayload?.entity === 'card' && draggingPayload.id === c.id;
                 const menuKey = `card:${c.id}`;
+                const cardMenuOpen = menuOpenKey === menuKey;
                 return (
                   <li
                     key={`card-${c.id}`}
                     draggable
                     onDragStart={e => onDragStart(e, 'card', c.id)}
                     onDragEnd={onDragEnd}
-                    className="list-none"
+                    className="list-none flex h-full min-h-0 flex-col"
                   >
                     <div
-                      className={`group relative flex min-h-[8.5rem] flex-col rounded-xl border bg-gradient-to-b from-panel to-mid/95 shadow-[0_8px_32px_rgba(0,0,0,0.35)] transition-all duration-200 ${
+                      className={`group relative flex h-full min-h-0 flex-col overflow-visible rounded-xl border bg-gradient-to-b from-panel to-mid/95 shadow-[0_8px_32px_rgba(0,0,0,0.35)] transition-all duration-200 ${
+                        cardMenuOpen ? 'z-[80]' : 'z-0'
+                      } ${
                         dragActive
                           ? 'scale-[0.98] border-gold/50 opacity-90'
                           : 'border-bdr hover:border-gold/35 hover:shadow-[0_12px_40px_rgba(201,168,76,0.08)]'
                       }`}
                     >
-                      <LibraryCardOverflowMenu
-                        card={c}
-                        folders={folders}
-                        open={menuOpenKey === menuKey}
-                        panel={menuOpenKey === menuKey ? menuPanel : 'main'}
-                        onPanelChange={setMenuPanel}
-                        onToggle={() => toggleMenu(menuKey)}
-                        onClose={closeMenu}
-                        onMove={toId => void handleMoveCard(c.id, toId)}
-                        onDuplicate={() => void handleDuplicateCard(c.id)}
-                        onDelete={() => void handleDeleteCard(c.id)}
-                        onPublishToggle={pub => void handlePublishCard(c.id, pub)}
-                        menuButtonId={`library-card-menu-btn-${c.id}`}
-                        menuId={`library-card-menu-${c.id}`}
-                      />
                       <div
                         role="link"
                         tabIndex={0}
                         aria-label={`Open ${cardSubtitle(c)}`}
-                        className="flex min-h-0 flex-1 cursor-pointer flex-col p-5 pr-11 outline-none transition-colors hover:text-inherit focus-visible:ring-2 focus-visible:ring-gold/40 sm:p-6 sm:pr-12"
+                        className="flex min-h-0 flex-1 cursor-pointer flex-col outline-none transition-colors hover:text-inherit focus-visible:ring-2 focus-visible:ring-gold/40 focus-visible:ring-offset-2 focus-visible:ring-offset-panel"
                         onClick={e => {
                           if (e.defaultPrevented) return;
                           const href = openHrefCard(c);
@@ -1360,52 +1423,72 @@ export default function LibraryView({
                           }
                         }}
                       >
-                        <div className="mb-3 flex min-w-0 flex-col gap-2">
-                          <div className="min-w-0">
-                            <h3 className="truncate font-[var(--font-cinzel),serif] text-base font-semibold text-gold">
-                              {cardSubtitle(c)}
-                            </h3>
-                            <p className="mt-0.5 truncate text-xs text-bronze">{c.title}</p>
-                          </div>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span
-                              className={`w-fit shrink-0 rounded-full border px-2 py-0.5 font-[var(--font-cinzel),serif] text-xs uppercase tracking-wider ${
-                                c.item_type === 'card'
-                                  ? 'border-amber-700/50 bg-amber-950/40 text-amber-200'
-                                  : 'border-violet-800/50 bg-violet-950/40 text-violet-200'
-                              }`}
-                            >
-                              {c.item_type === 'card' ? 'Card' : 'Block'}
-                            </span>
-                            {c.is_published ? (
-                              <span className="w-fit shrink-0 rounded-full border border-emerald-800/50 bg-emerald-950/40 px-2 py-0.5 font-[var(--font-cinzel),serif] text-[0.65rem] uppercase tracking-wider text-emerald-200">
-                                Public
+                        <LibraryItemThumbnail imageUrl={cardThumb} label={cardSubtitle(c)} />
+                        <div className="flex min-h-0 min-w-0 flex-1 flex-col justify-between gap-3 p-5 pt-4 sm:p-6 sm:pt-5">
+                          <div className="flex min-w-0 flex-col gap-2">
+                            <div className="flex min-w-0 items-center gap-1 sm:gap-1.5">
+                              <div className="min-w-0 flex-1">
+                                <h3 className="truncate font-[var(--font-cinzel),serif] text-base font-semibold leading-tight text-gold">
+                                  {cardSubtitle(c)}
+                                </h3>
+                                <p className="mt-0.5 truncate text-xs text-bronze">{c.title}</p>
+                              </div>
+                              <LibraryCardOverflowMenu
+                                card={c}
+                                folders={folders}
+                                open={cardMenuOpen}
+                                panel={cardMenuOpen ? menuPanel : 'main'}
+                                onPanelChange={setMenuPanel}
+                                onToggle={() => toggleMenu(menuKey)}
+                                onClose={closeMenu}
+                                onMove={toId => void handleMoveCard(c.id, toId)}
+                                onDuplicate={() => void handleDuplicateCard(c.id)}
+                                onDelete={() => void handleDeleteCard(c.id)}
+                                onPublishToggle={pub => void handlePublishCard(c.id, pub)}
+                                menuButtonId={`library-card-menu-btn-${c.id}`}
+                                menuId={`library-card-menu-${c.id}`}
+                              />
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span
+                                className={`w-fit shrink-0 rounded-full border px-2 py-0.5 font-[var(--font-cinzel),serif] text-xs uppercase tracking-wider ${
+                                  c.item_type === 'card'
+                                    ? 'border-amber-700/50 bg-amber-950/40 text-amber-200'
+                                    : 'border-violet-800/50 bg-violet-950/40 text-violet-200'
+                                }`}
+                              >
+                                {c.item_type === 'card' ? 'Card' : 'Block'}
                               </span>
-                            ) : null}
+                              {c.is_published ? (
+                                <span className="w-fit shrink-0 rounded-full border border-emerald-800/50 bg-emerald-950/40 px-2 py-0.5 font-[var(--font-cinzel),serif] text-[0.65rem] uppercase tracking-wider text-emerald-200">
+                                  Public
+                                </span>
+                              ) : null}
+                            </div>
                           </div>
-                        </div>
 
-                        <div className="mt-auto flex flex-wrap items-center gap-2 text-xs text-muted">
-                          <span>
-                            {c.folder_id ? (
-                              <>
-                                In{' '}
-                                <strong className="text-gold/90">
-                                  {folderById[c.folder_id]?.name ?? '…'}
-                                </strong>
-                              </>
-                            ) : (
-                              <span className="italic">No folder</span>
-                            )}
-                          </span>
-                          <span className="text-muted/60">·</span>
-                          <time dateTime={c.created_at}>
-                            {new Date(c.created_at).toLocaleDateString(undefined, {
-                              year: 'numeric',
-                              month: 'short',
-                              day: 'numeric',
-                            })}
-                          </time>
+                          <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
+                            <span>
+                              {c.folder_id ? (
+                                <>
+                                  In{' '}
+                                  <strong className="text-gold/90">
+                                    {folderById[c.folder_id]?.name ?? '…'}
+                                  </strong>
+                                </>
+                              ) : (
+                                <span className="italic">No folder</span>
+                              )}
+                            </span>
+                            <span className="text-muted/60">·</span>
+                            <time dateTime={c.created_at}>
+                              {new Date(c.created_at).toLocaleDateString(undefined, {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                              })}
+                            </time>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1417,43 +1500,32 @@ export default function LibraryView({
               const dragActive =
                 draggingPayload?.entity === 'encounter' && draggingPayload.id === enc.id;
               const menuKey = `encounter:${enc.id}`;
+              const encMenuOpen = menuOpenKey === menuKey;
               return (
                 <li
                   key={`encounter-${enc.id}`}
                   draggable
                   onDragStart={e => onDragStart(e, 'encounter', enc.id)}
                   onDragEnd={onDragEnd}
-                  className="list-none"
+                  className="list-none flex h-full min-h-0 flex-col"
                 >
                   <div
-                    className={`group relative flex min-h-[8.5rem] flex-col rounded-xl border bg-gradient-to-b from-panel to-mid/95 shadow-[0_8px_32px_rgba(0,0,0,0.35)] transition-all duration-200 ${
+                    className={`group relative flex h-full min-h-0 flex-col overflow-visible rounded-xl border bg-gradient-to-b from-panel to-mid/95 shadow-[0_8px_32px_rgba(0,0,0,0.35)] transition-all duration-200 ${
+                      encMenuOpen ? 'z-[80]' : 'z-0'
+                    } ${
                       dragActive
                         ? 'scale-[0.98] border-gold/50 opacity-90'
                         : 'border-bdr hover:border-gold/35 hover:shadow-[0_12px_40px_rgba(201,168,76,0.08)]'
                     }`}
-                  >
-                    <LibraryEncounterOverflowMenu
-                      encounter={enc}
-                      folders={folders}
-                      open={menuOpenKey === menuKey}
-                      panel={menuOpenKey === menuKey ? menuPanel : 'main'}
-                      onPanelChange={setMenuPanel}
-                      onToggle={() => toggleMenu(menuKey)}
-                      onClose={closeMenu}
-                      onMove={toId => void handleMoveEncounter(enc.id, toId)}
-                      onDuplicate={() => void handleDuplicateEncounter(enc.id)}
-                      onDelete={() => void handleDeleteEncounter(enc.id)}
-                      menuButtonId={`library-enc-menu-btn-${enc.id}`}
-                      menuId={`library-enc-menu-${enc.id}`}
-                    />
+                    >
                     <div
                       role="link"
                       tabIndex={0}
                       aria-label={`Open encounter ${enc.title}`}
-                      className="flex min-h-0 flex-1 cursor-pointer flex-col p-5 pr-11 outline-none transition-colors hover:text-inherit focus-visible:ring-2 focus-visible:ring-gold/40 sm:p-6 sm:pr-12"
+                      className="flex min-h-0 flex-1 cursor-pointer flex-col outline-none transition-colors hover:text-inherit focus-visible:ring-2 focus-visible:ring-gold/40 focus-visible:ring-offset-2 focus-visible:ring-offset-panel"
                       onClick={e => {
                         if (e.defaultPrevented) return;
-                        const href = `/encounters/${enc.id}`;
+                        const href = `/encounters/${enc.id}${FROM_LIBRARY_QS}`;
                         if (e.metaKey || e.ctrlKey) {
                           window.open(href, '_blank', 'noopener,noreferrer');
                           return;
@@ -1463,51 +1535,74 @@ export default function LibraryView({
                       onAuxClick={e => {
                         if (e.button === 1) {
                           e.preventDefault();
-                          window.open(`/encounters/${enc.id}`, '_blank', 'noopener,noreferrer');
+                          window.open(
+                            `/encounters/${enc.id}${FROM_LIBRARY_QS}`,
+                            '_blank',
+                            'noopener,noreferrer'
+                          );
                         }
                       }}
                       onKeyDown={e => {
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault();
-                          router.push(`/encounters/${enc.id}`);
+                          router.push(`/encounters/${enc.id}${FROM_LIBRARY_QS}`);
                         }
                       }}
                     >
-                      <div className="mb-3 flex min-w-0 flex-col gap-2">
-                        <div className="min-w-0">
-                          <h3 className="truncate font-[var(--font-cinzel),serif] text-base font-semibold text-gold">
-                            {enc.title}
-                          </h3>
-                          <p className="mt-0.5 text-xs text-bronze">
-                            {enc.entry_count === 1 ? '1 entry' : `${enc.entry_count} entries`}
-                          </p>
+                      <LibraryItemThumbnail imageUrl={enc.thumbnail_url} label={enc.title} />
+                      <div className="flex min-h-0 min-w-0 flex-1 flex-col justify-between gap-3 p-5 pt-4 sm:p-6 sm:pt-5">
+                        <div className="flex min-w-0 flex-col gap-2">
+                          <div className="flex min-w-0 items-center gap-1 sm:gap-1.5">
+                            <div className="min-w-0 flex-1">
+                              <h3 className="truncate font-[var(--font-cinzel),serif] text-base font-semibold leading-tight text-gold">
+                                {enc.title}
+                              </h3>
+                              <p className="mt-0.5 text-xs text-bronze">
+                                {enc.entry_count === 1 ? '1 entry' : `${enc.entry_count} entries`}
+                              </p>
+                            </div>
+                            <LibraryEncounterOverflowMenu
+                              encounter={enc}
+                              folders={folders}
+                              open={encMenuOpen}
+                              panel={encMenuOpen ? menuPanel : 'main'}
+                              onPanelChange={setMenuPanel}
+                              onToggle={() => toggleMenu(menuKey)}
+                              onClose={closeMenu}
+                              onMove={toId => void handleMoveEncounter(enc.id, toId)}
+                              onDuplicate={() => void handleDuplicateEncounter(enc.id)}
+                              onDelete={() => void handleDeleteEncounter(enc.id)}
+                              menuButtonId={`library-enc-menu-btn-${enc.id}`}
+                              menuId={`library-enc-menu-${enc.id}`}
+                            />
+                          </div>
+                          <span className="w-fit shrink-0 rounded-full border border-emerald-800/50 bg-emerald-950/40 px-2 py-0.5 font-[var(--font-cinzel),serif] text-xs uppercase tracking-wider text-emerald-200">
+                            Encounter
+                          </span>
                         </div>
-                        <span className="w-fit shrink-0 rounded-full border border-emerald-800/50 bg-emerald-950/40 px-2 py-0.5 font-[var(--font-cinzel),serif] text-xs uppercase tracking-wider text-emerald-200">
-                          Encounter
-                        </span>
-                      </div>
 
-                      <div className="mt-auto flex flex-wrap items-center gap-2 text-xs text-muted">
-                        <span>
-                          {enc.folder_id ? (
-                            <>
-                              In{' '}
-                              <strong className="text-gold/90">
-                                {folderById[enc.folder_id]?.name ?? '…'}
-                              </strong>
-                            </>
-                          ) : (
-                            <span className="italic">No folder</span>
-                          )}
-                        </span>
-                        <span className="text-muted/60">·</span>
-                        <time dateTime={enc.created_at}>
-                          {new Date(enc.created_at).toLocaleDateString(undefined, {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric',
-                          })}
-                        </time>
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
+                          <span>
+                            {enc.folder_id ? (
+                              <>
+                                In{' '}
+                                <strong className="text-gold/90">
+                                  {folderById[enc.folder_id]?.name ?? '…'}
+                                </strong>
+                              </>
+                            ) : (
+                              <span className="italic">No folder</span>
+                            )}
+                          </span>
+                          <span className="text-muted/60">·</span>
+                          <time dateTime={enc.created_at}>
+                            {new Date(enc.created_at).toLocaleDateString(undefined, {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                            })}
+                          </time>
+                        </div>
                       </div>
                     </div>
                   </div>

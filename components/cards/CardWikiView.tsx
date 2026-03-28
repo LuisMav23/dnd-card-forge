@@ -6,6 +6,7 @@ import { CARD_TYPES, getTypebar, getCost } from '@/lib/cardConfig';
 import { abilityMod, GEMS } from '@/lib/utils';
 import { getCardWikiCardExtras, getCardWikiFeatureRows } from '@/lib/cardWikiMetadata';
 import CardRenderer from '@/components/CardRenderer';
+import WikiClickableArt from '@/components/wiki/WikiClickableArt';
 
 interface Props {
   state: CardState;
@@ -28,14 +29,6 @@ const CardWikiView = forwardRef<HTMLDivElement, Props>(function CardWikiView({ s
 
   const featureRows = getCardWikiFeatureRows(state.type, f);
   const cardExtra = getCardWikiCardExtras(f);
-
-  const artContent = state.image ? (
-    <img src={state.image} alt="" className="h-full min-h-[220px] w-full object-cover" />
-  ) : (
-    <div className="flex h-full min-h-[220px] w-full items-center justify-center bg-mid/80 text-7xl">
-      {state.icon}
-    </div>
-  );
 
   return (
     <article className="wiki-card-page mx-auto max-w-5xl px-4 py-10 sm:px-8 sm:py-12">
@@ -69,9 +62,12 @@ const CardWikiView = forwardRef<HTMLDivElement, Props>(function CardWikiView({ s
                 </span>
               </div>
             </header>
-            <div className="overflow-hidden rounded-xl border border-bdr bg-mid/40 shadow-inner">
-              <div className="aspect-[4/5] max-h-[min(420px,55vh)] w-full">{artContent}</div>
-            </div>
+            <WikiClickableArt
+              src={state.image}
+              alt={`${name} card art`}
+              frameClassName="aspect-[559/256] w-full"
+              placeholder={<span aria-hidden>{state.icon}</span>}
+            />
 
             <section className="flex flex-col gap-4">
               <h2 className="border-b border-bdr pb-3 font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-[0.22em] text-gold">

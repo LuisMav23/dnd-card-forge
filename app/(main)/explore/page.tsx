@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import ExploreItemCard from '@/components/explore/ExploreItemCard';
 import type { ExploreListItem, ExploreSort } from '@/lib/exploreTypes';
+import { ITEM_CARD_GRID_CLASS } from '@/lib/itemCardGrid';
 
 async function fetchSection(sort: ExploreSort): Promise<ExploreListItem[]> {
   const res = await fetch(`/api/explore?sort=${sort}&limit=12`, { cache: 'no-store' });
@@ -40,16 +41,16 @@ function ExploreSection({
         <p className="mt-1 text-sm text-bronze">{subtitle}</p>
       </div>
       {loading ? (
-        <ul className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className={ITEM_CARD_GRID_CLASS}>
           {Array.from({ length: 6 }).map((_, i) => (
             <li
               key={i}
-              className="overflow-hidden rounded-xl border border-bdr/60 bg-panel/50 shadow-[0_4px_20px_rgba(0,0,0,0.2)]"
+              className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-bdr/60 bg-panel/50 shadow-[0_4px_20px_rgba(0,0,0,0.2)]"
             >
-              <div className="aspect-[4/3] animate-pulse bg-mid/90" />
-              <div className="space-y-2 p-3">
+              <div className="aspect-[4/3] shrink-0 animate-pulse bg-mid/90" />
+              <div className="flex min-h-0 flex-1 flex-col justify-between gap-2 p-3">
                 <div className="h-4 w-3/4 animate-pulse rounded bg-mid/80" />
-                <div className="h-3 w-1/2 animate-pulse rounded bg-mid/60" />
+                <div className="mt-auto h-3 w-1/2 animate-pulse rounded bg-mid/60" />
               </div>
             </li>
           ))}
@@ -57,7 +58,7 @@ function ExploreSection({
       ) : items.length === 0 ? (
         <p className="text-sm italic text-muted">Nothing published here yet.</p>
       ) : (
-        <ul className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className={ITEM_CARD_GRID_CLASS}>
           {items.map(item => (
             <ExploreItemCard key={item.id} item={item} />
           ))}
@@ -92,15 +93,16 @@ function FollowingFeedSection({
           </Link>
         </div>
       ) : loading ? (
-        <ul className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className={ITEM_CARD_GRID_CLASS}>
           {Array.from({ length: 3 }).map((_, i) => (
             <li
               key={i}
-              className="overflow-hidden rounded-xl border border-bdr/60 bg-panel/50 shadow-[0_4px_20px_rgba(0,0,0,0.2)]"
+              className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-bdr/60 bg-panel/50 shadow-[0_4px_20px_rgba(0,0,0,0.2)]"
             >
-              <div className="aspect-[4/3] animate-pulse bg-mid/90" />
-              <div className="space-y-2 p-3">
+              <div className="aspect-[4/3] shrink-0 animate-pulse bg-mid/90" />
+              <div className="flex min-h-0 flex-1 flex-col justify-between gap-2 p-3">
                 <div className="h-4 w-3/4 animate-pulse rounded bg-mid/80" />
+                <div className="mt-auto h-3 w-1/2 animate-pulse rounded bg-mid/60" />
               </div>
             </li>
           ))}
@@ -110,7 +112,7 @@ function FollowingFeedSection({
           No new publishes yet. Follow creators from their public profile, then check back here.
         </p>
       ) : (
-        <ul className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className={ITEM_CARD_GRID_CLASS}>
           {items.map(item => (
             <ExploreItemCard key={item.id} item={item} />
           ))}

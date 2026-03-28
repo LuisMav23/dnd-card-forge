@@ -16,7 +16,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from('user_profiles')
-    .select('full_name, birth_date, gender, country, bio, avatar_url, created_at')
+    .select('full_name, birth_date, gender, country, bio, avatar_url, created_at, favorites_public')
     .eq('id', user.id)
     .maybeSingle();
 
@@ -44,6 +44,7 @@ export async function GET() {
       bio: null,
       avatar_url: null,
       created_at: null,
+      favorites_public: false,
     },
     recentCreations: cards.slice(0, 12),
   });
@@ -64,7 +65,7 @@ export async function PATCH(request: Request) {
 
     const { data: existing } = await supabase
       .from('user_profiles')
-      .select('full_name, birth_date, gender, country, bio, avatar_url')
+      .select('full_name, birth_date, gender, country, bio, avatar_url, favorites_public')
       .eq('id', user.id)
       .maybeSingle();
 
@@ -123,11 +124,17 @@ export async function PATCH(request: Request) {
       row.avatar_url = existing?.avatar_url ?? null;
     }
 
+    if (body.favorites_public !== undefined) {
+      row.favorites_public = Boolean(body.favorites_public);
+    } else {
+      row.favorites_public = Boolean(existing?.favorites_public);
+    }
+
     const { data, error } = await supabase
       .from('user_profiles')
       .upsert(row, { onConflict: 'id' })
       .select(
-        'full_name, birth_date, gender, country, bio, avatar_url, created_at'
+        'full_name, birth_date, gender, country, bio, avatar_url, created_at, favorites_public'
       )
       .single();
 

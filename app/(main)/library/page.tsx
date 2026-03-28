@@ -20,7 +20,7 @@ export default async function LibraryPage() {
     supabase.from('cards').select('*').order('created_at', { ascending: false }),
     supabase
       .from('encounters')
-      .select('id, title, created_at, updated_at, folder_id, encounter_entries ( id )')
+      .select('id, title, created_at, updated_at, folder_id, thumbnail_url, encounter_entries ( id )')
       .eq('user_id', user.id)
       .order('updated_at', { ascending: false }),
   ]);
@@ -32,6 +32,7 @@ export default async function LibraryPage() {
       created_at: string;
       updated_at: string;
       folder_id: string | null;
+      thumbnail_url: string | null;
       encounter_entries: { id: string }[] | null;
     }) => ({
       id: r.id,
@@ -39,6 +40,7 @@ export default async function LibraryPage() {
       created_at: r.created_at,
       updated_at: r.updated_at,
       folder_id: r.folder_id,
+      thumbnail_url: r.thumbnail_url?.trim() ? r.thumbnail_url.trim() : null,
       entry_count: Array.isArray(r.encounter_entries) ? r.encounter_entries.length : 0,
     })
   );

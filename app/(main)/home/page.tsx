@@ -7,6 +7,7 @@ import {
   mergeCardsAndEncountersIntoActivity,
 } from '@/lib/recentActivity';
 import { createClient } from '@/lib/supabase/server';
+import { ITEM_CARD_GRID_CLASS } from '@/lib/itemCardGrid';
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -107,17 +108,14 @@ export default async function HomePage() {
                 </div>
               </div>
             ) : (
-              <ul className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-                {activity.map(item => {
-                  const typeEmoji =
-                    item.kind === 'card' ? '⚔' : item.kind === 'statblock' ? '📜' : '🎲';
-                  return (
-                    <li key={`${item.kind}-${item.id}`} className="min-w-0">
+              <ul className={`mt-6 ${ITEM_CARD_GRID_CLASS}`}>
+                {activity.map(item => (
+                    <li key={`${item.kind}-${item.id}`} className="flex h-full min-h-0 min-w-0 flex-col">
                       <Link
                         href={item.href}
-                        className="group flex flex-col overflow-hidden rounded-xl border border-bdr bg-panel/90 shadow-[0_4px_20px_rgba(0,0,0,0.2)] transition-colors hover:border-gold/40 hover:shadow-[0_8px_28px_rgba(201,168,76,0.12)]"
+                        className="group flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-bdr bg-panel/90 shadow-[0_4px_20px_rgba(0,0,0,0.2)] transition-colors hover:border-gold/40 hover:shadow-[0_8px_28px_rgba(201,168,76,0.12)]"
                       >
-                        <div className="relative aspect-[4/3] w-full overflow-hidden bg-mid/90">
+                        <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-mid/90">
                           {item.thumbnailUrl ? (
                             <img
                               src={item.thumbnailUrl}
@@ -135,30 +133,21 @@ export default async function HomePage() {
                             </div>
                           )}
                         </div>
-                        <div className="flex min-h-0 flex-col gap-1.5 p-3 pt-2.5">
+                        <div className="flex min-h-0 flex-1 flex-col justify-between gap-1.5 p-3 pt-2.5">
                           <p className="truncate font-[var(--font-cinzel),serif] text-[0.8rem] font-bold leading-tight text-gold">
                             {item.title}
                           </p>
-                          <div className="flex items-start gap-1.5 text-[0.7rem] leading-snug text-bronze">
-                            <span
-                              className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-mid text-[0.65rem]"
-                              aria-hidden
-                            >
-                              {typeEmoji}
+                          <p className="mt-auto text-[0.7rem] leading-snug text-bronze">
+                            <span className="text-muted">{item.label}</span>
+                            <span className="text-muted"> · </span>
+                            <span>
+                              {formatActivityPhrase(item.createdAt, item.updatedAt)}
                             </span>
-                            <span className="min-w-0">
-                              <span className="text-muted">{item.label}</span>
-                              <span className="text-muted"> · </span>
-                              <span className="text-bronze">
-                                {formatActivityPhrase(item.createdAt, item.updatedAt)}
-                              </span>
-                            </span>
-                          </div>
+                          </p>
                         </div>
                       </Link>
                     </li>
-                  );
-                })}
+                ))}
               </ul>
             )}
           </section>

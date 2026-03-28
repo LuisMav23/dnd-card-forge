@@ -24,6 +24,8 @@ interface Props {
   saving?: boolean;
   saveLabel?: string;
   saveDisabled?: boolean;
+  /** Subtle line under save/export (e.g. autosave status). */
+  autosaveHint?: string | null;
 }
 
 const FIELD_COMPONENTS: Record<CardType, React.ComponentType<{ fields: Record<string, string>; onChange: (k: string, v: string) => void }>> = {
@@ -45,6 +47,7 @@ export default function FormPanel({
   saving,
   saveLabel,
   saveDisabled,
+  autosaveHint,
 }: Props) {
   const cfg = CARD_TYPES[state.type];
   const FieldsComponent = FIELD_COMPONENTS[state.type];
@@ -105,6 +108,9 @@ export default function FormPanel({
           {exportLabel}
         </button>
       </div>
+      {autosaveHint ? (
+        <p className="mt-2 text-center text-[0.65rem] leading-snug text-muted">{autosaveHint}</p>
+      ) : null}
       <p className="export-note">Pokémon card size · 63mm × 88mm · print-ready PNG</p>
     </div>
   );

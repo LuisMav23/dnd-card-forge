@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import AuthButton from './AuthButton';
+import LogoMark from './LogoMark';
 
 export default function Header() {
   const pathname = usePathname();
@@ -32,28 +33,29 @@ export default function Header() {
   };
 
   const linkClass = (href: string) =>
-    `block min-h-[44px] w-full px-3 py-3 font-[var(--font-cinzel),serif] text-sm tracking-[.06em] uppercase transition-colors sm:min-h-0 sm:py-2.5 sm:text-[0.8rem] ${
+    `block min-h-[44px] w-full px-3 py-3 font-[var(--font-cinzel),serif] text-sm font-semibold tracking-[.06em] uppercase transition-colors sm:min-h-0 sm:py-2.5 sm:text-[0.8rem] dark:font-normal ${
       navIsActive(href)
-        ? 'text-gold [text-shadow:0_0_10px_rgba(201,168,76,.3)]'
-        : 'text-bronze hover:bg-mid/80 hover:text-gold'
+        ? 'text-gold-dark [text-shadow:none] dark:text-gold dark:[text-shadow:0_0_10px_rgba(201,168,76,.3)]'
+        : 'text-ink hover:bg-mid/80 hover:text-gold-dark dark:text-bronze dark:hover:text-gold'
     }`;
 
   const linkClassDesktop = (href: string) =>
-    `whitespace-nowrap font-[var(--font-cinzel),serif] text-xs tracking-[.06em] uppercase transition-colors sm:text-[0.8rem] ${
+    `whitespace-nowrap font-[var(--font-cinzel),serif] text-xs font-semibold tracking-[.06em] uppercase transition-colors sm:text-[0.8rem] dark:font-normal ${
       navIsActive(href)
-        ? 'text-gold [text-shadow:0_0_10px_rgba(201,168,76,.3)]'
-        : 'text-bronze hover:text-gold'
+        ? 'text-gold-dark [text-shadow:none] dark:text-gold dark:[text-shadow:0_0_10px_rgba(201,168,76,.3)]'
+        : 'text-ink hover:text-gold-dark dark:text-bronze dark:hover:text-gold'
     }`;
 
   return (
-    <header className="sticky top-0 z-50 flex flex-shrink-0 flex-col border-b-2 border-gold-dark bg-gradient-to-b from-bg to-mid px-3 py-[9px] sm:px-[22px] sm:py-[11px]">
+    <header className="sticky top-0 z-50 flex flex-shrink-0 flex-col border-b-2 border-gold-dark/90 bg-gradient-to-b from-bg to-mid shadow-[0_1px_0_rgb(0_0_0/0.06)] dark:shadow-none px-3 py-[9px] sm:px-[22px] sm:py-[11px]">
       <div className="flex items-center justify-between gap-2">
         <Link
           href="/home"
-          className="min-w-0 max-w-[min(100%,11rem)] shrink font-[var(--font-cinzel),serif] text-[0.95rem] font-black tracking-[.1em] text-gold [text-shadow:0_0_18px_rgba(201,168,76,.4)] transition-colors hover:text-gold-light sm:max-w-none sm:text-[1.25rem] sm:tracking-[.12em]"
+          className="flex min-w-0 max-w-[min(100%,14rem)] shrink items-center gap-2 rounded-md px-2 py-1.5 font-[var(--font-cinzel),serif] text-[0.95rem] font-black tracking-[.1em] text-gold-dark [text-shadow:none] transition-colors hover:text-gold sm:max-w-none sm:gap-2.5 sm:px-2.5 sm:py-2 sm:text-[1.25rem] sm:tracking-[.12em] dark:text-gold dark:[text-shadow:0_0_18px_rgba(201,168,76,.4)] dark:hover:text-gold-light"
         >
-          <span className="truncate block">
-            ⚔ <em className="not-italic text-gold-light">Card Forge</em>
+          <LogoMark className="h-9 w-9 shrink-0 sm:h-10 sm:w-10" />
+          <span className="truncate">
+            <em className="not-italic text-gold dark:text-gold-light">Card Forge</em>
           </span>
         </Link>
 
@@ -75,7 +77,7 @@ export default function Header() {
           />
           <button
             type="button"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-bdr bg-panel/80 font-[var(--font-cinzel),serif] text-lg text-gold transition-colors hover:border-gold-dark hover:bg-mid hover:text-gold-light lg:hidden"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-bdr-2 bg-panel/90 font-[var(--font-cinzel),serif] text-lg text-gold-dark transition-colors hover:border-gold-dark hover:bg-mid hover:text-gold dark:text-gold dark:hover:text-gold-light lg:hidden"
             aria-expanded={navOpen}
             aria-controls="mobile-main-nav"
             aria-label={navOpen ? 'Close menu' : 'Open menu'}

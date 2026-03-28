@@ -22,6 +22,7 @@ interface Props {
   saving?: boolean;
   saveLabel?: string;
   saveDisabled?: boolean;
+  autosaveHint?: string | null;
 }
 
 type FieldComponentType = React.ComponentType<{ fields: Record<string, string>; onChange: (k: string, v: string) => void }>;
@@ -49,6 +50,7 @@ export default function StatBlockFormPanel({
   saving,
   saveLabel,
   saveDisabled,
+  autosaveHint,
 }: Props) {
   const cfg = STATBLOCK_TYPES[state.type];
   const FieldsComponent = FIELD_COMPONENTS[state.system][state.type];
@@ -125,6 +127,9 @@ export default function StatBlockFormPanel({
           {exportLabel}
         </button>
       </div>
+      {autosaveHint ? (
+        <p className="mt-2 text-center text-[0.65rem] leading-snug text-muted">{autosaveHint}</p>
+      ) : null}
       <p className="export-note">Stat block export · print-ready PNG</p>
     </div>
   );

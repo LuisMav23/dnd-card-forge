@@ -55,7 +55,7 @@ export default function ThemeToggle({ variant = 'icon', onMenuThemeChange }: The
         aria-checked={isDark}
         aria-label={label}
         onClick={next}
-        className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left font-[var(--font-cinzel),serif] text-xs tracking-[.08em] uppercase text-bronze transition-colors hover:bg-mid hover:text-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/40 focus-visible:ring-offset-2 focus-visible:ring-offset-panel"
+        className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left font-[var(--font-cinzel),serif] text-xs tracking-[.08em] uppercase text-ink transition-colors hover:bg-mid hover:text-gold-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/40 focus-visible:ring-offset-2 focus-visible:ring-offset-panel dark:text-bronze dark:hover:text-gold"
       >
         <span>Dark mode</span>
         <span
@@ -78,7 +78,7 @@ export default function ThemeToggle({ variant = 'icon', onMenuThemeChange }: The
       aria-label={label}
       title={isDark ? 'Light mode' : 'Dark mode'}
       onClick={next}
-      className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-bdr bg-panel/80 text-lg text-gold transition-colors hover:border-gold-dark hover:bg-mid hover:text-gold-light"
+      className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-bdr-2 bg-panel/90 text-lg text-gold-dark transition-colors hover:border-gold-dark hover:bg-mid hover:text-gold dark:border-bdr dark:text-gold dark:hover:text-gold-light"
     >
       {isDark ? '☀️' : '🌙'}
     </button>

@@ -1,5 +1,6 @@
 import PageLoadShell from '@/components/ui/PageLoadShell';
 import Skeleton from '@/components/ui/Skeleton';
+import { ITEM_CARD_GRID_CLASS } from '@/lib/itemCardGrid';
 
 export default function LibraryLoading() {
   return (
@@ -39,24 +40,27 @@ export default function LibraryLoading() {
             <div className="flex flex-wrap gap-2">
               <Skeleton className="h-10 min-w-[160px] flex-1 sm:max-w-xs" />
               <Skeleton className="h-10 w-28" />
+              <Skeleton className="h-10 w-28" />
             </div>
           </div>
-          <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {[1, 2, 3, 4, 5, 6].map(i => (
-              <li key={i} className="surface-card flex flex-col p-5 sm:p-6">
-                <div className="mb-4 flex justify-between gap-2">
-                  <div className="min-w-0 flex-1 space-y-2">
-                    <Skeleton className="h-5 w-[75%]" />
-                    <Skeleton className="h-3 w-1/2" />
-                  </div>
-                  <Skeleton className="h-7 w-20 shrink-0 rounded-full" />
-                </div>
-                <Skeleton className="mb-5 h-4 w-2/3" />
-                <div className="mt-auto space-y-2 border-t border-bdr/80 pt-4">
-                  <Skeleton className="h-9 w-full" />
-                  <div className="flex gap-2">
-                    <Skeleton className="h-10 flex-1" />
-                    <Skeleton className="h-10 w-12 shrink-0" />
+          <ul className={ITEM_CARD_GRID_CLASS}>
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => (
+              <li key={i} className="list-none flex h-full min-h-0 flex-col">
+                <div className="surface-card flex h-full min-h-0 flex-col overflow-hidden p-0">
+                  <Skeleton className="aspect-[4/3] w-full shrink-0 rounded-none rounded-t-xl" />
+                  <div className="flex min-h-0 flex-1 flex-col justify-between gap-3 p-5 pr-10 pt-4 sm:p-6 sm:pr-11 sm:pt-5">
+                    <div className="space-y-2">
+                      <Skeleton className="h-5 w-[85%]" />
+                      <Skeleton className="h-3 w-3/5" />
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Skeleton className="h-6 w-16 rounded-full" />
+                      <Skeleton className="h-6 w-14 rounded-full" />
+                    </div>
+                    <div className="mt-auto flex flex-wrap gap-2 pt-1">
+                      <Skeleton className="h-3 w-24" />
+                      <Skeleton className="h-3 w-20" />
+                    </div>
                   </div>
                 </div>
               </li>

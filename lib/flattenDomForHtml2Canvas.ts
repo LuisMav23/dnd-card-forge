@@ -1,6 +1,6 @@
 /**
  * Copies resolved computed color-related CSS from a source tree onto a deep-cloned tree.
- * html2canvas 1.4.x cannot parse modern serialized colors (e.g. color-mix → `color(srgb …)` in Chromium).
+ * html2canvas 1.4.x cannot parse modern color syntax (color-mix → `color(srgb …)`, oklch, etc.).
  */
 
 let probeCtx: CanvasRenderingContext2D | null | undefined;
@@ -31,42 +31,141 @@ function coerceColorToRgbString(cssColor: string): string {
   }
 }
 
-/** Replace top-level `color(...)` spans (Chromium serialization of color-mix, etc.). */
-const COLOR_FN = /\bcolor\((?:[^()]|\([^()]*\))*\)/gi;
+/** CSS color functions that serialize with nested parens; regex cannot reliably match them. */
+const MODERN_COLOR_FUNCS = ['color', 'oklch', 'lab', 'lch', 'hwb'] as const;
 
-function stripColorFunctionSpans(cssValue: string): string {
-  if (!cssValue.includes('color(')) return cssValue;
-  return cssValue.replace(COLOR_FN, match => coerceColorToRgbString(match));
+function replaceBalancedCalls(input: string, funcName: string): string {
+  const needle = `${funcName.toLowerCase()}(`;
+  const lower = input.toLowerCase();
+  let out = '';
+  let i = 0;
+  while (i < input.length) {
+    let found = lower.indexOf(needle, i);
+    while (found !== -1) {
+      const before = found > 0 ? input[found - 1] : '';
+      if (/[a-z0-9_-]/i.test(before)) {
+        found = lower.indexOf(needle, found + 1);
+      } else {
+        break;
+      }
+    }
+    if (found === -1) {
+      out += input.slice(i);
+      break;
+    }
+    out += input.slice(i, found);
+    const openParen = found + needle.length - 1;
+    if (input[openParen] !== '(') {
+      out += input.slice(found, found + needle.length);
+      i = found + needle.length;
+      continue;
+    }
+    let depth = 1;
+    let j = openParen + 1;
+    while (j < input.length && depth > 0) {
+      const c = input[j];
+      if (c === '(') {
+        depth++;
+      } else if (c === ')') {
+        depth--;
+      }
+      j++;
+    }
+    if (depth !== 0) {
+      out += input.slice(found, found + needle.length);
+      i = found + needle.length;
+      continue;
+    }
+    const fullCall = input.slice(found, j);
+    out += coerceColorToRgbString(fullCall);
+    i = j;
+  }
+  return out;
+}
+
+/** Replace all modern color() / oklch() / … spans until stable (e.g. nested in gradients). */
+export function stripModernColorFunctions(cssValue: string): string {
+  if (!cssValue || cssValue === 'none') return cssValue;
+  let result = cssValue;
+  let guard = 0;
+  let changed = true;
+  while (changed && guard++ < 48) {
+    changed = false;
+    for (const fn of MODERN_COLOR_FUNCS) {
+      const next = replaceBalancedCalls(result, fn);
+      if (next !== result) {
+        result = next;
+        changed = true;
+      }
+    }
+  }
+  return result;
 }
 
 function normalizeSvgPaint(value: string): string {
   const v = value.trim();
   if (!v || v === 'none') return v;
   if (/^url\(/i.test(v)) return v;
-  if (/\bcolor\(/i.test(v)) return stripColorFunctionSpans(v);
-  return coerceColorToRgbString(v);
+  return coerceColorToRgbString(stripModernColorFunctions(v));
+}
+
+function applyComputedPaintOntoElement(origin: HTMLElement, target: HTMLElement): void {
+  const s = getComputedStyle(origin);
+  target.style.color = coerceColorToRgbString(s.color);
+  target.style.backgroundColor = coerceColorToRgbString(s.backgroundColor);
+  target.style.backgroundImage = stripModernColorFunctions(s.backgroundImage);
+  target.style.backgroundSize = s.backgroundSize;
+  target.style.backgroundPosition = s.backgroundPosition;
+  target.style.backgroundRepeat = s.backgroundRepeat;
+  target.style.borderTopColor = coerceColorToRgbString(s.borderTopColor);
+  target.style.borderRightColor = coerceColorToRgbString(s.borderRightColor);
+  target.style.borderBottomColor = coerceColorToRgbString(s.borderBottomColor);
+  target.style.borderLeftColor = coerceColorToRgbString(s.borderLeftColor);
+  target.style.borderTopWidth = s.borderTopWidth;
+  target.style.borderRightWidth = s.borderRightWidth;
+  target.style.borderBottomWidth = s.borderBottomWidth;
+  target.style.borderLeftWidth = s.borderLeftWidth;
+  target.style.borderTopStyle = s.borderTopStyle;
+  target.style.borderRightStyle = s.borderRightStyle;
+  target.style.borderBottomStyle = s.borderBottomStyle;
+  target.style.borderLeftStyle = s.borderLeftStyle;
+  target.style.outlineColor = coerceColorToRgbString(s.outlineColor);
+  target.style.outlineStyle = s.outlineStyle;
+  target.style.outlineWidth = s.outlineWidth;
+  target.style.textDecorationColor = coerceColorToRgbString(s.textDecorationColor);
+  target.style.boxShadow = stripModernColorFunctions(s.boxShadow);
+  target.style.textShadow = stripModernColorFunctions(s.textShadow);
+  target.style.filter = stripModernColorFunctions(s.filter);
+  target.style.borderImageSource = stripModernColorFunctions(s.borderImageSource);
+}
+
+/**
+ * Re-applies sanitized computed paint onto html2canvas's own clone (onclone).
+ * html2canvas re-clones the subtree; this strips `color()` / oklch again from resolved values.
+ */
+export function selfFlattenHtml2CanvasTree(root: HTMLElement): void {
+  function walk(el: Element): void {
+    if (el instanceof HTMLElement) {
+      applyComputedPaintOntoElement(el, el);
+    } else if (el instanceof SVGElement) {
+      const tag = el.tagName.toLowerCase();
+      if (tag !== 'svg' && tag !== 'defs' && tag !== 'clipPath' && tag !== 'linearGradient') {
+        const s = getComputedStyle(el);
+        el.setAttribute('fill', normalizeSvgPaint(s.fill));
+        el.setAttribute('stroke', normalizeSvgPaint(s.stroke));
+      }
+    }
+    for (let i = 0; i < el.children.length; i++) {
+      walk(el.children[i]);
+    }
+  }
+  walk(root);
 }
 
 export function flattenDomForHtml2Canvas(sourceRoot: Element, cloneRoot: Element): void {
   function walk(origin: Element, cloned: Element): void {
     if (origin instanceof HTMLElement && cloned instanceof HTMLElement) {
-      const s = getComputedStyle(origin);
-      cloned.style.color = coerceColorToRgbString(s.color);
-      cloned.style.backgroundColor = coerceColorToRgbString(s.backgroundColor);
-      cloned.style.backgroundImage = stripColorFunctionSpans(s.backgroundImage);
-      cloned.style.backgroundSize = s.backgroundSize;
-      cloned.style.backgroundPosition = s.backgroundPosition;
-      cloned.style.backgroundRepeat = s.backgroundRepeat;
-      cloned.style.borderTopColor = coerceColorToRgbString(s.borderTopColor);
-      cloned.style.borderRightColor = coerceColorToRgbString(s.borderRightColor);
-      cloned.style.borderBottomColor = coerceColorToRgbString(s.borderBottomColor);
-      cloned.style.borderLeftColor = coerceColorToRgbString(s.borderLeftColor);
-      cloned.style.outlineColor = coerceColorToRgbString(s.outlineColor);
-      cloned.style.textDecorationColor = coerceColorToRgbString(s.textDecorationColor);
-      cloned.style.boxShadow = stripColorFunctionSpans(s.boxShadow);
-      cloned.style.textShadow = stripColorFunctionSpans(s.textShadow);
-      cloned.style.filter = stripColorFunctionSpans(s.filter);
-      cloned.style.borderImageSource = stripColorFunctionSpans(s.borderImageSource);
+      applyComputedPaintOntoElement(origin, cloned);
     } else if (origin instanceof SVGElement && cloned instanceof SVGElement) {
       const tag = origin.tagName.toLowerCase();
       if (tag !== 'svg' && tag !== 'defs' && tag !== 'clipPath' && tag !== 'linearGradient') {
