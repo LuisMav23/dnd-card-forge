@@ -7,6 +7,7 @@ import { pathFromCardAssetPublicUrl } from '@/lib/storage/paths';
 export type UserAssetKind =
   | 'card-art'
   | 'card-texture'
+  | 'card-back'
   | 'statblock-art'
   | 'profile-avatar'
   | 'encounter-thumbnail';

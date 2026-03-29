@@ -1,23 +1,29 @@
 'use client';
 
-import { forwardRef } from 'react';
+import { forwardRef, type LegacyRef, type RefObject } from 'react';
 import { CardState } from '@/lib/types';
 import { CARD_TYPES, getTypebar, getCost } from '@/lib/cardConfig';
 import { abilityMod, GEMS } from '@/lib/utils';
 import { getCardWikiCardExtras, getCardWikiFeatureRows } from '@/lib/cardWikiMetadata';
+import CardBackFace from '@/components/CardBackFace';
 import CardRenderer from '@/components/CardRenderer';
 import WikiClickableArt from '@/components/wiki/WikiClickableArt';
 
 interface Props {
   state: CardState;
   savedTitle?: string;
+  /** When set, a hidden full-size back face is mounted for PNG export. */
+  backExportRef?: RefObject<HTMLDivElement | null>;
 }
 
 function rarityLabel(r: string): string {
   return r ? r.charAt(0).toUpperCase() + r.slice(1) : r;
 }
 
-const CardWikiView = forwardRef<HTMLDivElement, Props>(function CardWikiView({ state, savedTitle }, ref) {
+const CardWikiView = forwardRef<HTMLDivElement, Props>(function CardWikiView(
+  { state, savedTitle, backExportRef },
+  ref
+) {
   const cfg = CARD_TYPES[state.type];
   const f = state.fields;
   const tb = getTypebar(state.type, f);
@@ -81,6 +87,21 @@ const CardWikiView = forwardRef<HTMLDivElement, Props>(function CardWikiView({ s
                 </div>
               </div>
             </section>
+
+            {state.backImage ? (
+              <section className="flex flex-col gap-4">
+                <h2 className="border-b border-bdr pb-3 font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-[0.22em] text-gold">
+                  Card back
+                </h2>
+                <div className="overflow-hidden rounded-xl border border-bdr bg-prev px-3 py-6 sm:px-5 sm:py-8">
+                  <div className="mx-auto flex w-[290px] max-w-full justify-center">
+                    <div className="card-scale-wrap">
+                      <CardBackFace src={state.backImage} />
+                    </div>
+                  </div>
+                </div>
+              </section>
+            ) : null}
           </div>
 
           <div className="flex flex-col gap-12 lg:col-span-7">
@@ -190,6 +211,14 @@ const CardWikiView = forwardRef<HTMLDivElement, Props>(function CardWikiView({ s
           </div>
         </div>
       </div>
+      {state.backImage && backExportRef ? (
+        <div
+          className="pointer-events-none fixed left-[-10000px] top-0 h-[833px] w-[595px] overflow-visible"
+          aria-hidden
+        >
+          <CardBackFace ref={backExportRef as LegacyRef<HTMLDivElement>} src={state.backImage} />
+        </div>
+      ) : null}
     </article>
   );
 });

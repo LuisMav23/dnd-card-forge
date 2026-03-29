@@ -166,6 +166,11 @@ export async function exportCardToPng(cardElement: HTMLElement, nameForFile: str
   await runExport(cardElement, 'card', `${base}-card.png`);
 }
 
+export async function exportCardBackToPng(cardBackElement: HTMLElement, nameForFile: string): Promise<void> {
+  const base = sanitizeFilenameBase(nameForFile, 'dnd-card');
+  await runExport(cardBackElement, 'card', `${base}-card-back.png`);
+}
+
 export async function exportStatBlockToPng(blockElement: HTMLElement, nameForFile: string): Promise<void> {
   const base = sanitizeFilenameBase(nameForFile, 'stat-block');
   await runExport(blockElement, 'statblock', `${base}-statblock.png`);

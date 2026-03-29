@@ -1,1 +1,1 @@
-export { exportCardToPng } from '@/lib/captureDomToPng';
+export { exportCardToPng, exportCardBackToPng } from '@/lib/captureDomToPng';

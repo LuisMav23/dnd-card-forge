@@ -6,11 +6,17 @@ import { useParams, useSearchParams } from 'next/navigation';
 import { FROM_LIBRARY_APPEND, isFromLibrarySearch } from '@/lib/fromLibraryNav';
 import { CardState } from '@/lib/types';
 import { coerceRarity, hydrateCardPalette } from '@/lib/cardPalette';
-import { exportCardToPng } from '@/lib/exportCardPng';
+import { exportCardBackToPng, exportCardToPng } from '@/lib/exportCardPng';
 import { getDomPngExportButtonLabel } from '@/lib/domPngExportError';
 import CardWikiView from '@/components/cards/CardWikiView';
 import RouteSuspenseFallback from '@/components/ui/RouteSuspenseFallback';
 import WikiDetailBodySkeleton from '@/components/ui/skeletons/WikiDetailBodySkeleton';
+
+function doubleRaf(): Promise<void> {
+  return new Promise(resolve => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+  });
+}
 
 interface LibraryCardRow {
   id: string;
@@ -41,6 +47,7 @@ function parseCardStateFromRow(libraryRow: LibraryCardRow): CardState | null {
     icon: raw.icon,
     image: raw.image ?? null,
     backgroundTexture: raw.backgroundTexture ?? null,
+    backImage: raw.backImage ?? null,
     fields: raw.fields,
     ...palette,
   };
@@ -63,14 +70,19 @@ function CardDetailInner() {
   const [downloadLabel, setDownloadLabel] = useState('⬇ Download card (PNG)');
   const [downloading, setDownloading] = useState(false);
   const cardExportRef = useRef<HTMLDivElement>(null);
+  const cardBackExportRef = useRef<HTMLDivElement>(null);
 
   const handleDownloadCard = useCallback(async () => {
-    const el = cardExportRef.current;
-    if (!el || !state) return;
+    const frontEl = cardExportRef.current;
+    if (!frontEl || !state) return;
     setDownloading(true);
     setDownloadLabel('⏳ Generating…');
     try {
-      await exportCardToPng(el, state.fields.name || 'dnd-card');
+      await exportCardToPng(frontEl, state.fields.name || 'dnd-card');
+      if (state.backImage && cardBackExportRef.current) {
+        await doubleRaf();
+        await exportCardBackToPng(cardBackExportRef.current, state.fields.name || 'dnd-card');
+      }
       setDownloadLabel('✓ Downloaded');
       setTimeout(() => setDownloadLabel('⬇ Download card (PNG)'), 2000);
     } catch (err) {
@@ -173,7 +185,12 @@ function CardDetailInner() {
       )}
 
       {status === 'ready' && state && (
-        <CardWikiView ref={cardExportRef} state={state} savedTitle={savedTitle} />
+        <CardWikiView
+          ref={cardExportRef}
+          backExportRef={cardBackExportRef}
+          state={state}
+          savedTitle={savedTitle}
+        />
       )}
 
       <footer className="mt-auto flex-shrink-0 border-t border-bdr px-3 py-2 text-center font-[var(--font-cinzel),serif] text-[0.7rem] italic leading-snug tracking-wide text-muted sm:text-xs">

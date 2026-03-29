@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { CardState } from '@/lib/types';
 import { coerceRarity, hydrateCardPalette } from '@/lib/cardPalette';
-import { exportCardToPng } from '@/lib/exportCardPng';
+import { exportCardBackToPng, exportCardToPng } from '@/lib/exportCardPng';
 import { exportStatBlockToPng } from '@/lib/exportStatBlockPng';
 import { getDomPngExportButtonLabel } from '@/lib/domPngExportError';
 import { parseStatBlockFromLibraryRow, type LibraryStatBlockRow } from '@/lib/statBlockLoad';
@@ -59,6 +59,7 @@ function parseCardStateFromRow(row: PublishedRow): CardState | null {
     icon: raw.icon,
     image: raw.image ?? null,
     backgroundTexture: raw.backgroundTexture ?? null,
+    backImage: raw.backImage ?? null,
     fields: raw.fields,
     ...palette,
   };
@@ -80,6 +81,7 @@ function ExplorePublishedInner() {
   const [reactionBusy, setReactionBusy] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const exportRef = useRef<HTMLDivElement>(null);
+  const cardBackExportRef = useRef<HTMLDivElement>(null);
 
   const supabase = createClient();
 
@@ -302,7 +304,12 @@ function ExplorePublishedInner() {
       )}
 
       {status === 'ready' && cardState && row && (
-        <CardWikiView ref={exportRef} state={cardState} savedTitle={row.title} />
+        <CardWikiView
+          ref={exportRef}
+          backExportRef={cardBackExportRef}
+          state={cardState}
+          savedTitle={row.title}
+        />
       )}
 
       {status === 'ready' && statState && row && (

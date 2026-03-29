@@ -10,6 +10,7 @@ import SidekickFields from './forms/SidekickFields';
 import AnythingFields from './forms/AnythingFields';
 import ThemeSection from './forms/ThemeSection';
 import BackgroundTextureSection from './forms/BackgroundTextureSection';
+import CardBackSection from './forms/CardBackSection';
 import ArtSection from './forms/ArtSection';
 import TextSection from './forms/TextSection';
 import StatsSection from './forms/StatsSection';
@@ -77,6 +78,11 @@ export default function FormPanel({
       <BackgroundTextureSection
         currentTexture={state.backgroundTexture}
         onTextureChange={url => dispatch({ type: 'SET_BACKGROUND_TEXTURE', payload: url })}
+      />
+
+      <CardBackSection
+        currentBack={state.backImage}
+        onBackChange={url => dispatch({ type: 'SET_BACK_IMAGE', payload: url })}
       />
 
       <ArtSection

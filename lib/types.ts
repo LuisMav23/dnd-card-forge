@@ -38,6 +38,8 @@ export interface CardState {
   image: string | null;
   /** Full-bleed background behind color wash; data URL (JPEG preferred). */
   backgroundTexture: string | null;
+  /** Optional reverse-face art for print (same aspect as card shell). */
+  backImage: string | null;
   /** Face gradient and chrome (#rrggbb). */
   colorBgFrom: string;
   colorBgTo: string;
@@ -66,6 +68,7 @@ export type CardAction =
   | { type: 'SET_ICON'; payload: string }
   | { type: 'SET_IMAGE'; payload: string | null }
   | { type: 'SET_BACKGROUND_TEXTURE'; payload: string | null }
+  | { type: 'SET_BACK_IMAGE'; payload: string | null }
   | { type: 'SET_CARD_COLORS'; payload: CardPalettePatch }
   | { type: 'SET_FIELD'; payload: { key: string; value: string } }
   | { type: 'SET_FIELDS'; payload: Record<string, string> }

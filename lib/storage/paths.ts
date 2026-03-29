@@ -18,7 +18,7 @@ export function storagePathsFromCardData(data: unknown): string[] {
   if (!data || typeof data !== 'object') return [];
   const d = data as Record<string, unknown>;
   const paths: string[] = [];
-  for (const key of ['image', 'backgroundTexture'] as const) {
+  for (const key of ['image', 'backgroundTexture', 'backImage'] as const) {
     const p = pathFromCardAssetPublicUrl(typeof d[key] === 'string' ? (d[key] as string) : null);
     if (p) paths.push(p);
   }

@@ -6,17 +6,23 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { CardState, CardAction, CardType } from '@/lib/types';
 import { CARD_TYPES, getDefaultFields } from '@/lib/cardConfig';
 import { coerceRarity, DEFAULT_CARD_PALETTE, hydrateCardPalette } from '@/lib/cardPalette';
-import { exportCardToPng } from '@/lib/exportCardPng';
+import { exportCardBackToPng, exportCardToPng } from '@/lib/exportCardPng';
 import { getDomPngExportButtonLabel } from '@/lib/domPngExportError';
 import TypeBar from '@/components/TypeBar';
 import ExamplePanel from '@/components/ExamplePanel';
 import FormPanel from '@/components/FormPanel';
-import LivePreview from '@/components/LivePreview';
+import LivePreview, { type CardPreviewFace } from '@/components/LivePreview';
 import ForgeLibraryLoadSkeleton from '@/components/ui/ForgeLibraryLoadSkeleton';
 import LoadingLibraryProgressBar from '@/components/ui/LoadingLibraryProgressBar';
 import RouteSuspenseFallback from '@/components/ui/RouteSuspenseFallback';
 import { FROM_LIBRARY_QS, isFromLibrarySearch } from '@/lib/fromLibraryNav';
 import { useLibraryItemAutosave } from '@/hooks/useLibraryItemAutosave';
+
+function doubleRaf(): Promise<void> {
+  return new Promise(resolve => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+  });
+}
 
 function cardReducer(state: CardState, action: CardAction): CardState {
   switch (action.type) {
@@ -28,6 +34,7 @@ function cardReducer(state: CardState, action: CardAction): CardState {
         icon: cfg.defaultIcon,
         image: null,
         backgroundTexture: null,
+        backImage: null,
         ...DEFAULT_CARD_PALETTE,
         fields: getDefaultFields(action.payload),
       };
@@ -40,6 +47,8 @@ function cardReducer(state: CardState, action: CardAction): CardState {
       return { ...state, image: action.payload };
     case 'SET_BACKGROUND_TEXTURE':
       return { ...state, backgroundTexture: action.payload };
+    case 'SET_BACK_IMAGE':
+      return { ...state, backImage: action.payload };
     case 'SET_CARD_COLORS':
       return { ...state, ...action.payload };
     case 'SET_FIELD':
@@ -56,6 +65,7 @@ function cardReducer(state: CardState, action: CardAction): CardState {
         icon: p.icon,
         image: p.image ?? null,
         backgroundTexture: p.backgroundTexture ?? null,
+        backImage: p.backImage ?? null,
         fields: p.fields,
         ...palette,
       };
@@ -71,6 +81,7 @@ const initialState: CardState = {
   icon: '🌀',
   image: null,
   backgroundTexture: null,
+  backImage: null,
   ...DEFAULT_CARD_PALETTE,
   fields: getDefaultFields('spell'),
 };
@@ -88,6 +99,8 @@ function CardForgeInner() {
 
   const [state, dispatch] = useReducer(cardReducer, initialState);
   const cardRef = useRef<HTMLDivElement>(null);
+  const cardBackRef = useRef<HTMLDivElement>(null);
+  const [previewFace, setPreviewFace] = useState<CardPreviewFace>('front');
   const [exporting, setExporting] = useState(false);
   const [exportLabel, setExportLabel] = useState('⬇ Export Card as PNG');
 
@@ -188,14 +201,23 @@ function CardForgeInner() {
   }, []);
 
   const handleExport = useCallback(async () => {
-    const el = cardRef.current;
-    if (!el) return;
+    const frontEl = cardRef.current;
+    if (!frontEl) return;
 
+    const prevFace = previewFace;
     setExporting(true);
     setExportLabel('⏳ Generating…');
 
     try {
-      await exportCardToPng(el, state.fields.name || 'dnd-card');
+      setPreviewFace('front');
+      await doubleRaf();
+      await exportCardToPng(frontEl, state.fields.name || 'dnd-card');
+      if (state.backImage && cardBackRef.current) {
+        setPreviewFace('back');
+        await doubleRaf();
+        await exportCardBackToPng(cardBackRef.current, state.fields.name || 'dnd-card');
+      }
+      setPreviewFace(prevFace);
       setExportLabel('✓ Exported!');
       setTimeout(() => {
         setExportLabel('⬇ Export Card as PNG');
@@ -203,11 +225,12 @@ function CardForgeInner() {
       }, 2200);
     } catch (err) {
       console.error(err);
+      setPreviewFace(prevFace);
       setExportLabel(getDomPngExportButtonLabel(err));
       setExporting(false);
       setTimeout(() => setExportLabel('⬇ Export Card as PNG'), 2500);
     }
-  }, [state.fields.name]);
+  }, [state.fields.name, state.backImage, previewFace]);
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden">
@@ -268,7 +291,13 @@ function CardForgeInner() {
             saveDisabled={Boolean(libraryId && loadState !== 'ready')}
             autosaveHint={autosaveHint}
           />
-          <LivePreview ref={cardRef} state={state} />
+          <LivePreview
+            state={state}
+            previewFace={previewFace}
+            onPreviewFaceChange={setPreviewFace}
+            frontExportRef={cardRef}
+            backExportRef={cardBackRef}
+          />
         </div>
       )}
       <footer className="flex-shrink-0 border-t border-bdr px-3 py-2 text-center font-[var(--font-cinzel),serif] text-[0.7rem] italic leading-snug tracking-wide text-muted sm:text-xs">
