@@ -72,7 +72,7 @@ export default function NotificationsPage() {
   const refresh = useCallback(async () => {
     const next = await loadList();
     setData(next);
-    if (next === null) router.push('/');
+    if (next === null) router.push('/login');
   }, [router]);
 
   useEffect(() => {

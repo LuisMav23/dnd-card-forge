@@ -10,7 +10,7 @@ export default async function LibraryPage() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/');
+    redirect('/login');
   }
 
   await ensureLibrarySystemFolders(supabase, user.id);

@@ -1,3 +1,6 @@
+'use client';
+
+import type { CSSProperties } from 'react';
 import Link from 'next/link';
 import { exploreCount, type ExploreListItem } from '@/lib/exploreTypes';
 
@@ -11,14 +14,22 @@ function rankBadgeClass(rank: number): string {
 export default function ExploreItemCard({
   item,
   rank,
+  listItemClassName,
+  listItemStyle,
 }: {
   item: ExploreListItem;
   /** 1-based; shows a leaderboard badge on the thumbnail when set */
   rank?: number;
+  /** Merged onto outer `<li>` (e.g. landing scroll-reveal). */
+  listItemClassName?: string;
+  listItemStyle?: CSSProperties;
 }) {
   return (
-    <li className="list-none flex h-full min-h-0 flex-col">
-      <div className="group flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-bdr bg-panel/90 shadow-[0_4px_20px_rgba(0,0,0,0.2)] transition-colors hover:border-gold/40 hover:shadow-[0_8px_28px_rgba(201,168,76,0.12)]">
+    <li
+      className={`list-none flex h-full min-h-0 flex-col${listItemClassName ? ` ${listItemClassName}` : ''}`}
+      style={listItemStyle}
+    >
+      <div className="group flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-bdr bg-panel/90 shadow-[0_4px_20px_rgba(0,0,0,0.2)] transition-all duration-300 hover:-translate-y-0.5 hover:border-gold/40 hover:shadow-[0_8px_28px_rgba(201,168,76,0.12)]">
         <Link
           href={`/explore/${item.id}`}
           className="flex min-h-0 min-w-0 flex-1 flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/40"

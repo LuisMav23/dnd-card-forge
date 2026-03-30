@@ -54,6 +54,61 @@
   background: radial-gradient(ellipse 80% 50% at 50% -20%, rgb(var(--color-gold) / 0.06), transparent);
 }
 
+/* Landing page: scroll reveal children */
+.landing-reveal .landing-reveal-child {
+  opacity: 0;
+  transform: translateY(1rem);
+}
+.landing-reveal.landing-visible .landing-reveal-child {
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity 0.65s ease-out,
+    transform 0.65s ease-out;
+  transition-delay: var(--landing-reveal-delay, 0ms);
+}
+
+.landing-hero-aurora {
+  background: radial-gradient(
+    ellipse 100% 70% at 50% 20%,
+    rgb(var(--color-gold) / 0.14),
+    transparent 55%
+  );
+}
+html.dark .landing-hero-aurora {
+  background: radial-gradient(
+    ellipse 100% 70% at 50% 20%,
+    rgb(var(--color-gold) / 0.1),
+    transparent 55%
+  );
+}
+
+.landing-community-mask {
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 4%,
+    black 96%,
+    transparent
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-landing-fade-up,
+  .animate-landing-fade-in,
+  .animate-landing-shimmer {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .landing-reveal .landing-reveal-child,
+  .landing-reveal.landing-visible .landing-reveal-child {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
 @layer components {
   .panel-btn {
     @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-md border border-bdr bg-panel px-4 py-2.5 text-center font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-[0.18em] text-gold transition-all hover:border-gold-dark hover:bg-mid;

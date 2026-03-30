@@ -10,7 +10,8 @@ const PROTECTED_PREFIXES = [
   '/profile',
   '/encounters',
 ] as const;
-const AUTH_ONLY_PATHS = ['/', '/signup'] as const;
+/** Logged-in users are redirected away from these (login/signup flows). */
+const AUTH_ONLY_PATHS = ['/login', '/signup'] as const;
 
 function isProtectedPath(pathname: string): boolean {
   return PROTECTED_PREFIXES.some(
@@ -56,7 +57,7 @@ export async function proxy(request: NextRequest) {
 
   if (!user && isProtectedPath(pathname)) {
     const url = request.nextUrl.clone();
-    url.pathname = '/';
+    url.pathname = '/login';
     return NextResponse.redirect(url);
   }
 

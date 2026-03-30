@@ -180,7 +180,7 @@ function FollowingFeedSection({
       {!authed ? (
         <div className="rounded-xl border border-dashed border-bdr/80 bg-panel/40 p-6 text-center">
           <p className="text-sm text-bronze">Sign in to see new posts from people you follow.</p>
-          <Link href="/" className="mt-4 inline-block panel-btn text-gold">
+          <Link href="/login" className="mt-4 inline-block panel-btn text-gold">
             Sign in
           </Link>
         </div>

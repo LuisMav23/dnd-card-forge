@@ -332,7 +332,7 @@ export default function ExploreCommentsSection({ cardId }: { cardId: string }) {
             />
           ) : (
             <p className="text-sm text-bronze">
-              <Link href="/" className="text-gold underline-offset-2 hover:underline">
+              <Link href="/login" className="text-gold underline-offset-2 hover:underline">
                 Sign in
               </Link>{' '}
               to join the discussion.

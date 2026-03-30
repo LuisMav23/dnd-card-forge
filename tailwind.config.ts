@@ -9,6 +9,25 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      keyframes: {
+        'landing-fade-up': {
+          '0%': { opacity: '0', transform: 'translateY(1rem)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        'landing-fade-in': {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        'landing-shimmer': {
+          '0%, 100%': { opacity: '0.3' },
+          '50%': { opacity: '0.5' },
+        },
+      },
+      animation: {
+        'landing-fade-up': 'landing-fade-up 0.75s ease-out forwards',
+        'landing-fade-in': 'landing-fade-in 0.85s ease-out forwards',
+        'landing-shimmer': 'landing-shimmer 10s ease-in-out infinite',
+      },
       colors: {
         gold: {
           DEFAULT: 'rgb(var(--color-gold) / <alpha-value>)',

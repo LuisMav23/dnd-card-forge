@@ -3,6 +3,7 @@ import { Cinzel, Crimson_Text } from 'next/font/google';
 import Script from 'next/script';
 import './globals.css';
 import { ThemeProvider } from '@/components/ThemeProvider';
+import { getMetadataBase } from '@/lib/siteUrl';
 
 const cinzel = Cinzel({
   subsets: ['latin'],
@@ -20,6 +21,7 @@ const crimsonText = Crimson_Text({
 });
 
 export const metadata: Metadata = {
+  metadataBase: getMetadataBase(),
   title: 'Card Forge',
   description: 'Spells · Armor · Weapons · Items · Sidekicks · Anything — Export PNG',
   icons: {

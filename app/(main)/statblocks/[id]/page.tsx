@@ -123,7 +123,7 @@ function StatBlockDetailInner() {
       {status === 'unauthorized' && (
         <div className="mx-auto max-w-md px-4 py-16 text-center">
           <p className="text-parch">Sign in to view this stat block.</p>
-          <Link href="/" className="mt-4 inline-block panel-btn">
+          <Link href="/login" className="mt-4 inline-block panel-btn">
             Sign in
           </Link>
         </div>

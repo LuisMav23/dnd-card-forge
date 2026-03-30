@@ -176,7 +176,7 @@ export default function PublicUserProfilePage() {
                   {!sessionUserId && (
                     <button
                       type="button"
-                      onClick={() => router.push('/')}
+                      onClick={() => router.push('/login')}
                       className="panel-btn text-sm text-gold"
                     >
                       Sign in to follow

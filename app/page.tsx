@@ -1,145 +1,350 @@
-'use client';
-
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import type { CSSProperties } from 'react';
+import type { Metadata } from 'next';
 import Link from 'next/link';
-import ThemeToggle from '@/components/ThemeToggle';
+import ExploreItemCard from '@/components/explore/ExploreItemCard';
+import LandingCta from '@/components/landing/LandingCta';
+import LandingJsonLd from '@/components/landing/LandingJsonLd';
+import LandingReveal from '@/components/landing/LandingReveal';
+import LandingTopBar from '@/components/landing/LandingTopBar';
 import LogoMark from '@/components/LogoMark';
+import { fetchLandingSpotlightItems } from '@/lib/landingSpotlight';
+import { ITEM_CARD_GRID_CLASS } from '@/lib/itemCardGrid';
+import { createClient } from '@/lib/supabase/server';
 
-export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
+const LANDING_TITLE = 'Card Forge — TTRPG item card maker, stat block builder & PNG export';
+const LANDING_DESCRIPTION =
+  'Design fantasy tabletop RPG item cards and stat blocks online: spells, weapons, armor, NPCs, monsters, and more. Live preview, PNG export for VTTs and handouts, then publish and share on Explore — with comments, votes, favorites, and creator follows.';
 
-  const handleAuth = async () => {
-    if (!email || !password) {
-      setError('Please enter both your email and password.');
-      return;
-    }
+export const metadata: Metadata = {
+  title: LANDING_TITLE,
+  description: LANDING_DESCRIPTION,
+  keywords: [
+    'TTRPG',
+    'tabletop RPG',
+    'item card maker',
+    'spell card generator',
+    'stat block builder',
+    'NPC card',
+    'monster stat block',
+    'fantasy RPG props',
+    'VTT handouts',
+    'PNG export',
+    'RPG community',
+    'Card Forge',
+  ],
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    title: LANDING_TITLE,
+    description: LANDING_DESCRIPTION,
+    url: '/',
+    siteName: 'Card Forge',
+    locale: 'en_US',
+    type: 'website',
+    images: [
+      {
+        url: '/logo.svg',
+        width: 512,
+        height: 512,
+        alt: 'Card Forge — tabletop card studio logo',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: LANDING_TITLE,
+    description: LANDING_DESCRIPTION,
+    images: ['/logo.svg'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+};
 
-    setLoading(true);
-    setError(null);
+const createItems = [
+  {
+    glyph: '✦',
+    title: 'Item cards',
+    body: 'Spell cards, weapons, armor, equipment, sidekicks, and flexible “anything” templates — a full item card maker with live preview and crisp PNG export for your fantasy tabletop RPG table or VTT.',
+  },
+  {
+    glyph: '⚔',
+    title: 'Stat blocks',
+    body: 'Build NPC, monster, adversary, and environment stat blocks for quick reference. One stat block builder tuned for handouts and wiki-style browsing.',
+  },
+  {
+    glyph: '◇',
+    title: 'Encounters',
+    body: 'Plan and run encounters linked to your library so prep and play stay in one workspace.',
+  },
+];
 
-    try {
-      const res = await fetch(`/api/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
+const socialFeatures = [
+  {
+    glyph: '◎',
+    title: 'Publish to Explore',
+    body: 'Share finished work publicly so anyone can browse popular and top-rated creations, fork ideas into their library, or take inspiration for their own campaign.',
+  },
+  {
+    glyph: '♥',
+    title: 'Reactions & favorites',
+    body: 'Upvote, downvote, and favorite published cards and stat blocks — community signal for the best homebrew on Explore.',
+  },
+  {
+    glyph: '✎',
+    title: 'Comments',
+    body: 'Discuss each published build in context: feedback, tweaks, and table stories in one thread.',
+  },
+  {
+    glyph: '↗',
+    title: 'Follow creators',
+    body: 'Follow profiles and see new publishes from people you care about alongside the main Explore feeds.',
+  },
+];
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Authentication failed');
-      }
-
-      router.push('/home');
-      router.refresh();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
-    } finally {
-      setLoading(false);
-    }
-  };
+export default async function LandingPage() {
+  const supabase = await createClient();
+  const spotlight = await fetchLandingSpotlightItems(supabase, 8);
 
   return (
-    <div className="auth-hero-gradient relative flex min-h-screen flex-col overflow-y-auto bg-bg px-4 py-10 sm:py-14">
-      <div className="auth-page-vignette pointer-events-none absolute inset-0" aria-hidden />
-      <div className="absolute right-4 top-4 z-10 sm:right-6 sm:top-6">
-        <ThemeToggle />
-      </div>
-      <div className="relative mx-auto flex w-full max-w-md flex-1 flex-col justify-center">
-        <div className="rounded-xl border border-bdr bg-panel/95 p-8 shadow-[0_0_0_1px_rgba(201,168,76,0.08),0_24px_48px_rgba(0,0,0,0.55)] backdrop-blur-sm sm:p-10">
-          <div className="mb-8 text-center">
-            <div className="mx-auto mb-3 flex justify-center text-gold-dark dark:text-gold">
-              <LogoMark className="h-14 w-14 sm:h-16 sm:w-16" />
+    <>
+      <LandingJsonLd />
+      <div className="relative min-h-screen bg-bg text-parch">
+        <LandingTopBar />
+
+        <section
+          className="auth-hero-gradient relative overflow-hidden px-4 pb-20 pt-24 sm:pb-28 sm:pt-28"
+          aria-labelledby="landing-hero-heading"
+        >
+          <div
+            className="landing-hero-aurora animate-landing-shimmer pointer-events-none absolute inset-0"
+            aria-hidden
+          />
+          <div className="auth-page-vignette pointer-events-none absolute inset-0" aria-hidden />
+          <div className="relative mx-auto max-w-3xl text-center">
+            <div className="mx-auto mb-6 flex justify-center text-gold-dark opacity-0 animate-landing-fade-in dark:text-gold">
+              <LogoMark className="h-16 w-16 sm:h-20 sm:w-20" />
             </div>
-            <p className="mb-2 font-[var(--font-cinzel),serif] text-xs uppercase tracking-[0.35em] text-gold-dark">
-              Welcome back
+            <p className="font-[var(--font-cinzel),serif] text-xs uppercase tracking-[0.35em] text-gold-dark opacity-0 animate-landing-fade-up [animation-delay:120ms]">
+              Tabletop card studio
             </p>
-            <h1 className="font-[var(--font-cinzel),serif] text-2xl font-black tracking-[0.12em] text-gold [text-shadow:0_0_24px_rgba(201,168,76,0.35)] sm:text-3xl">
+            <h1
+              id="landing-hero-heading"
+              className="mt-4 font-[var(--font-cinzel),serif] text-3xl font-black tracking-[0.08em] text-gold opacity-0 animate-landing-fade-up [animation-delay:200ms] [text-shadow:0_0_28px_rgba(201,168,76,0.35)] sm:text-4xl md:text-5xl"
+            >
               Card Forge
             </h1>
-            <div className="mx-auto mt-4 h-px w-16 bg-gradient-to-r from-transparent via-gold to-transparent opacity-80" />
-            <p className="mt-4 font-[var(--font-cinzel),serif] text-xs uppercase tracking-[0.2em] text-gold-dark">
-              Sign in to continue
+            <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-bronze opacity-0 animate-landing-fade-up [animation-delay:280ms] sm:text-lg">
+              The item card maker and stat block builder for fantasy TTRPGs: craft handouts, export PNGs for virtual tabletops, then{' '}
+              <Link href="/explore" className="text-gold underline-offset-2 hover:underline">
+                publish and share
+              </Link>{' '}
+              with a community that comments, votes, and follows creators.
             </p>
-          </div>
-
-          <div className="flex flex-col gap-4 text-parch">
-            <label className="text-xs font-semibold uppercase tracking-wider text-gold-dark" htmlFor="email">
-              Email
-            </label>
-            <input
-              id="email"
-              className="rounded-md border border-bdr bg-mid px-4 py-3 text-parch placeholder:text-placeholder/90 focus:border-gold-dark focus:outline-none focus:ring-2 focus:ring-gold/20"
-              name="email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-            />
-
-            <label className="text-xs font-semibold uppercase tracking-wider text-gold-dark" htmlFor="password">
-              Password
-            </label>
-            <div className="relative">
-              <input
-                id="password"
-                className="w-full rounded-md border border-bdr bg-mid py-3 pl-4 pr-[4.5rem] text-parch placeholder:text-placeholder/90 focus:border-gold-dark focus:outline-none focus:ring-2 focus:ring-gold/20"
-                type={showPassword ? 'text' : 'password'}
-                name="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-                autoComplete="current-password"
-              />
-              <button
-                type="button"
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded px-2 py-1 font-[var(--font-cinzel),serif] text-[0.65rem] font-semibold uppercase tracking-wider text-gold-dark transition-colors hover:bg-bdr/40 hover:text-gold"
-                onClick={() => setShowPassword(v => !v)}
-                aria-pressed={showPassword}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-              >
-                {showPassword ? 'Hide' : 'Show'}
-              </button>
-            </div>
-
-            <div className="mt-2 flex flex-col gap-3">
-              <button
-                type="button"
-                onClick={handleAuth}
-                disabled={loading}
-                className="panel-btn w-full justify-center disabled:pointer-events-none disabled:opacity-50"
-              >
-                {loading ? 'Processing…' : 'Sign In'}
-              </button>
-
-              <Link
-                href="/signup"
-                className="panel-btn w-full justify-center border-bdr bg-transparent text-gold-dark hover:bg-input hover:text-gold"
-              >
-                Need an account? Sign Up
+            <nav
+              className="mt-10 flex flex-wrap items-center justify-center gap-3 opacity-0 animate-landing-fade-up [animation-delay:360ms]"
+              aria-label="Primary actions"
+            >
+              <Link href="/signup" className="panel-btn border-gold-dark/60 bg-gold-dark/10 text-gold hover:bg-gold/10">
+                Create free account
               </Link>
-            </div>
-
-            {error && (
-              <p
-                role="alert"
-                className="mt-2 rounded-md border border-red-800/80 bg-red-950/50 p-3 text-center text-sm text-red-200"
+              <Link
+                href="/explore"
+                className="panel-btn border-bdr/90 bg-transparent text-gold-dark hover:border-gold/40 hover:text-gold dark:text-bronze"
               >
-                {error}
-              </p>
-            )}
+                Browse community creations
+              </Link>
+              <Link
+                href="/login"
+                className="font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-[0.14em] text-muted underline-offset-4 transition-colors hover:text-gold-dark dark:hover:text-gold"
+              >
+                Sign in
+              </Link>
+            </nav>
           </div>
-        </div>
+        </section>
+
+        <section
+          className="page-radial-soft border-t border-bdr/60 px-4 py-14 sm:px-8 sm:py-20"
+          aria-labelledby="landing-create-heading"
+        >
+          <LandingReveal>
+            <div className="mx-auto max-w-5xl">
+              <h2
+                id="landing-create-heading"
+                className="landing-reveal-child font-[var(--font-cinzel),serif] text-xl font-bold tracking-wide text-gold sm:text-2xl"
+                style={{ '--landing-reveal-delay': '0ms' } as CSSProperties}
+              >
+                What you can create
+              </h2>
+              <p
+                className="landing-reveal-child mt-2 max-w-2xl text-sm text-bronze sm:text-base"
+                style={{ '--landing-reveal-delay': '80ms' } as CSSProperties}
+              >
+                Props, player handouts, and GM reference — built for long campaigns and one-shots. Everything saves to your library when you{' '}
+                <Link href="/signup" className="text-gold underline-offset-2 hover:underline">
+                  sign up free
+                </Link>
+                .
+              </p>
+              <ul className="mt-10 grid gap-6 sm:grid-cols-3">
+                {createItems.map((item, i) => (
+                  <li
+                    key={item.title}
+                    className="landing-reveal-child group relative rounded-xl border border-bdr/80 bg-panel/60 p-5 shadow-[0_4px_24px_rgba(0,0,0,0.15)] transition-all duration-300 hover:-translate-y-1 hover:border-gold/45 hover:shadow-[0_12px_40px_rgba(201,168,76,0.12)]"
+                    style={
+                      { '--landing-reveal-delay': `${120 + i * 90}ms` } as CSSProperties
+                    }
+                  >
+                    <span
+                      className="mb-2 block font-[var(--font-cinzel),serif] text-lg text-gold/80 transition-colors group-hover:text-gold"
+                      aria-hidden
+                    >
+                      {item.glyph}
+                    </span>
+                    <h3 className="font-[var(--font-cinzel),serif] text-sm font-bold uppercase tracking-[0.12em] text-gold-dark dark:text-gold">
+                      {item.title}
+                    </h3>
+                    <p className="mt-3 text-sm leading-relaxed text-parch/95">{item.body}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </LandingReveal>
+        </section>
+
+        <section
+          className="border-t border-bdr/40 bg-panel/25 px-4 py-14 dark:bg-panel/15 sm:px-8 sm:py-20"
+          aria-labelledby="landing-social-heading"
+        >
+          <LandingReveal>
+            <div className="mx-auto max-w-5xl">
+              <h2
+                id="landing-social-heading"
+                className="landing-reveal-child font-[var(--font-cinzel),serif] text-xl font-bold tracking-wide text-gold sm:text-2xl"
+                style={{ '--landing-reveal-delay': '0ms' } as CSSProperties}
+              >
+                Social &amp; discovery
+              </h2>
+              <p
+                className="landing-reveal-child mt-2 max-w-2xl text-sm text-bronze sm:text-base"
+                style={{ '--landing-reveal-delay': '70ms' } as CSSProperties}
+              >
+                More than an editor: a place to publish, remix, and discover homebrew. Explore trending and top-rated work on{' '}
+                <Link href="/explore" className="text-gold underline-offset-2 hover:underline">
+                  Explore
+                </Link>
+                .
+              </p>
+              <ul className="mt-10 grid gap-5 sm:grid-cols-2">
+                {socialFeatures.map((f, i) => (
+                  <li
+                    key={f.title}
+                    className="landing-reveal-child group flex gap-3 rounded-lg border border-transparent py-1 pl-4 transition-colors hover:border-bdr/60 hover:bg-panel/40"
+                    style={
+                      { '--landing-reveal-delay': `${100 + i * 75}ms` } as CSSProperties
+                    }
+                  >
+                    <span
+                      className="shrink-0 font-[var(--font-cinzel),serif] text-base text-gold/70 transition-colors group-hover:text-gold"
+                      aria-hidden
+                    >
+                      {f.glyph}
+                    </span>
+                    <div className="min-w-0 border-l-2 border-gold-dark/50 pl-3 dark:border-gold/40">
+                      <h3 className="font-[var(--font-cinzel),serif] text-sm font-semibold text-gold-dark dark:text-gold">
+                        {f.title}
+                      </h3>
+                      <p className="mt-1 text-sm leading-relaxed text-muted">{f.body}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </LandingReveal>
+        </section>
+
+        <section
+          className="page-radial-soft border-t border-bdr/60 px-4 py-14 sm:px-8 sm:py-20"
+          aria-labelledby="landing-community-heading"
+        >
+          <LandingReveal>
+            <div className="landing-community-mask mx-auto max-w-6xl">
+              <div className="mb-8 border-b border-bdr/80 pb-4">
+                <h2
+                  id="landing-community-heading"
+                  className="landing-reveal-child font-[var(--font-cinzel),serif] text-xl font-bold tracking-wide text-gold sm:text-2xl"
+                  style={{ '--landing-reveal-delay': '0ms' } as CSSProperties}
+                >
+                  From the community
+                </h2>
+                <p
+                  className="landing-reveal-child mt-2 text-sm text-bronze sm:text-base"
+                  style={{ '--landing-reveal-delay': '70ms' } as CSSProperties}
+                >
+                  Popular published item cards and stat blocks — open any tile for the full wiki-style view, comments, and forks on Explore.
+                </p>
+              </div>
+              {spotlight.length === 0 ? (
+                <p
+                  className="landing-reveal-child text-sm italic text-muted"
+                  style={{ '--landing-reveal-delay': '120ms' } as CSSProperties}
+                >
+                  Nothing published yet.{' '}
+                  <Link href="/explore" className="text-gold underline-offset-2 hover:underline">
+                    Open Explore
+                  </Link>{' '}
+                  to see new work as creators share.
+                </p>
+              ) : (
+                <ul className={`${ITEM_CARD_GRID_CLASS} gap-5 lg:gap-6`}>
+                  {spotlight.map((item, i) => (
+                    <ExploreItemCard
+                      key={item.id}
+                      item={item}
+                      listItemClassName="landing-reveal-child"
+                      listItemStyle={
+                        { '--landing-reveal-delay': `${100 + i * 65}ms` } as CSSProperties
+                      }
+                    />
+                  ))}
+                </ul>
+              )}
+            </div>
+          </LandingReveal>
+        </section>
+
+        <section
+          className="border-t border-bdr/60 bg-mid/30 px-4 py-16 sm:px-8 sm:py-24"
+          aria-labelledby="landing-cta-heading"
+        >
+          <LandingReveal>
+            <div className="mx-auto max-w-2xl text-center">
+              <h2
+                id="landing-cta-heading"
+                className="landing-reveal-child font-[var(--font-cinzel),serif] text-xl font-bold tracking-wide text-gold sm:text-2xl"
+                style={{ '--landing-reveal-delay': '0ms' } as CSSProperties}
+              >
+                Start forging
+              </h2>
+              <p
+                className="landing-reveal-child mt-3 text-sm text-bronze sm:text-base"
+                style={{ '--landing-reveal-delay': '80ms' } as CSSProperties}
+              >
+                Free account: cloud library, publish to Explore, follow creators, and keep your item cards and stat blocks in sync everywhere.
+              </p>
+              <div
+                className="landing-reveal-child mt-8"
+                style={{ '--landing-reveal-delay': '160ms' } as CSSProperties}
+              >
+                <LandingCta />
+              </div>
+            </div>
+          </LandingReveal>
+        </section>
       </div>
-    </div>
+    </>
   );
 }

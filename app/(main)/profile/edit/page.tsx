@@ -101,7 +101,7 @@ export default function ProfileEditPage() {
       } = await supabase.auth.getUser();
       if (cancelled) return;
       if (!user) {
-        router.replace('/');
+        router.replace('/login');
         return;
       }
       setMyUserId(user.id);

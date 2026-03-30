@@ -173,7 +173,7 @@ function ExplorePublishedInner() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) {
-        router.push('/');
+        router.push('/login');
         return;
       }
       setReactionBusy(true);
@@ -213,7 +213,7 @@ function ExplorePublishedInner() {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      router.push('/');
+      router.push('/login');
       return;
     }
     setForking(true);

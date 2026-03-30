@@ -188,7 +188,7 @@ export default function SignupPage() {
               </button>
 
               <Link
-                href="/"
+                href="/login"
                 className="panel-btn w-full justify-center border-bdr bg-transparent text-gold-dark hover:bg-input hover:text-gold"
               >
                 Back to login

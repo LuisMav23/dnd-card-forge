@@ -21,7 +21,7 @@ export default function ProfileFavoritesPage() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) {
-        router.replace('/');
+        router.replace('/login');
         return;
       }
       setLoading(true);

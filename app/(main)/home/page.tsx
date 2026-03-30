@@ -16,7 +16,7 @@ export default async function HomePage() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/');
+    redirect('/login');
   }
 
   const [profileResult, cardsResult, encountersResult] = await Promise.all([

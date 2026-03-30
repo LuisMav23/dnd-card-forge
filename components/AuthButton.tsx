@@ -289,7 +289,7 @@ export default function AuthButton({ mobileAccountMount, onCloseMobileNav }: Aut
     <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
       <ThemeToggle />
       <Link
-        href="/"
+        href="/login"
         className="whitespace-nowrap font-[var(--font-cinzel),serif] text-xs font-semibold tracking-[.08em] uppercase text-gold-dark transition-colors hover:text-gold sm:text-sm dark:font-normal dark:text-gold dark:hover:text-gold-light"
       >
         Sign in
