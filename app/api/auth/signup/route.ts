@@ -32,7 +32,7 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({ user: data.user })
+    return NextResponse.json({ user: data.user, session: data.session })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }

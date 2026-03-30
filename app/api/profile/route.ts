@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { fetchCardsForProfileAndActivity } from '@/lib/recentActivity';
 import { createClient } from '@/lib/supabase/server';
+import { parseOnboardingCompletedAt, parseOnboardingPayload } from '@/lib/onboarding/validateOnboarding';
 
 const BIO_MAX = 500;
 
@@ -16,7 +17,9 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from('user_profiles')
-    .select('full_name, birth_date, gender, country, bio, avatar_url, created_at, favorites_public')
+    .select(
+      'full_name, birth_date, gender, country, bio, avatar_url, created_at, favorites_public, onboarding, onboarding_completed_at'
+    )
     .eq('id', user.id)
     .maybeSingle();
 
@@ -45,6 +48,8 @@ export async function GET() {
       avatar_url: null,
       created_at: null,
       favorites_public: false,
+      onboarding: null,
+      onboarding_completed_at: null,
     },
     recentCreations: cards.slice(0, 12),
   });
@@ -65,7 +70,9 @@ export async function PATCH(request: Request) {
 
     const { data: existing } = await supabase
       .from('user_profiles')
-      .select('full_name, birth_date, gender, country, bio, avatar_url, favorites_public')
+      .select(
+        'full_name, birth_date, gender, country, bio, avatar_url, favorites_public, onboarding, onboarding_completed_at'
+      )
       .eq('id', user.id)
       .maybeSingle();
 
@@ -130,11 +137,33 @@ export async function PATCH(request: Request) {
       row.favorites_public = Boolean(existing?.favorites_public);
     }
 
+    if (body.onboarding !== undefined) {
+      try {
+        row.onboarding = parseOnboardingPayload(body.onboarding);
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : 'Invalid onboarding';
+        return NextResponse.json({ error: msg }, { status: 400 });
+      }
+    } else {
+      row.onboarding = existing?.onboarding ?? null;
+    }
+
+    if (body.onboarding_completed_at !== undefined) {
+      try {
+        row.onboarding_completed_at = parseOnboardingCompletedAt(body.onboarding_completed_at);
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : 'Invalid onboarding_completed_at';
+        return NextResponse.json({ error: msg }, { status: 400 });
+      }
+    } else {
+      row.onboarding_completed_at = existing?.onboarding_completed_at ?? null;
+    }
+
     const { data, error } = await supabase
       .from('user_profiles')
       .upsert(row, { onConflict: 'id' })
       .select(
-        'full_name, birth_date, gender, country, bio, avatar_url, created_at, favorites_public'
+        'full_name, birth_date, gender, country, bio, avatar_url, created_at, favorites_public, onboarding, onboarding_completed_at'
       )
       .single();
 

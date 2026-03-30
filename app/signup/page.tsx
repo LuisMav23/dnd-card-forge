@@ -48,7 +48,15 @@ export default function SignupPage() {
         throw new Error(data.error || 'Registration failed');
       }
 
-      router.push('/home');
+      // If email confirmation is required, Supabase returns no session—onboarding needs an authenticated session.
+      if (!data.session) {
+        setError(
+          'Check your email to confirm your account, then sign in. You can complete preferences in onboarding after your first login.'
+        );
+        return;
+      }
+
+      router.push('/onboarding');
       router.refresh();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong');

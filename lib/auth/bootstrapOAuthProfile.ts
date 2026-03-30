@@ -22,7 +22,9 @@ export async function bootstrapOAuthProfile(
 
   const { data: existing, error: selectErr } = await supabase
     .from('user_profiles')
-    .select('full_name, avatar_url, birth_date, gender, country, bio, favorites_public')
+    .select(
+      'full_name, avatar_url, birth_date, gender, country, bio, favorites_public, onboarding, onboarding_completed_at'
+    )
     .eq('id', user.id)
     .maybeSingle();
 
@@ -52,6 +54,8 @@ export async function bootstrapOAuthProfile(
     bio: existing?.bio ?? null,
     avatar_url: hasAvatar ? existing!.avatar_url : fromMetaAvatar ?? null,
     favorites_public: Boolean(existing?.favorites_public),
+    onboarding: existing?.onboarding ?? null,
+    onboarding_completed_at: existing?.onboarding_completed_at ?? null,
   };
 
   const { error: upsertErr } = await supabase
