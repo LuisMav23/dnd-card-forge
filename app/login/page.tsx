@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ThemeToggle from '@/components/ThemeToggle';
 import LogoMark from '@/components/LogoMark';
+import GoogleSignInButton from '@/components/auth/GoogleSignInButton';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -74,6 +75,14 @@ export default function LoginPage() {
           </div>
 
           <div className="flex flex-col gap-4 text-parch">
+            <GoogleSignInButton />
+            <div className="relative my-1 flex items-center gap-3">
+              <div className="h-px flex-1 bg-bdr/60" aria-hidden />
+              <span className="shrink-0 font-[var(--font-cinzel),serif] text-[0.65rem] uppercase tracking-[0.2em] text-gold-dark">
+                Or continue with email
+              </span>
+              <div className="h-px flex-1 bg-bdr/60" aria-hidden />
+            </div>
             <label className="text-xs font-semibold uppercase tracking-wider text-gold-dark" htmlFor="email">
               Email
             </label>
