@@ -17,3 +17,23 @@ export function getSiteUrlString(): string {
 export function getMetadataBase(): URL {
   return new URL(getSiteUrlString());
 }
+
+/**
+ * OAuth return URL for Supabase `signInWithOAuth` `redirectTo`.
+ * Prefer NEXT_PUBLIC_SITE_URL in production builds so redirects match your deployed origin
+ * (avoids Supabase falling back to Dashboard "Site URL" when allowlists or proxies disagree).
+ */
+export function getOAuthCallbackUrl(): string {
+  const env = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (env) {
+    try {
+      return `${new URL(env).origin}/auth/callback`;
+    } catch {
+      /* fall through */
+    }
+  }
+  if (typeof window !== 'undefined') {
+    return `${window.location.origin}/auth/callback`;
+  }
+  return 'http://localhost:3000/auth/callback';
+}
