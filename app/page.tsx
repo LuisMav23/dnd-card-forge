@@ -1,7 +1,8 @@
-import type { CSSProperties } from 'react';
+import type { ComponentType, CSSProperties, SVGProps } from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import ExploreItemCard from '@/components/explore/ExploreItemCard';
+import { ForgeIcon, MonsterIcon, BookIcon } from '@/components/icons/FeatureIcons';
 import LandingCta from '@/components/landing/LandingCta';
 import LandingJsonLd from '@/components/landing/LandingJsonLd';
 import LandingReveal from '@/components/landing/LandingReveal';
@@ -63,19 +64,19 @@ export const metadata: Metadata = {
   },
 };
 
-const createItems = [
+const createItems: { icon: ComponentType<SVGProps<SVGSVGElement>>; title: string; body: string }[] = [
   {
-    glyph: '✦',
+    icon: ForgeIcon,
     title: 'Item cards',
     body: 'Spell cards, weapons, armor, equipment, sidekicks, and flexible “anything” templates — a full item card maker with live preview and crisp PNG export for your fantasy tabletop RPG table or VTT.',
   },
   {
-    glyph: '⚔',
+    icon: MonsterIcon,
     title: 'Stat blocks',
     body: 'Build NPC, monster, adversary, and environment stat blocks for quick reference. One stat block builder tuned for handouts and wiki-style browsing.',
   },
   {
-    glyph: '◇',
+    icon: BookIcon,
     title: 'Encounters',
     body: 'Plan and run encounters linked to your library so prep and play stay in one workspace.',
   },
@@ -198,12 +199,7 @@ export default async function LandingPage() {
                       { '--landing-reveal-delay': `${120 + i * 90}ms` } as CSSProperties
                     }
                   >
-                    <span
-                      className="mb-2 block font-[var(--font-cinzel),serif] text-lg text-gold/80 transition-colors group-hover:text-gold"
-                      aria-hidden
-                    >
-                      {item.glyph}
-                    </span>
+                    <item.icon className="mb-2 h-7 w-7 text-gold/80 transition-colors group-hover:text-gold" />
                     <h3 className="font-[var(--font-cinzel),serif] text-sm font-bold uppercase tracking-[0.12em] text-gold-dark dark:text-gold">
                       {item.title}
                     </h3>
