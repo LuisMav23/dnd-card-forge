@@ -16,7 +16,7 @@ export default function ThemeSection({ currentRarity, onRarityChange, colors, on
   return (
     <div className="fsec">
       <ColorPalettePickers
-        title="🎨 Card colors"
+        title="Card colors"
         intro="Background is a gradient (start → end). Foreground drives text; accent highlights frames and gems; borders are the outer and inner frame lines."
         colors={colors}
         onColorChange={onColorChange}

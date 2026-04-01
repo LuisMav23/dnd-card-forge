@@ -1,5 +1,7 @@
 'use client';
 
+import IconDisplay from '@/components/IconDisplay';
+
 interface Props {
   fields: Record<string, string>;
   onChange: (key: string, value: string) => void;
@@ -8,7 +10,7 @@ interface Props {
 export default function TextSection({ fields, onChange }: Props) {
   return (
     <div className="fsec">
-      <h3>📜 Card Text</h3>
+      <h3><IconDisplay iconId="scroll-text" className="inline-block h-4 w-4 align-[-2px]" /> Card Text</h3>
       <div className="frow c1">
         <div className="fg">
           <label>Flavor Text (italic quote)</label>

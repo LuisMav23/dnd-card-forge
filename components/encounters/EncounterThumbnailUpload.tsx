@@ -1,5 +1,6 @@
 'use client';
 
+import { Camera } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { uploadUserAsset, removeUserAssetByPublicUrl } from '@/lib/storage/uploadUserAsset';
 
@@ -117,9 +118,7 @@ export default function EncounterThumbnailUpload({ imageUrl, onImageChange }: Pr
           aria-label="Upload encounter thumbnail"
         />
         <div className="flex flex-col items-center gap-2 px-4 py-6 text-center">
-          <span className="text-2xl" aria-hidden>
-            📷
-          </span>
+          <Camera className="h-6 w-6 text-muted" aria-hidden />
           <span className="font-[var(--font-cinzel),serif] text-xs text-bronze">
             {uploading ? 'Uploading…' : 'Click to upload image'}
           </span>

@@ -2,6 +2,7 @@
 
 import { CardType } from '@/lib/types';
 import { CARD_TYPE_ORDER } from '@/lib/cardConfig';
+import IconDisplay from '@/components/IconDisplay';
 
 interface Props {
   active: CardType;
@@ -29,13 +30,13 @@ export default function TypeBar({ active, onSelect, typeLocked = false }: Props)
               title="Card type cannot be changed for a saved card"
               aria-current={isActive ? 'true' : undefined}
             >
-              {ct.emoji} {ct.label}
+              <IconDisplay iconId={ct.iconId} className="inline-block h-3.5 w-3.5 align-[-2px]" /> {ct.label}
             </span>
           );
         }
         return (
           <button key={ct.type} type="button" className={`tbtn${isActive ? ' active' : ''}`} onClick={() => onSelect(ct.type)}>
-            {ct.emoji} {ct.label}
+            <IconDisplay iconId={ct.iconId} className="inline-block h-3.5 w-3.5 align-[-2px]" /> {ct.label}
           </button>
         );
       })}

@@ -6,6 +6,7 @@ import { useParams, useSearchParams } from 'next/navigation';
 import { FROM_LIBRARY_APPEND, isFromLibrarySearch } from '@/lib/fromLibraryNav';
 import { CardState } from '@/lib/types';
 import { coerceRarity, hydrateCardPalette } from '@/lib/cardPalette';
+import { resolveIconId } from '@/lib/iconRegistry';
 import { exportCardBackToPng, exportCardToPng } from '@/lib/exportCardPng';
 import { getDomPngExportButtonLabel } from '@/lib/domPngExportError';
 import CardWikiView from '@/components/cards/CardWikiView';
@@ -44,7 +45,7 @@ function parseCardStateFromRow(libraryRow: LibraryCardRow): CardState | null {
   return {
     type: raw.type,
     rarity,
-    icon: raw.icon,
+    icon: resolveIconId(raw.icon),
     image: raw.image ?? null,
     backgroundTexture: raw.backgroundTexture ?? null,
     backImage: raw.backImage ?? null,
@@ -67,7 +68,7 @@ function CardDetailInner() {
   const [status, setStatus] = useState<'loading' | 'ready' | 'error' | 'unauthorized'>('loading');
   const [state, setState] = useState<CardState | null>(null);
   const [savedTitle, setSavedTitle] = useState<string>('');
-  const [downloadLabel, setDownloadLabel] = useState('⬇ Download card (PNG)');
+  const [downloadLabel, setDownloadLabel] = useState('Download card (PNG)');
   const [downloading, setDownloading] = useState(false);
   const cardExportRef = useRef<HTMLDivElement>(null);
   const cardBackExportRef = useRef<HTMLDivElement>(null);
@@ -76,19 +77,19 @@ function CardDetailInner() {
     const frontEl = cardExportRef.current;
     if (!frontEl || !state) return;
     setDownloading(true);
-    setDownloadLabel('⏳ Generating…');
+    setDownloadLabel('Generating…');
     try {
       await exportCardToPng(frontEl, state.fields.name || 'dnd-card');
       if (state.backImage && cardBackExportRef.current) {
         await doubleRaf();
         await exportCardBackToPng(cardBackExportRef.current, state.fields.name || 'dnd-card');
       }
-      setDownloadLabel('✓ Downloaded');
-      setTimeout(() => setDownloadLabel('⬇ Download card (PNG)'), 2000);
+      setDownloadLabel('Downloaded');
+      setTimeout(() => setDownloadLabel('Download card (PNG)'), 2000);
     } catch (err) {
       console.error(err);
       setDownloadLabel(getDomPngExportButtonLabel(err));
-      setTimeout(() => setDownloadLabel('⬇ Download card (PNG)'), 2500);
+      setTimeout(() => setDownloadLabel('Download card (PNG)'), 2500);
     } finally {
       setDownloading(false);
     }

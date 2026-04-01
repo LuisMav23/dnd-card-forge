@@ -1,5 +1,6 @@
 'use client';
 
+import { ClipboardList, UserRound } from 'lucide-react';
 import { getTierDifficulty } from '@/lib/statblockConfig';
 
 interface Props {
@@ -16,7 +17,9 @@ export default function NpcFields({ fields, onChange }: Props) {
   return (
     <>
       <div className="fsec">
-        <h3>🧑 NPC Identity</h3>
+        <h3>
+          <UserRound className="inline-block h-4 w-4 align-[-2px]" /> NPC Identity
+        </h3>
         <div className="frow c2">
           <div className="fg">
             <label>Name</label>
@@ -59,7 +62,9 @@ export default function NpcFields({ fields, onChange }: Props) {
       </div>
 
       <div className="fsec">
-        <h3>📋 Details</h3>
+        <h3>
+          <ClipboardList className="inline-block h-4 w-4 align-[-2px]" /> Details
+        </h3>
         <div className="frow c1">
           <div className="fg">
             <label>Motives</label>

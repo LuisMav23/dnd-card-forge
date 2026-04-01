@@ -1,14 +1,32 @@
 'use client';
 
+import IconDisplay from '@/components/IconDisplay';
+
 interface Props {
   fields: Record<string, string>;
   onChange: (key: string, value: string) => void;
 }
 
+const SCHOOL_OPTIONS: { iconId: string; label: string }[] = [
+  { iconId: 'sparkles', label: 'Arcane' },
+  { iconId: 'bomb', label: 'Evocation' },
+  { iconId: 'loader', label: 'Conjuration' },
+  { iconId: 'orbit', label: 'Divination' },
+  { iconId: 'wand', label: 'Transmutation' },
+  { iconId: 'shield', label: 'Abjuration' },
+  { iconId: 'skull', label: 'Necromancy' },
+  { iconId: 'eye', label: 'Illusion' },
+  { iconId: 'leaf', label: 'Druidic' },
+  { iconId: 'sun', label: 'Divine' },
+  { iconId: 'moon', label: 'Shadow' },
+  { iconId: 'droplets', label: 'Blood' },
+  { iconId: 'zap', label: 'Storm' },
+];
+
 export default function SpellFields({ fields, onChange }: Props) {
   return (
     <div className="fsec">
-      <h3>✨ Spell Identity</h3>
+      <h3><IconDisplay iconId="sparkles" className="inline-block h-4 w-4 align-[-2px]" /> Spell Identity</h3>
       <div className="frow c2">
         <div className="fg">
           <label>Spell Name</label>
@@ -42,13 +60,9 @@ export default function SpellFields({ fields, onChange }: Props) {
         </div>
         <div className="fg">
           <label>School of Magic</label>
-          <select value={fields.school || '✨ Arcane'} onChange={e => onChange('school', e.target.value)}>
-            {[
-              '✨ Arcane', '💥 Evocation', '🌀 Conjuration', '🔮 Divination',
-              '🪄 Transmutation', '🛡 Abjuration', '💀 Necromancy', '👁 Illusion',
-              '🌿 Druidic', '☀️ Divine', '🖤 Shadow', '🩸 Blood', '⚡ Storm',
-            ].map(v => (
-              <option key={v} value={v}>{v.split(' ').slice(1).join(' ')}</option>
+          <select value={fields.school || 'Arcane'} onChange={e => onChange('school', e.target.value)}>
+            {SCHOOL_OPTIONS.map(s => (
+              <option key={s.label} value={s.label}>{s.label}</option>
             ))}
           </select>
         </div>

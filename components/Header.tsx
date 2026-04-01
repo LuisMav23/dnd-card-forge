@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { Menu, X } from 'lucide-react';
 import AuthButton from './AuthButton';
 import LogoMark from './LogoMark';
 import NotificationBell from './NotificationBell';
@@ -85,7 +86,7 @@ export default function Header() {
             aria-label={navOpen ? 'Close menu' : 'Open menu'}
             onClick={() => setNavOpen(o => !o)}
           >
-            {navOpen ? '×' : '☰'}
+            {navOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
       </div>

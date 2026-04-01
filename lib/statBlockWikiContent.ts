@@ -8,7 +8,7 @@ export function getStatBlockWikiSystemLabel(system: StatBlockState['system']): s
 export function getStatBlockWikiTypeLabel(state: StatBlockState): string {
   const order = SYSTEM_TYPE_ORDER[state.system];
   const found = order.find(t => t.type === state.type);
-  return found ? `${found.emoji} ${found.label}` : state.type;
+  return found ? found.label : state.type;
 }
 
 export function getStatBlockWikiSubtypeLine(state: StatBlockState): string {

@@ -15,7 +15,7 @@ interface Props {
 }
 
 export default function ColorPalettePickers({
-  title = '🎨 Colors',
+  title = 'Colors',
   intro = 'Background is a gradient (start → end). Foreground drives text; accent highlights chrome; borders split outer and inner frame.',
   colors,
   onColorChange,

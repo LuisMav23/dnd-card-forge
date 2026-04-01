@@ -21,7 +21,7 @@ export interface ThemeOption {
 
 export interface StatBlockTypeConfig {
   label: string;
-  emoji: string;
+  iconId: string;
   defaultIcon: string;
   /** Legacy preset key; used only to seed default colors for new / type-switched blocks. */
   defaultTheme: string;

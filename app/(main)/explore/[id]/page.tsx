@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { CardState } from '@/lib/types';
 import { coerceRarity, hydrateCardPalette } from '@/lib/cardPalette';
+import { resolveIconId } from '@/lib/iconRegistry';
 import { exportCardBackToPng, exportCardToPng } from '@/lib/exportCardPng';
 import { exportStatBlockToPng } from '@/lib/exportStatBlockPng';
 import { getDomPngExportButtonLabel } from '@/lib/domPngExportError';
@@ -56,7 +57,7 @@ function parseCardStateFromRow(row: PublishedRow): CardState | null {
   return {
     type: raw.type,
     rarity,
-    icon: raw.icon,
+    icon: resolveIconId(raw.icon),
     image: raw.image ?? null,
     backgroundTexture: raw.backgroundTexture ?? null,
     backImage: raw.backImage ?? null,
@@ -76,7 +77,7 @@ function ExplorePublishedInner() {
   const [statState, setStatState] = useState<StatBlockState | null>(null);
   const [forkLabel, setForkLabel] = useState('Fork to my library');
   const [forking, setForking] = useState(false);
-  const [downloadLabel, setDownloadLabel] = useState('⬇ Download PNG');
+  const [downloadLabel, setDownloadLabel] = useState('Download PNG');
   const [downloading, setDownloading] = useState(false);
   const [reactionBusy, setReactionBusy] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -217,14 +218,14 @@ function ExplorePublishedInner() {
       return;
     }
     setForking(true);
-    setForkLabel('⏳ Forking…');
+    setForkLabel('Forking…');
     try {
       const res = await fetch(`/api/explore/${id}/fork`, { method: 'POST' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Fork failed');
       const itemType = data.item_type as string;
       const newId = data.id as string;
-      setForkLabel('✓ Forked!');
+      setForkLabel('Forked!');
       if (itemType === 'statblock') {
         router.push(`/statblocks/${newId}`);
       } else {
@@ -243,19 +244,19 @@ function ExplorePublishedInner() {
     const el = exportRef.current;
     if (!el) return;
     setDownloading(true);
-    setDownloadLabel('⏳ Generating…');
+    setDownloadLabel('Generating…');
     try {
       if (cardState) {
         await exportCardToPng(el, cardState.fields.name || 'dnd-card');
       } else if (statState) {
         await exportStatBlockToPng(el, statState.fields.name || 'stat-block');
       }
-      setDownloadLabel('✓ Downloaded');
-      setTimeout(() => setDownloadLabel('⬇ Download PNG'), 2000);
+      setDownloadLabel('Downloaded');
+      setTimeout(() => setDownloadLabel('Download PNG'), 2000);
     } catch (err) {
       console.error(err);
       setDownloadLabel(getDomPngExportButtonLabel(err));
-      setTimeout(() => setDownloadLabel('⬇ Download PNG'), 2500);
+      setTimeout(() => setDownloadLabel('Download PNG'), 2500);
     } finally {
       setDownloading(false);
     }

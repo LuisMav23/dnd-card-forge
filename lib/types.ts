@@ -21,7 +21,7 @@ export interface SelectOption {
 
 export interface CardTypeConfig {
   label: string;
-  emoji: string;
+  iconId: string;
   defaultIcon: string;
   defaultTheme: string;
   isSidekick?: boolean;

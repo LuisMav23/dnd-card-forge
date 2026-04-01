@@ -26,7 +26,7 @@ function StatBlockDetailInner() {
   const [status, setStatus] = useState<'loading' | 'ready' | 'error' | 'unauthorized'>('loading');
   const [state, setState] = useState<StatBlockState | null>(null);
   const [savedTitle, setSavedTitle] = useState<string>('');
-  const [downloadLabel, setDownloadLabel] = useState('⬇ Download stat block (PNG)');
+  const [downloadLabel, setDownloadLabel] = useState('Download stat block (PNG)');
   const [downloading, setDownloading] = useState(false);
   const blockExportRef = useRef<HTMLDivElement>(null);
 
@@ -34,15 +34,15 @@ function StatBlockDetailInner() {
     const el = blockExportRef.current;
     if (!el || !state) return;
     setDownloading(true);
-    setDownloadLabel('⏳ Generating…');
+    setDownloadLabel('Generating…');
     try {
       await exportStatBlockToPng(el, state.fields.name || 'stat-block');
-      setDownloadLabel('✓ Downloaded');
-      setTimeout(() => setDownloadLabel('⬇ Download stat block (PNG)'), 2000);
+      setDownloadLabel('Downloaded');
+      setTimeout(() => setDownloadLabel('Download stat block (PNG)'), 2000);
     } catch (err) {
       console.error(err);
       setDownloadLabel(getDomPngExportButtonLabel(err));
-      setTimeout(() => setDownloadLabel('⬇ Download stat block (PNG)'), 2500);
+      setTimeout(() => setDownloadLabel('Download stat block (PNG)'), 2500);
     } finally {
       setDownloading(false);
     }

@@ -5,10 +5,10 @@ import { GameSystem, StatBlockType, StatBlockTypeConfig, Feature } from './statb
 export const STATBLOCK_TYPES: Record<StatBlockType, StatBlockTypeConfig> = {
   adversary: {
     label: 'Adversary',
-    emoji: '⚔️',
-    defaultIcon: '💀',
+    iconId: 'swords',
+    defaultIcon: 'skull',
     defaultTheme: 'blood',
-    icons: ['💀','👹','🐉','👺','🧟','🕷️','🦂','🐍','🦇','👻','🧛','🗡️','🔥','⚡','🌑','🩸','☠️','🐺'],
+    icons: ['skull','demon','dragon','demon','zombie','spider','scorpion','snake','bat','ghost','vampire','sword','flame','zap','eclipse','droplets','skull','wolf'],
     themes: [
       { key: 'blood', bg: 'linear-gradient(135deg,#f0c8c8,#d88080)', name: 'Blood' },
       { key: 'shadow', bg: 'linear-gradient(135deg,#c0b8d0,#8888a8)', name: 'Shadow' },
@@ -22,10 +22,10 @@ export const STATBLOCK_TYPES: Record<StatBlockType, StatBlockTypeConfig> = {
   },
   npc: {
     label: 'NPC',
-    emoji: '🧑',
-    defaultIcon: '🧙',
+    iconId: 'user-round',
+    defaultIcon: 'wand',
     defaultTheme: 'earth',
-    icons: ['🧙','🧝','👤','🤴','👸','🧑‍🌾','🧑‍🔬','🧑‍⚕️','🧑‍🎨','🧑‍🍳','🧑‍🏫','🧑‍⚖️','🧑‍✈️','🥷','🤖','🧚'],
+    icons: ['wand','elf','user','crown','gem','wheat','flask','heart','sparkles','flame','book-open','shield-half','star','ninja','bot','fairy'],
     themes: [
       { key: 'earth', bg: 'linear-gradient(135deg,#e0d0b0,#a88848)', name: 'Earth' },
       { key: 'divine', bg: 'linear-gradient(135deg,#f5f0c8,#e8d870)', name: 'Divine' },
@@ -39,10 +39,10 @@ export const STATBLOCK_TYPES: Record<StatBlockType, StatBlockTypeConfig> = {
   },
   environment: {
     label: 'Environment',
-    emoji: '🏔️',
-    defaultIcon: '🌲',
+    iconId: 'mountain',
+    defaultIcon: 'tree-pine',
     defaultTheme: 'nature',
-    icons: ['🌲','🏔️','🌊','🏰','🌋','🏚️','⛪','🏛️','🌾','🌑','🔥','❄️','⚡','🌪️','🏜️','🪨','🌿','🕳️'],
+    icons: ['tree-pine','mountain','waves','castle','volcano','haunted-house','church','landmark','wheat','eclipse','flame','snowflake','zap','wind','desert','rock','leaf','hole'],
     themes: [
       { key: 'nature', bg: 'linear-gradient(135deg,#c8e8c0,#90c878)', name: 'Nature' },
       { key: 'earth', bg: 'linear-gradient(135deg,#e0d0b0,#a88848)', name: 'Earth' },
@@ -60,17 +60,17 @@ export const STATBLOCK_TYPES: Record<StatBlockType, StatBlockTypeConfig> = {
 
 export const SYSTEM_TYPE_ORDER: Record<
   GameSystem,
-  { type: StatBlockType; emoji: string; label: string }[]
+  { type: StatBlockType; iconId: string; label: string }[]
 > = {
   dnd: [
-    { type: 'adversary', emoji: '🐉', label: 'Monster' },
-    { type: 'npc', emoji: '🧑', label: 'NPC' },
-    { type: 'environment', emoji: '⚠️', label: 'Hazard' },
+    { type: 'adversary', iconId: 'dragon', label: 'Monster' },
+    { type: 'npc', iconId: 'user-round', label: 'NPC' },
+    { type: 'environment', iconId: 'triangle-alert', label: 'Hazard' },
   ],
   daggerheart: [
-    { type: 'adversary', emoji: '⚔️', label: 'Adversary' },
-    { type: 'npc', emoji: '🧑', label: 'NPC' },
-    { type: 'environment', emoji: '🏔️', label: 'Environment' },
+    { type: 'adversary', iconId: 'swords', label: 'Adversary' },
+    { type: 'npc', iconId: 'user-round', label: 'NPC' },
+    { type: 'environment', iconId: 'mountain', label: 'Environment' },
   ],
 };
 

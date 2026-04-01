@@ -1,5 +1,7 @@
 'use client';
 
+import IconDisplay from '@/components/IconDisplay';
+
 interface Props {
   fields: Record<string, string>;
   onChange: (key: string, value: string) => void;
@@ -8,7 +10,7 @@ interface Props {
 export default function ArmorFields({ fields, onChange }: Props) {
   return (
     <div className="fsec">
-      <h3>🛡 Armor Identity</h3>
+      <h3><IconDisplay iconId="shield" className="inline-block h-4 w-4 align-[-2px]" /> Armor Identity</h3>
       <div className="frow c2">
         <div className="fg">
           <label>Armor Name</label>

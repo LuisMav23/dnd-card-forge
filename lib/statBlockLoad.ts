@@ -1,5 +1,6 @@
 import type { Feature, GameSystem, StatBlockState, StatBlockType } from './statblockTypes';
 import { hydrateStatBlockPalette } from './statBlockPalette';
+import { resolveIconId } from './iconRegistry';
 
 export interface LibraryStatBlockRow {
   id: string;
@@ -57,7 +58,7 @@ export function parseStatBlockFromLibraryRow(libraryRow: LibraryStatBlockRow): S
   return {
     system: coerceGameSystem(rec.system),
     type: coerceStatBlockType(rec.type),
-    icon: typeof rec.icon === 'string' ? rec.icon : '💀',
+    icon: typeof rec.icon === 'string' ? resolveIconId(rec.icon) : 'skull',
     image: typeof rec.image === 'string' ? rec.image : null,
     fields: rec.fields as Record<string, string>,
     features: coerceFeatures(rec.features),

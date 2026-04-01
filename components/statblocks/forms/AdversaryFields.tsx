@@ -1,6 +1,8 @@
 'use client';
 
+import { ClipboardList, Crosshair } from 'lucide-react';
 import { getTierDifficulty } from '@/lib/statblockConfig';
+import IconDisplay from '@/components/IconDisplay';
 
 interface Props {
   fields: Record<string, string>;
@@ -16,7 +18,7 @@ export default function AdversaryFields({ fields, onChange }: Props) {
   return (
     <>
       <div className="fsec">
-        <h3>⚔️ Adversary Identity</h3>
+        <h3><IconDisplay iconId="swords" className="inline-block h-4 w-4 align-[-2px]" /> Adversary Identity</h3>
         <div className="frow c2">
           <div className="fg">
             <label>Name</label>
@@ -61,7 +63,9 @@ export default function AdversaryFields({ fields, onChange }: Props) {
       </div>
 
       <div className="fsec">
-        <h3>🎯 Combat Stats</h3>
+        <h3>
+          <Crosshair className="inline-block h-4 w-4 align-[-2px]" /> Combat Stats
+        </h3>
         <div className="frow c3">
           <div className="fg">
             <label>Difficulty</label>
@@ -102,7 +106,7 @@ export default function AdversaryFields({ fields, onChange }: Props) {
       </div>
 
       <div className="fsec">
-        <h3>🗡️ Attack</h3>
+        <h3><IconDisplay iconId="sword" className="inline-block h-4 w-4 align-[-2px]" /> Attack</h3>
         <div className="frow c2">
           <div className="fg">
             <label>Weapon Name</label>
@@ -128,7 +132,9 @@ export default function AdversaryFields({ fields, onChange }: Props) {
       </div>
 
       <div className="fsec">
-        <h3>📋 Details</h3>
+        <h3>
+          <ClipboardList className="inline-block h-4 w-4 align-[-2px]" /> Details
+        </h3>
         <div className="frow c1">
           <div className="fg">
             <label>Motives & Tactics</label>

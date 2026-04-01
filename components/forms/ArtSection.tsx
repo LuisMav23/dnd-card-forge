@@ -1,6 +1,8 @@
 'use client';
 
+import { Camera } from 'lucide-react';
 import { useRef, useEffect, useCallback, useState } from 'react';
+import IconDisplay from '@/components/IconDisplay';
 import {
   uploadUserAsset,
   removeUserAssetByPublicUrl,
@@ -26,7 +28,7 @@ export default function ArtSection({
   onIconChange,
   onImageChange,
   assetKind = 'card-art',
-  sectionTitle = '🖼 Card Art',
+  sectionTitle = 'Card Art',
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -123,8 +125,9 @@ export default function ArtSection({
                 key={ic}
                 className={`ibtn${currentIcon === ic ? ' active' : ''}`}
                 onClick={() => onIconChange(ic)}
+                title={ic}
               >
-                {ic}
+                <IconDisplay iconId={ic} className="h-5 w-5" />
               </button>
             ))}
           </div>
@@ -142,7 +145,9 @@ export default function ArtSection({
               onChange={e => void handleUpload(e)}
               style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }}
             />
-            <div className="upload-icon">📷</div>
+            <div className="upload-icon">
+              <Camera className="h-6 w-6" />
+            </div>
             <p>
               {uploading ? 'Uploading…' : 'Click to upload'}
               <br />

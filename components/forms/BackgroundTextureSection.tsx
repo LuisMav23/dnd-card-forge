@@ -1,5 +1,6 @@
 'use client';
 
+import { Image as ImageIcon, Palette } from 'lucide-react';
 import { useRef, useEffect, useCallback, useState } from 'react';
 import { uploadUserAsset, removeUserAssetByPublicUrl } from '@/lib/storage/uploadUserAsset';
 
@@ -120,7 +121,9 @@ export default function BackgroundTextureSection({ currentTexture, onTextureChan
 
   return (
     <div className="fsec">
-      <h3>🎨 Background texture</h3>
+      <h3>
+        <Palette className="inline-block h-4 w-4 align-[-2px]" /> Background texture
+      </h3>
       <p className="ex-note mb-3 text-left">
         Optional full-card background (shown under the color wash). Separate from card art.
       </p>
@@ -149,7 +152,9 @@ export default function BackgroundTextureSection({ currentTexture, onTextureChan
                 height: '100%',
               }}
             />
-            <div className="upload-icon">🖼</div>
+            <div className="upload-icon">
+              <ImageIcon className="h-6 w-6" />
+            </div>
             <p>
               {uploading ? 'Uploading…' : 'Click to upload'}
               <br />

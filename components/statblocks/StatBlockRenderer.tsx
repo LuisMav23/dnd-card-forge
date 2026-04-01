@@ -4,6 +4,7 @@ import React, { forwardRef } from 'react';
 import { StatBlockState } from '@/lib/statblockTypes';
 import { crossOriginForImgSrc } from '@/lib/crossOriginForImgSrc';
 import { statBlockPaletteCssVars } from '@/lib/statBlockPalette';
+import IconDisplay from '@/components/IconDisplay';
 
 interface Props {
   state: StatBlockState;
@@ -47,7 +48,7 @@ const DaggerheartStatBlock = forwardRef<HTMLDivElement, Props>(({ state }, ref) 
               crossOrigin={crossOriginForImgSrc(state.image)}
             />
           ) : (
-            <span className="sb-header-icon">{state.icon}</span>
+            <span className="sb-header-icon"><IconDisplay iconId={state.icon} className="sb-header-icon-svg" /></span>
           )}
           <div>
             <div className="sb-name">{name}</div>
@@ -94,7 +95,7 @@ const DaggerheartStatBlock = forwardRef<HTMLDivElement, Props>(({ state }, ref) 
       <div className="sb-footer">
         <span className="sb-footer-system">Daggerheart</span>
         <span className="sb-footer-type">
-          {state.type === 'adversary' ? '⚔️ Adversary' : state.type === 'npc' ? '🧑 NPC' : '🏔️ Environment'}
+          <span className="inline-flex items-center gap-1"><IconDisplay iconId={state.type === 'adversary' ? 'swords' : state.type === 'npc' ? 'user-round' : 'mountain'} className="inline h-3 w-3" /> {state.type === 'adversary' ? 'Adversary' : state.type === 'npc' ? 'NPC' : 'Environment'}</span>
         </span>
       </div>
     </div>
@@ -264,7 +265,7 @@ const DndStatBlock = forwardRef<HTMLDivElement, Props>(({ state }, ref) => {
               crossOrigin={crossOriginForImgSrc(state.image)}
             />
           ) : (
-            <span className="sb-header-icon">{state.icon}</span>
+            <span className="sb-header-icon"><IconDisplay iconId={state.icon} className="sb-header-icon-svg" /></span>
           )}
           <div>
             <div className="sb-name">{name}</div>
@@ -309,7 +310,7 @@ const DndStatBlock = forwardRef<HTMLDivElement, Props>(({ state }, ref) => {
       <div className="sb-footer">
         <span className="sb-footer-system">D&D 5e</span>
         <span className="sb-footer-type">
-          {state.type === 'adversary' ? '🐉 Monster' : state.type === 'npc' ? '🧑 NPC' : '⚠️ Hazard'}
+          <span className="inline-flex items-center gap-1"><IconDisplay iconId={state.type === 'adversary' ? 'dragon' : state.type === 'npc' ? 'user-round' : 'triangle-alert'} className="inline h-3 w-3" /> {state.type === 'adversary' ? 'Monster' : state.type === 'npc' ? 'NPC' : 'Hazard'}</span>
         </span>
       </div>
     </div>

@@ -6,6 +6,7 @@ import { CARD_TYPES, getTypebar, getCost } from '@/lib/cardConfig';
 import { cardPaletteCssVars } from '@/lib/cardPalette';
 import { crossOriginForImgSrc } from '@/lib/crossOriginForImgSrc';
 import { GEMS, abilityMod } from '@/lib/utils';
+import IconDisplay from '@/components/IconDisplay';
 
 const CornerSVG = () => (
   <svg viewBox="0 0 20 20" aria-hidden>
@@ -35,7 +36,7 @@ const CardRenderer = forwardRef<HTMLDivElement, Props>(({ state }, ref) => {
   const artContent = state.image ? (
     <img src={state.image} alt="Card art" crossOrigin={crossOriginForImgSrc(state.image)} />
   ) : (
-    <div className="c-art-ph">{state.icon}</div>
+    <div className="c-art-ph"><IconDisplay iconId={state.icon} className="c-art-ph-icon" /></div>
   );
 
   const isSK = cfg.isSidekick;

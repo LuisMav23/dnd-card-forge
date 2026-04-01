@@ -1,6 +1,7 @@
 import type { ComponentType, CSSProperties, SVGProps } from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { Globe, Heart, MessageSquare, UserPlus } from 'lucide-react';
 import ExploreItemCard from '@/components/explore/ExploreItemCard';
 import { ForgeIcon, MonsterIcon, BookIcon } from '@/components/icons/FeatureIcons';
 import LandingCta from '@/components/landing/LandingCta';
@@ -82,24 +83,24 @@ const createItems: { icon: ComponentType<SVGProps<SVGSVGElement>>; title: string
   },
 ];
 
-const socialFeatures = [
+const socialFeatures: { icon: ComponentType<SVGProps<SVGSVGElement>>; title: string; body: string }[] = [
   {
-    glyph: '◎',
+    icon: Globe,
     title: 'Publish to Explore',
     body: 'Share finished work publicly so anyone can browse popular and top-rated creations, fork ideas into their library, or take inspiration for their own campaign.',
   },
   {
-    glyph: '♥',
+    icon: Heart,
     title: 'Reactions & favorites',
     body: 'Upvote, downvote, and favorite published cards and stat blocks — community signal for the best homebrew on Explore.',
   },
   {
-    glyph: '✎',
+    icon: MessageSquare,
     title: 'Comments',
     body: 'Discuss each published build in context: feedback, tweaks, and table stories in one thread.',
   },
   {
-    glyph: '↗',
+    icon: UserPlus,
     title: 'Follow creators',
     body: 'Follow profiles and see new publishes from people you care about alongside the main Explore feeds.',
   },
@@ -243,12 +244,10 @@ export default async function LandingPage() {
                       { '--landing-reveal-delay': `${100 + i * 75}ms` } as CSSProperties
                     }
                   >
-                    <span
-                      className="shrink-0 font-[var(--font-cinzel),serif] text-base text-gold/70 transition-colors group-hover:text-gold"
+                    <f.icon
+                      className="mt-0.5 h-5 w-5 shrink-0 text-gold/70 transition-colors group-hover:text-gold"
                       aria-hidden
-                    >
-                      {f.glyph}
-                    </span>
+                    />
                     <div className="min-w-0 border-l-2 border-gold-dark/50 pl-3 dark:border-gold/40">
                       <h3 className="font-[var(--font-cinzel),serif] text-sm font-semibold text-gold-dark dark:text-gold">
                         {f.title}

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { ChevronUp, ChevronDown, Diamond, Heart } from 'lucide-react';
 import { exploreCount, type ExploreListItem } from '@/lib/exploreTypes';
 
 function rankBadgeClass(rank: number): string {
@@ -42,9 +43,7 @@ export default function ExploreTopRatedRow({
               />
             ) : (
               <div className="flex h-full w-full flex-col items-center justify-center gap-1 px-2 text-center">
-                <span className="text-xl text-gold-dark/25" aria-hidden>
-                  ◇
-                </span>
+                <Diamond className="h-5 w-5 text-gold-dark/25" aria-hidden />
                 <span className="font-[var(--font-cinzel),serif] text-[0.6rem] font-semibold uppercase tracking-wider text-muted">
                   No image
                 </span>
@@ -79,9 +78,10 @@ export default function ExploreTopRatedRow({
             <div className="mt-auto flex flex-wrap gap-x-3 gap-y-1 border-t border-bdr/50 pt-2 text-[0.65rem] uppercase tracking-wider text-muted">
               <span>{exploreCount(item.view_count)} views</span>
               <span>{exploreCount(item.fork_count)} forks</span>
-              <span className="text-muted/90">
-                ▲{exploreCount(item.upvote_count)} ▼{exploreCount(item.downvote_count)} ♥
-                {exploreCount(item.favorite_count)}
+              <span className="inline-flex items-center gap-1 text-muted/90">
+                <ChevronUp className="inline h-3 w-3" />{exploreCount(item.upvote_count)}{' '}
+                <ChevronDown className="inline h-3 w-3" />{exploreCount(item.downvote_count)}{' '}
+                <Heart className="inline h-3 w-3" />{exploreCount(item.favorite_count)}
               </span>
             </div>
           </Link>

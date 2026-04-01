@@ -85,7 +85,7 @@ export default function StatBlockFormPanel({
 
       <div className="fsec">
         <ColorPalettePickers
-          title="🎨 Stat block colors"
+          title="Stat block colors"
           intro="Same controls as card forge: gradient background, text, accent chrome, and borders."
           colors={{
             colorBgFrom: state.colorBgFrom,
@@ -100,7 +100,7 @@ export default function StatBlockFormPanel({
       </div>
 
       <ArtSection
-        sectionTitle="🖼 Header image"
+        sectionTitle="Header image"
         assetKind="statblock-art"
         icons={cfg.icons}
         currentIcon={state.icon}

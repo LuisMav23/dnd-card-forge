@@ -2,6 +2,7 @@
 
 import { GameSystem, StatBlockType } from '@/lib/statblockTypes';
 import { SYSTEM_TYPE_ORDER } from '@/lib/statblockConfig';
+import IconDisplay from '@/components/IconDisplay';
 
 interface Props {
   system: GameSystem;
@@ -37,14 +38,14 @@ export default function StatBlockTypeBar({
               title="Game system cannot be changed for a saved stat block"
               aria-current={system === 'dnd' ? 'true' : undefined}
             >
-              🐉 D&D 5e
+              <IconDisplay iconId="dragon" className="inline-block h-3.5 w-3.5 align-[-2px]" /> D&amp;D 5e
             </span>
             <span
               className={`tbtn sys-btn${system === 'daggerheart' ? ' active' : ''} pointer-events-none select-none${system !== 'daggerheart' ? ' opacity-45' : ''}`}
               title="Game system cannot be changed for a saved stat block"
               aria-current={system === 'daggerheart' ? 'true' : undefined}
             >
-              ⚔️ Daggerheart
+              <IconDisplay iconId="swords" className="inline-block h-3.5 w-3.5 align-[-2px]" /> Daggerheart
             </span>
           </>
         ) : (
@@ -54,14 +55,14 @@ export default function StatBlockTypeBar({
               className={`tbtn sys-btn${system === 'dnd' ? ' active' : ''}`}
               onClick={() => onSystemChange('dnd')}
             >
-              🐉 D&D 5e
+              <IconDisplay iconId="dragon" className="inline-block h-3.5 w-3.5 align-[-2px]" /> D&amp;D 5e
             </button>
             <button
               type="button"
               className={`tbtn sys-btn${system === 'daggerheart' ? ' active' : ''}`}
               onClick={() => onSystemChange('daggerheart')}
             >
-              ⚔️ Daggerheart
+              <IconDisplay iconId="swords" className="inline-block h-3.5 w-3.5 align-[-2px]" /> Daggerheart
             </button>
           </>
         )}
@@ -78,7 +79,7 @@ export default function StatBlockTypeBar({
                 title="Stat block type cannot be changed for a saved block"
                 aria-current={isActive ? 'true' : undefined}
               >
-                {t.emoji} {t.label}
+                <IconDisplay iconId={t.iconId} className="inline-block h-3.5 w-3.5 align-[-2px]" /> {t.label}
               </span>
             );
           }
@@ -89,7 +90,7 @@ export default function StatBlockTypeBar({
               className={`tbtn${isActive ? ' active' : ''}`}
               onClick={() => onSelect(t.type)}
             >
-              {t.emoji} {t.label}
+              <IconDisplay iconId={t.iconId} className="inline-block h-3.5 w-3.5 align-[-2px]" /> {t.label}
             </button>
           );
         })}

@@ -1,5 +1,7 @@
 'use client';
 
+import { Loader } from 'lucide-react';
+
 interface Props {
   fields: Record<string, string>;
   onChange: (key: string, value: string) => void;
@@ -8,7 +10,9 @@ interface Props {
 export default function AnythingFields({ fields, onChange }: Props) {
   return (
     <div className="fsec">
-      <h3>🌀 Card Identity</h3>
+      <h3>
+        <Loader className="inline-block h-4 w-4 align-[-2px]" /> Card Identity
+      </h3>
       <div className="frow c2">
         <div className="fg">
           <label>Card Name</label>
@@ -29,7 +33,7 @@ export default function AnythingFields({ fields, onChange }: Props) {
         </div>
         <div className="fg">
           <label>Subtype Label (right)</label>
-          <input type="text" placeholder="e.g. 🌀 Creation" maxLength={24}
+          <input type="text" placeholder="e.g. Creation" maxLength={24}
             value={fields.tr || ''} onChange={e => onChange('tr', e.target.value)} />
         </div>
       </div>

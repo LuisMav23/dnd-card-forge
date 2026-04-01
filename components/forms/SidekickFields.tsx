@@ -1,5 +1,7 @@
 'use client';
 
+import { BarChart3, UserRound } from 'lucide-react';
+
 interface Props {
   fields: Record<string, string>;
   onChange: (key: string, value: string) => void;
@@ -9,7 +11,9 @@ export default function SidekickFields({ fields, onChange }: Props) {
   return (
     <>
       <div className="fsec">
-        <h3>🧑 Sidekick Identity</h3>
+        <h3>
+          <UserRound className="inline-block h-4 w-4 align-[-2px]" /> Sidekick Identity
+        </h3>
         <div className="frow c2">
           <div className="fg">
             <label>Sidekick Name</label>
@@ -53,7 +57,9 @@ export default function SidekickFields({ fields, onChange }: Props) {
         </div>
       </div>
       <div className="fsec">
-        <h3>📊 Ability Scores & Stats</h3>
+        <h3>
+          <BarChart3 className="inline-block h-4 w-4 align-[-2px]" /> Ability Scores & Stats
+        </h3>
         <div className="frow c3">
           {(['str','dex','con','int','wis','cha'] as const).map(ab => (
             <div key={ab} className="fg">

@@ -1,5 +1,7 @@
 'use client';
 
+import { Backpack } from 'lucide-react';
+
 interface Props {
   fields: Record<string, string>;
   onChange: (key: string, value: string) => void;
@@ -8,7 +10,9 @@ interface Props {
 export default function EquipmentFields({ fields, onChange }: Props) {
   return (
     <div className="fsec">
-      <h3>🎒 Item Identity</h3>
+      <h3>
+        <Backpack className="inline-block h-4 w-4 align-[-2px]" /> Item Identity
+      </h3>
       <div className="frow c2">
         <div className="fg">
           <label>Item Name</label>

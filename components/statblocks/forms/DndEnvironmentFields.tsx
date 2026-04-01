@@ -1,5 +1,8 @@
 'use client';
 
+import { Crosshair, Wrench } from 'lucide-react';
+import IconDisplay from '@/components/IconDisplay';
+
 interface Props {
   fields: Record<string, string>;
   onChange: (key: string, value: string) => void;
@@ -16,7 +19,7 @@ export default function DndEnvironmentFields({ fields, onChange }: Props) {
   return (
     <>
       <div className="fsec">
-        <h3>⚠️ Hazard Identity</h3>
+        <h3><IconDisplay iconId="triangle-alert" className="inline-block h-4 w-4 align-[-2px]" /> Hazard Identity</h3>
         <div className="frow c2">
           <div className="fg">
             <label>Name</label>
@@ -41,7 +44,9 @@ export default function DndEnvironmentFields({ fields, onChange }: Props) {
       </div>
 
       <div className="fsec">
-        <h3>🎯 Mechanics</h3>
+        <h3>
+          <Crosshair className="inline-block h-4 w-4 align-[-2px]" /> Mechanics
+        </h3>
         <div className="frow c1">
           <div className="fg">
             <label>Trigger</label>
@@ -87,7 +92,9 @@ export default function DndEnvironmentFields({ fields, onChange }: Props) {
       </div>
 
       <div className="fsec">
-        <h3>🔧 Countermeasures</h3>
+        <h3>
+          <Wrench className="inline-block h-4 w-4 align-[-2px]" /> Countermeasures
+        </h3>
         <div className="frow c1">
           <div className="fg">
             <label>Countermeasures</label>

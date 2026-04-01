@@ -1,6 +1,7 @@
 'use client';
 
 import type { LegacyRef, RefObject } from 'react';
+import { Sparkle } from 'lucide-react';
 import { CardState } from '@/lib/types';
 import CardRenderer from './CardRenderer';
 import CardBackFace from './CardBackFace';
@@ -26,7 +27,7 @@ export default function LivePreview({
 
   return (
     <div className="prev-panel">
-      <span className="prev-label">✦ Live Preview ✦</span>
+      <span className="prev-label"><Sparkle className="inline-block h-3 w-3 align-[-1px]" /> Live Preview <Sparkle className="inline-block h-3 w-3 align-[-1px]" /></span>
       <div
         className="mb-2 flex justify-center gap-1"
         role="tablist"

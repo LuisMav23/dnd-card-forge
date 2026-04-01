@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useEffect, useCallback, useState } from 'react';
+import { Image as ImageIcon } from 'lucide-react';
 import { uploadUserAsset, removeUserAssetByPublicUrl } from '@/lib/storage/uploadUserAsset';
 
 /** Card shell aspect (matches .spell-card in globals.css). */
@@ -145,7 +146,7 @@ export default function CardBackSection({ currentBack, onBackChange }: Props) {
                 height: '100%',
               }}
             />
-            <div className="upload-icon">🖼</div>
+            <div className="upload-icon"><ImageIcon className="h-6 w-6" /></div>
             <p>
               {uploading ? 'Uploading…' : 'Click to upload'}
               <br />

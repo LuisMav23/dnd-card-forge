@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState, useCallback, useRef, useEffect, type ReactNode } from 'react';
+import { Diamond } from 'lucide-react';
 import { crossOriginForImgSrc } from '@/lib/crossOriginForImgSrc';
 import { FROM_LIBRARY_APPEND, FROM_LIBRARY_QS } from '@/lib/fromLibraryNav';
 import { ITEM_CARD_GRID_CLASS } from '@/lib/itemCardGrid';
@@ -120,9 +121,7 @@ function LibraryItemThumbnail({
   return (
     <div className={frameClass} title={label}>
       <div className="flex h-full w-full flex-col items-center justify-center gap-1 px-2 text-center">
-        <span className="text-2xl text-gold-dark/25" aria-hidden>
-          ◇
-        </span>
+        <Diamond className="h-6 w-6 text-gold-dark/25" aria-hidden />
         <span className="font-[var(--font-cinzel),serif] text-[0.65rem] font-semibold uppercase tracking-wider text-muted">
           No image
         </span>

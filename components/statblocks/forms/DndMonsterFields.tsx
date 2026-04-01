@@ -1,5 +1,8 @@
 'use client';
 
+import { BarChart3, ClipboardList } from 'lucide-react';
+import IconDisplay from '@/components/IconDisplay';
+
 interface Props {
   fields: Record<string, string>;
   onChange: (key: string, value: string) => void;
@@ -25,7 +28,7 @@ export default function DndMonsterFields({ fields, onChange }: Props) {
   return (
     <>
       <div className="fsec">
-        <h3>🐉 Monster Identity</h3>
+        <h3><IconDisplay iconId="dragon" className="inline-block h-4 w-4 align-[-2px]" /> Monster Identity</h3>
         <div className="frow c2">
           <div className="fg">
             <label>Name</label>
@@ -64,7 +67,7 @@ export default function DndMonsterFields({ fields, onChange }: Props) {
       </div>
 
       <div className="fsec">
-        <h3>🛡️ Combat Stats</h3>
+        <h3><IconDisplay iconId="shield" className="inline-block h-4 w-4 align-[-2px]" /> Combat Stats</h3>
         <div className="frow c3">
           <div className="fg">
             <label>Armor Class</label>
@@ -109,7 +112,9 @@ export default function DndMonsterFields({ fields, onChange }: Props) {
       </div>
 
       <div className="fsec">
-        <h3>📊 Ability Scores</h3>
+        <h3>
+          <BarChart3 className="inline-block h-4 w-4 align-[-2px]" /> Ability Scores
+        </h3>
         <div className="frow c6">
           {ABILITY_KEYS.map(k => (
             <div className="fg" key={k}>
@@ -122,7 +127,9 @@ export default function DndMonsterFields({ fields, onChange }: Props) {
       </div>
 
       <div className="fsec">
-        <h3>📋 Properties</h3>
+        <h3>
+          <ClipboardList className="inline-block h-4 w-4 align-[-2px]" /> Properties
+        </h3>
         <div className="frow c2">
           <div className="fg">
             <label>Saving Throws</label>

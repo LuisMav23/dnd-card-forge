@@ -1,6 +1,7 @@
 'use client';
 
 import { Feature, FeatureKind } from '@/lib/statblockTypes';
+import IconDisplay from '@/components/IconDisplay';
 
 interface Props {
   features: Feature[];
@@ -28,7 +29,7 @@ export default function FeaturesEditor({ features, onAdd, onUpdate, onRemove, la
 
   return (
     <div className="fsec">
-      <h3>✦ {label}</h3>
+      <h3><IconDisplay iconId="sparkle" className="inline-block h-4 w-4 align-[-2px]" /> {label}</h3>
       {features.map((feat, idx) => (
         <div key={feat.id} className="sb-feature-row">
           <div className="sb-feature-header">

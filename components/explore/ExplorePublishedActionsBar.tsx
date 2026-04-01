@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { ChevronUp, ChevronDown, Heart } from 'lucide-react';
 import { exploreCount } from '@/lib/exploreTypes';
 
 export type ExplorePublishedActionsRow = {
@@ -94,7 +95,7 @@ export default function ExplorePublishedActionsBar({
                   : 'border-bdr bg-panel/80 text-bronze hover:border-gold/35 hover:text-parch'
               }`}
             >
-              ▲ Up
+              <ChevronUp className="inline h-4 w-4" /> Up
             </button>
             <button
               type="button"
@@ -107,7 +108,7 @@ export default function ExplorePublishedActionsBar({
                   : 'border-bdr bg-panel/80 text-bronze hover:border-gold/35 hover:text-parch'
               }`}
             >
-              ▼ Down
+              <ChevronDown className="inline h-4 w-4" /> Down
             </button>
             <button
               type="button"
@@ -120,7 +121,7 @@ export default function ExplorePublishedActionsBar({
                   : 'border-bdr bg-panel/80 text-bronze hover:border-gold/35 hover:text-parch'
               }`}
             >
-              ♥ Save
+              <Heart className="inline h-4 w-4" /> Save
             </button>
           </div>
           <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-stretch">

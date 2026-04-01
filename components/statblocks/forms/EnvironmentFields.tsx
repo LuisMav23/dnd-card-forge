@@ -1,6 +1,8 @@
 'use client';
 
+import { ClipboardList } from 'lucide-react';
 import { getTierDifficulty } from '@/lib/statblockConfig';
+import IconDisplay from '@/components/IconDisplay';
 
 interface Props {
   fields: Record<string, string>;
@@ -16,7 +18,7 @@ export default function EnvironmentFields({ fields, onChange }: Props) {
   return (
     <>
       <div className="fsec">
-        <h3>🏔️ Environment Identity</h3>
+        <h3><IconDisplay iconId="mountain" className="inline-block h-4 w-4 align-[-2px]" /> Environment Identity</h3>
         <div className="frow c2">
           <div className="fg">
             <label>Name</label>
@@ -59,7 +61,9 @@ export default function EnvironmentFields({ fields, onChange }: Props) {
       </div>
 
       <div className="fsec">
-        <h3>📋 Scene Details</h3>
+        <h3>
+          <ClipboardList className="inline-block h-4 w-4 align-[-2px]" /> Scene Details
+        </h3>
         <div className="frow c1">
           <div className="fg">
             <label>Impulses</label>

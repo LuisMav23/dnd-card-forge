@@ -34,7 +34,7 @@ export function useLibraryItemAutosave<T>({
 }: UseLibraryItemAutosaveOptions<T>) {
   const [clientDraftId, setClientDraftId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [saveLabel, setSaveLabel] = useState('💾 Save to Library');
+  const [saveLabel, setSaveLabel] = useState('Save to Library');
   const [autosaveHint, setAutosaveHint] = useState<string | null>(null);
 
   const stateRef = useRef(state);
@@ -85,7 +85,7 @@ export function useLibraryItemAutosave<T>({
   }, []);
 
   useEffect(() => {
-    setSaveLabel(libraryIdFromUrl ? '💾 Update in Library' : '💾 Save to Library');
+    setSaveLabel(libraryIdFromUrl ? 'Update in Library' : 'Save to Library');
   }, [libraryIdFromUrl]);
 
   useEffect(() => {
@@ -155,8 +155,8 @@ export function useLibraryItemAutosave<T>({
           setSaving(false);
           setSaveLabel(
             (libraryIdFromUrlRef.current ?? clientDraftIdRef.current)
-              ? '💾 Update in Library'
-              : '💾 Save to Library'
+              ? 'Update in Library'
+              : 'Save to Library'
           );
         }, 2500);
       };

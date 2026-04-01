@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { CardState, CardAction, CardType } from '@/lib/types';
 import { CARD_TYPES, getDefaultFields } from '@/lib/cardConfig';
 import { coerceRarity, DEFAULT_CARD_PALETTE, hydrateCardPalette } from '@/lib/cardPalette';
+import { resolveIconId } from '@/lib/iconRegistry';
 import { exportCardBackToPng, exportCardToPng } from '@/lib/exportCardPng';
 import { getDomPngExportButtonLabel } from '@/lib/domPngExportError';
 import TypeBar from '@/components/TypeBar';
@@ -62,7 +63,7 @@ function cardReducer(state: CardState, action: CardAction): CardState {
       return {
         type: p.type,
         rarity,
-        icon: p.icon,
+        icon: resolveIconId(p.icon),
         image: p.image ?? null,
         backgroundTexture: p.backgroundTexture ?? null,
         backImage: p.backImage ?? null,
@@ -78,7 +79,7 @@ function cardReducer(state: CardState, action: CardAction): CardState {
 const initialState: CardState = {
   type: 'spell',
   rarity: 'legendary',
-  icon: '🌀',
+  icon: 'loader',
   image: null,
   backgroundTexture: null,
   backImage: null,

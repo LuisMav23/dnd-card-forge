@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { GameSystem, StatBlockState, StatBlockAction, StatBlockType } from '@/lib/statblockTypes';
 import { STATBLOCK_TYPES, getDefaultStatBlockFields, getDefaultFeatures } from '@/lib/statblockConfig';
 import { hydrateStatBlockPalette, paletteFromStatBlockDefaultTheme } from '@/lib/statBlockPalette';
+import { resolveIconId } from '@/lib/iconRegistry';
 import StatBlockTypeBar from '@/components/statblocks/StatBlockTypeBar';
 import StatBlockFormPanel from '@/components/statblocks/StatBlockFormPanel';
 import StatBlockPreview from '@/components/statblocks/StatBlockPreview';
@@ -73,7 +74,7 @@ function statBlockReducer(state: StatBlockState, action: StatBlockAction): StatB
       return {
         system: p.system,
         type: p.type,
-        icon: p.icon,
+        icon: resolveIconId(p.icon),
         image: p.image ?? null,
         fields: p.fields,
         features: p.features,
