@@ -34,11 +34,24 @@ export default function GoogleSignInButton() {
   const handleClick = async () => {
     setLoading(true);
     setError(null);
+    let redirectTo = getOAuthCallbackUrl();
+    try {
+      const res = await fetch('/api/auth/oauth-callback-url', {
+        credentials: 'same-origin',
+        cache: 'no-store',
+      });
+      if (res.ok) {
+        const j = (await res.json()) as { callbackUrl?: string };
+        if (j.callbackUrl) redirectTo = j.callbackUrl;
+      }
+    } catch {
+      /* use getOAuthCallbackUrl fallback */
+    }
     const supabase = createClient();
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: getOAuthCallbackUrl(),
+        redirectTo,
       },
     });
     if (oauthError) {
