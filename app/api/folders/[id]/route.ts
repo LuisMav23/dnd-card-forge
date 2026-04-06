@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { internalError } from '@/lib/apiError';
 
 export async function PATCH(
   request: Request,
@@ -23,7 +24,7 @@ export async function PATCH(
     .maybeSingle();
 
   if (fetchErr) {
-    return NextResponse.json({ error: fetchErr.message }, { status: 500 });
+    return internalError(fetchErr, 'folders/[id]/PATCH/fetch');
   }
   if (!folder) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -73,7 +74,7 @@ export async function PATCH(
     .single();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return internalError(error, 'folders/[id]/PATCH/update');
   }
 
   return NextResponse.json(data);
@@ -99,7 +100,7 @@ export async function DELETE(
     .maybeSingle();
 
   if (fetchErr) {
-    return NextResponse.json({ error: fetchErr.message }, { status: 500 });
+    return internalError(fetchErr, 'folders/[id]/DELETE/fetch');
   }
   if (!folder) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -118,7 +119,7 @@ export async function DELETE(
     .eq('user_id', user.id);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return internalError(error, 'folders/[id]/DELETE');
   }
 
   return NextResponse.json({ success: true });

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { isUuidString } from '@/lib/uuidValidate';
+import { internalError } from '@/lib/apiError';
 
 const BODY_MIN = 1;
 const BODY_MAX = 4000;
@@ -43,7 +44,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return internalError(error, 'explore/comments/GET');
   }
 
   return NextResponse.json({ comments: data ?? [], limit, offset });
@@ -100,15 +101,17 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     .single();
 
   if (insertErr) {
-    const msg = insertErr.message;
-    if (
-      msg.includes('comments not allowed') ||
-      msg.includes('card must be published') ||
-      msg.includes('parent comment')
-    ) {
-      return NextResponse.json({ error: msg }, { status: 400 });
+    const msg = insertErr.message ?? '';
+    if (msg.includes('comments not allowed')) {
+      return NextResponse.json({ error: 'Comments are not allowed on this card.' }, { status: 400 });
     }
-    return NextResponse.json({ error: msg }, { status: 500 });
+    if (msg.includes('card must be published')) {
+      return NextResponse.json({ error: 'The card must be published to accept comments.' }, { status: 400 });
+    }
+    if (msg.includes('parent comment')) {
+      return NextResponse.json({ error: 'The parent comment was not found.' }, { status: 400 });
+    }
+    return internalError(insertErr, 'explore/comments/POST');
   }
 
   const { data: profRows } = await supabase.rpc('get_user_public_profile', { p_user_id: user.id });
@@ -157,7 +160,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     .select('id');
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return internalError(error, 'explore/comments/DELETE');
   }
   if (!deleted?.length) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });

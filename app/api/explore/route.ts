@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { mapPublishedRowToExploreItem, type PublishedCardExploreRow } from '@/lib/exploreItemMap';
 import { createClient } from '@/lib/supabase/server';
+import { internalError } from '@/lib/apiError';
 
 const LIST_FIELDS =
   'id, title, item_type, user_id, published_at, view_count, fork_count, published_author_name, data, upvote_count, downvote_count, favorite_count';
@@ -64,7 +65,7 @@ export async function GET(request: Request) {
   const { data, error } = await query;
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return internalError(error, 'explore/GET');
   }
 
   const items = (data ?? []).map(row =>

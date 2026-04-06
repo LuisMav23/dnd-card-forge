@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { resolveDefaultCardFolderId } from '@/lib/ensureLibrarySystemFolders';
 import { createClient } from '@/lib/supabase/server';
+import { internalError } from '@/lib/apiError';
 
 export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id: sourceId } = await params;
@@ -24,7 +25,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     .maybeSingle();
 
   if (fetchErr) {
-    return NextResponse.json({ error: fetchErr.message }, { status: 500 });
+    return internalError(fetchErr, 'explore/fork/POST/fetch');
   }
   if (!source || !source.is_published) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -40,7 +41,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
 
   const { folderId, error: folderErr } = await resolveDefaultCardFolderId(supabase, user.id, itemType);
   if (folderErr) {
-    return NextResponse.json({ error: folderErr }, { status: 500 });
+    return internalError(folderErr, 'explore/fork/POST/folder');
   }
 
   const baseTitle = typeof source.title === 'string' ? source.title.trim() : 'Untitled';
@@ -59,7 +60,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     .single();
 
   if (insErr || !inserted) {
-    return NextResponse.json({ error: insErr?.message ?? 'Fork failed' }, { status: 500 });
+    return internalError(insErr ?? new Error('Fork failed'), 'explore/fork/POST/insert');
   }
 
   const { error: rpcErr } = await supabase.rpc('increment_published_card_fork_count', {
@@ -67,7 +68,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   });
 
   if (rpcErr) {
-    return NextResponse.json({ error: rpcErr.message }, { status: 500 });
+    return internalError(rpcErr, 'explore/fork/POST/rpc');
   }
 
   return NextResponse.json(inserted);

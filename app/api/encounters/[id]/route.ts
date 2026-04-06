@@ -4,6 +4,7 @@ import type { PatchEncounterBody } from '@/lib/encounterTypes';
 import { mapEntryRow } from '@/lib/encounterApiHelpers';
 import { ownedCardAssetStoragePath } from '@/lib/storage/paths';
 import { removeStorageObjectsServer } from '@/lib/storage/removeStorageObjectsServer';
+import { internalError } from '@/lib/apiError';
 
 const PLAYER_DESCRIPTION_MAX = 8000;
 
@@ -26,7 +27,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     .maybeSingle();
 
   if (encErr) {
-    return NextResponse.json({ error: encErr.message }, { status: 500 });
+    return internalError(encErr, 'encounters/[id]/GET/enc');
   }
   if (!enc) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -52,7 +53,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     .order('sort_order', { ascending: true });
 
   if (entErr) {
-    return NextResponse.json({ error: entErr.message }, { status: 500 });
+    return internalError(entErr, 'encounters/[id]/GET/entries');
   }
 
   const entries = (entryRows ?? []).map(row =>
@@ -92,7 +93,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     .maybeSingle();
 
   if (encErr) {
-    return NextResponse.json({ error: encErr.message }, { status: 500 });
+    return internalError(encErr, 'encounters/[id]/PATCH/fetch');
   }
   if (!enc) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -215,7 +216,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
 
     const { error: delErr } = await supabase.from('encounter_entries').delete().eq('encounter_id', id);
     if (delErr) {
-      return NextResponse.json({ error: delErr.message }, { status: 500 });
+      return internalError(delErr, 'encounters/[id]/PATCH/entries-delete');
     }
 
     const entryRows = entries.map((e, sort_order) => ({
@@ -231,13 +232,13 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
 
     const { error: insErr } = await supabase.from('encounter_entries').insert(entryRows);
     if (insErr) {
-      return NextResponse.json({ error: insErr.message }, { status: 500 });
+      return internalError(insErr, 'encounters/[id]/PATCH/entries-insert');
     }
   }
 
   const { error: upErr } = await supabase.from('encounters').update(updates).eq('id', id);
   if (upErr) {
-    return NextResponse.json({ error: upErr.message }, { status: 500 });
+    return internalError(upErr, 'encounters/[id]/PATCH/update');
   }
 
   return NextResponse.json({ ok: true });
@@ -246,9 +247,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
 export async function DELETE(_request: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -262,7 +261,7 @@ export async function DELETE(_request: Request, context: { params: Promise<{ id:
     .maybeSingle();
 
   if (fetchErr) {
-    return NextResponse.json({ error: fetchErr.message }, { status: 500 });
+    return internalError(fetchErr, 'encounters/[id]/DELETE/fetch');
   }
   if (!row) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -273,7 +272,7 @@ export async function DELETE(_request: Request, context: { params: Promise<{ id:
   const { error } = await supabase.from('encounters').delete().eq('id', id).eq('user_id', user.id);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return internalError(error, 'encounters/[id]/DELETE');
   }
 
   if (thumbPath) {

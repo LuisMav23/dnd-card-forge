@@ -1,5 +1,11 @@
 import type { CSSProperties } from 'react';
-import type { CardState, Rarity } from './types';
+import type { CardFontSize, CardState, Rarity } from './types';
+
+const CARD_FONT_SCALE: Record<CardFontSize, number> = {
+  sm: 0.86,
+  md: 1,
+  lg: 1.14,
+};
 
 export type CardPalette = {
   colorBgFrom: string;
@@ -88,6 +94,7 @@ export function hydrateCardPalette(raw: Record<string, unknown>, fallbackRarity:
 }
 
 export function cardPaletteCssVars(state: CardState): CSSProperties {
+  const fs = state.fontSize ?? 'md';
   return {
     ['--card-bg-from' as string]: state.colorBgFrom,
     ['--card-bg-to' as string]: state.colorBgTo,
@@ -95,5 +102,6 @@ export function cardPaletteCssVars(state: CardState): CSSProperties {
     ['--card-accent' as string]: state.colorAccent,
     ['--card-border-o' as string]: state.colorBorderOuter,
     ['--card-border-i' as string]: state.colorBorderInner,
+    ['--card-font-scale' as string]: String(CARD_FONT_SCALE[fs] ?? 1),
   };
 }

@@ -50,6 +50,9 @@ function parseCardStateFromRow(libraryRow: LibraryCardRow): CardState | null {
     backgroundTexture: raw.backgroundTexture ?? null,
     backImage: raw.backImage ?? null,
     fields: raw.fields,
+    imageAspect: raw.imageAspect ?? 'square',
+    fontSize: raw.fontSize ?? 'md',
+    showPips: typeof raw.showPips === 'boolean' ? raw.showPips : true,
     ...palette,
   };
 }

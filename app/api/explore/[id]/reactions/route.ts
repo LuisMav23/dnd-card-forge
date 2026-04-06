@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { internalError } from '@/lib/apiError';
 
 type Vote = -1 | 0 | 1;
 
@@ -47,7 +48,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     .maybeSingle();
 
   if (cardErr) {
-    return NextResponse.json({ error: cardErr.message }, { status: 500 });
+    return internalError(cardErr, 'explore/reactions/PATCH/fetch');
   }
   if (!card) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -89,7 +90,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   );
 
   if (upsertErr) {
-    return NextResponse.json({ error: upsertErr.message }, { status: 500 });
+    return internalError(upsertErr, 'explore/reactions/PATCH/upsert');
   }
 
   const { data: counts } = await supabase

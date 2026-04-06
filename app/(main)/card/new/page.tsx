@@ -3,13 +3,13 @@
 import { Suspense, useReducer, useRef, useCallback, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { CardState, CardAction, CardType } from '@/lib/types';
+import { CardState, CardAction, CardType, ImageAspect, CardFontSize } from '@/lib/types';
 import { CARD_TYPES, getDefaultFields } from '@/lib/cardConfig';
 import { coerceRarity, DEFAULT_CARD_PALETTE, hydrateCardPalette } from '@/lib/cardPalette';
 import { resolveIconId } from '@/lib/iconRegistry';
 import { exportCardBackToPng, exportCardToPng } from '@/lib/exportCardPng';
 import { getDomPngExportButtonLabel } from '@/lib/domPngExportError';
-import TypeBar from '@/components/TypeBar';
+import CardTypePicker from '@/components/forge/CardTypePicker';
 import ExamplePanel from '@/components/ExamplePanel';
 import FormPanel from '@/components/FormPanel';
 import LivePreview, { type CardPreviewFace } from '@/components/LivePreview';
@@ -38,6 +38,9 @@ function cardReducer(state: CardState, action: CardAction): CardState {
         backImage: null,
         ...DEFAULT_CARD_PALETTE,
         fields: getDefaultFields(action.payload),
+        imageAspect: state.imageAspect,
+        fontSize: state.fontSize,
+        showPips: state.showPips,
       };
     }
     case 'SET_RARITY':
@@ -56,6 +59,12 @@ function cardReducer(state: CardState, action: CardAction): CardState {
       return { ...state, fields: { ...state.fields, [action.payload.key]: action.payload.value } };
     case 'SET_FIELDS':
       return { ...state, fields: { ...state.fields, ...action.payload } };
+    case 'SET_IMAGE_ASPECT':
+      return { ...state, imageAspect: action.payload };
+    case 'SET_FONT_SIZE':
+      return { ...state, fontSize: action.payload };
+    case 'SET_SHOW_PIPS':
+      return { ...state, showPips: action.payload };
     case 'LOAD_STATE': {
       const p = action.payload as CardState & Record<string, unknown>;
       const rarity = coerceRarity(p.rarity);
@@ -68,6 +77,9 @@ function cardReducer(state: CardState, action: CardAction): CardState {
         backgroundTexture: p.backgroundTexture ?? null,
         backImage: p.backImage ?? null,
         fields: p.fields,
+        imageAspect: p.imageAspect ?? 'square',
+        fontSize: p.fontSize ?? 'md',
+        showPips: typeof p.showPips === 'boolean' ? p.showPips : true,
         ...palette,
       };
     }
@@ -85,9 +97,21 @@ const initialState: CardState = {
   backImage: null,
   ...DEFAULT_CARD_PALETTE,
   fields: getDefaultFields('spell'),
+  imageAspect: 'square',
+  fontSize: 'md',
+  showPips: true,
 };
 
 const NEW_CARD_BASELINE_SERIALIZED = JSON.stringify(initialState);
+
+function CardForgeRouter() {
+  const searchParams = useSearchParams();
+  const typeParam = searchParams.get('type');
+  const libraryId = searchParams.get('library');
+
+  if (!typeParam && !libraryId) return <CardTypePicker />;
+  return <CardForgeInner />;
+}
 
 function CardForgeInner() {
   const router = useRouter();
@@ -98,7 +122,29 @@ function CardForgeInner() {
     ? `/card/${libraryId}${fromLibrary ? FROM_LIBRARY_QS : ''}`
     : '/card';
 
-  const [state, dispatch] = useReducer(cardReducer, initialState);
+  const typeParam = searchParams.get('type') as CardType | null;
+  const aspectParam = (searchParams.get('aspect') as ImageAspect | null) ?? 'square';
+  const fontSizeParam = (searchParams.get('fontSize') as CardFontSize | null) ?? 'md';
+
+  const resolvedInitial: CardState = (() => {
+    if (!typeParam) return initialState;
+    const cfg = CARD_TYPES[typeParam];
+    return {
+      type: typeParam,
+      rarity: 'legendary',
+      icon: cfg?.defaultIcon ?? 'loader',
+      image: null,
+      backgroundTexture: null,
+      backImage: null,
+      ...DEFAULT_CARD_PALETTE,
+      fields: getDefaultFields(typeParam),
+      imageAspect: aspectParam,
+      fontSize: fontSizeParam,
+      showPips: true,
+    };
+  })();
+
+  const [state, dispatch] = useReducer(cardReducer, resolvedInitial);
   const cardRef = useRef<HTMLDivElement>(null);
   const cardBackRef = useRef<HTMLDivElement>(null);
   const [previewFace, setPreviewFace] = useState<CardPreviewFace>('front');
@@ -197,10 +243,6 @@ function CardForgeInner() {
     };
   }, [libraryId]);
 
-  const handleTypeChange = useCallback((type: CardType) => {
-    dispatch({ type: 'SET_CARD_TYPE', payload: type });
-  }, []);
-
   const handleExport = useCallback(async () => {
     const frontEl = cardRef.current;
     if (!frontEl) return;
@@ -268,13 +310,6 @@ function CardForgeInner() {
           Could not load this library item. It may have been deleted or is not a card.
         </div>
       )}
-      <div
-        className={
-          libraryId && loadState === 'loading' ? 'pointer-events-none opacity-90' : ''
-        }
-      >
-        <TypeBar active={state.type} onSelect={handleTypeChange} typeLocked={Boolean(libraryId)} />
-      </div>
       {libraryId && loadState === 'loading' ? (
         <ForgeLibraryLoadSkeleton />
       ) : (
@@ -311,7 +346,7 @@ function CardForgeInner() {
 export default function CardForgeNewPage() {
   return (
     <Suspense fallback={<RouteSuspenseFallback />}>
-      <CardForgeInner />
+      <CardForgeRouter />
     </Suspense>
   );
 }

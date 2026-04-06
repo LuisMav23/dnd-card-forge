@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { isUuidString } from '@/lib/uuidValidate';
+import { internalError } from '@/lib/apiError';
 
 function clampLimit(raw: string | null): number {
   const n = raw ? parseInt(raw, 10) : 24;
@@ -32,7 +33,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return internalError(error, 'users/following/GET');
   }
 
   return NextResponse.json({ users: data ?? [], limit, offset });

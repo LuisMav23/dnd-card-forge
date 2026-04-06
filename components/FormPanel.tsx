@@ -73,6 +73,8 @@ export default function FormPanel({
           colorBorderInner: state.colorBorderInner,
         }}
         onColorChange={patch => dispatch({ type: 'SET_CARD_COLORS', payload: patch })}
+        showPips={state.showPips !== false}
+        onShowPipsChange={show => dispatch({ type: 'SET_SHOW_PIPS', payload: show })}
       />
 
       <BackgroundTextureSection

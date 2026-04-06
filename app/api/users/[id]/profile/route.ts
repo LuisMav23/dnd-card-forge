@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { mapPublishedRowToExploreItem, type PublishedCardExploreRow } from '@/lib/exploreItemMap';
 import { createClient } from '@/lib/supabase/server';
 import { isUuidString } from '@/lib/uuidValidate';
+import { internalError } from '@/lib/apiError';
 
 const LIST_FIELDS =
   'id, title, item_type, user_id, published_at, view_count, fork_count, published_author_name, data, upvote_count, downvote_count, favorite_count';
@@ -22,7 +23,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   });
 
   if (profErr) {
-    return NextResponse.json({ error: profErr.message }, { status: 500 });
+    return internalError(profErr, 'users/profile/GET/profile');
   }
 
   const profileRow = Array.isArray(profRows) ? profRows[0] : profRows;
@@ -40,7 +41,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     .limit(48);
 
   if (worksErr) {
-    return NextResponse.json({ error: worksErr.message }, { status: 500 });
+    return internalError(worksErr, 'users/profile/GET/works');
   }
 
   const { data: countRows, error: countErr } = await supabase.rpc('get_user_follow_counts', {
@@ -48,7 +49,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   });
 
   if (countErr) {
-    return NextResponse.json({ error: countErr.message }, { status: 500 });
+    return internalError(countErr, 'users/profile/GET/counts');
   }
 
   const countRow = Array.isArray(countRows) ? countRows[0] : countRows;
@@ -82,7 +83,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       { p_user_id: id, p_limit: 48 }
     );
     if (favErr) {
-      return NextResponse.json({ error: favErr.message }, { status: 500 });
+      return internalError(favErr, 'users/profile/GET/fav-ids');
     }
     const idRows = Array.isArray(favIdRows) ? favIdRows : [];
     const cardIds = idRows
@@ -95,7 +96,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
         .eq('is_published', true)
         .in('id', cardIds);
       if (cardsErr) {
-        return NextResponse.json({ error: cardsErr.message }, { status: 500 });
+        return internalError(cardsErr, 'users/profile/GET/fav-cards');
       }
       const byId = new Map((favCards ?? []).map(r => [r.id as string, r]));
       const ordered = cardIds

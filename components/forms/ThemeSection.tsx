@@ -10,9 +10,18 @@ interface Props {
   onRarityChange: (rarity: Rarity) => void;
   colors: CardPalette;
   onColorChange: (patch: CardPalettePatch) => void;
+  showPips: boolean;
+  onShowPipsChange: (show: boolean) => void;
 }
 
-export default function ThemeSection({ currentRarity, onRarityChange, colors, onColorChange }: Props) {
+export default function ThemeSection({
+  currentRarity,
+  onRarityChange,
+  colors,
+  onColorChange,
+  showPips,
+  onShowPipsChange,
+}: Props) {
   return (
     <div className="fsec">
       <ColorPalettePickers
@@ -40,6 +49,19 @@ export default function ThemeSection({ currentRarity, onRarityChange, colors, on
             </button>
           ))}
         </div>
+      </div>
+      <div className="fg mt-3">
+        <label className="flex cursor-pointer items-center gap-2.5">
+          <input
+            type="checkbox"
+            className="h-4 w-4 shrink-0 rounded border border-bdr bg-mid/60 text-gold focus:outline-none focus:ring-1 focus:ring-gold-dark"
+            checked={showPips}
+            onChange={e => onShowPipsChange(e.target.checked)}
+          />
+          <span className="text-[0.75rem] font-normal normal-case tracking-normal text-parch">
+            Show rarity pips on card (footer gems)
+          </span>
+        </label>
       </div>
     </div>
   );

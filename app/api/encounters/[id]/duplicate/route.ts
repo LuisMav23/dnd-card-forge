@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { internalError } from '@/lib/apiError';
 
 export async function POST(_request: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
@@ -20,7 +21,7 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
     .maybeSingle();
 
   if (encErr) {
-    return NextResponse.json({ error: encErr.message }, { status: 500 });
+    return internalError(encErr, 'encounters/duplicate/POST/fetch');
   }
   if (!encRow) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -33,7 +34,7 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
     .order('sort_order', { ascending: true });
 
   if (entErr) {
-    return NextResponse.json({ error: entErr.message }, { status: 500 });
+    return internalError(entErr, 'encounters/duplicate/POST/entries');
   }
 
   const now = new Date().toISOString();
@@ -58,7 +59,7 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
     .single();
 
   if (insEncErr || !newEnc) {
-    return NextResponse.json({ error: insEncErr?.message ?? 'Failed to duplicate' }, { status: 500 });
+    return internalError(insEncErr ?? new Error('Failed to duplicate'), 'encounters/duplicate/POST/insert');
   }
 
   const newId = newEnc.id;
@@ -77,7 +78,7 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
     const { error: insEntErr } = await supabase.from('encounter_entries').insert(entries);
     if (insEntErr) {
       await supabase.from('encounters').delete().eq('id', newId).eq('user_id', user.id);
-      return NextResponse.json({ error: insEntErr.message }, { status: 500 });
+      return internalError(insEntErr, 'encounters/duplicate/POST/entries-insert');
     }
   }
 

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { storagePathsFromLibraryCardRow } from '@/lib/storage/paths';
 import { removeStorageObjectsServer } from '@/lib/storage/removeStorageObjectsServer';
+import { internalError } from '@/lib/apiError';
 
 export async function GET(
   _request: Request,
@@ -45,8 +46,7 @@ export async function PATCH(
 
   try {
     const updates = await request.json();
-    
-    // Convert camelCase to snake_case if necessary, e.g. folderId -> folder_id
+
     const payload: Record<string, unknown> = {};
     if (updates.folderId !== undefined) {
       payload.folder_id = updates.folderId;
@@ -95,8 +95,8 @@ export async function PATCH(
     if (error) throw error;
 
     return NextResponse.json(data);
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err) {
+    return internalError(err, 'cards/[id]/PATCH');
   }
 }
 
@@ -131,7 +131,7 @@ export async function DELETE(
     .eq('user_id', user.id);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return internalError(error, 'cards/[id]/DELETE');
   }
 
   return NextResponse.json({ success: true });

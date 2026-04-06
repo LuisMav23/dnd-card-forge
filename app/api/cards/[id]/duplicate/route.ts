@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { internalError } from '@/lib/apiError';
 
 export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -20,7 +21,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     .maybeSingle();
 
   if (fetchErr) {
-    return NextResponse.json({ error: fetchErr.message }, { status: 500 });
+    return internalError(fetchErr, 'cards/duplicate/POST/fetch');
   }
   if (!row) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -40,7 +41,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     .single();
 
   if (insErr || !inserted) {
-    return NextResponse.json({ error: insErr?.message ?? 'Duplicate failed' }, { status: 500 });
+    return internalError(insErr ?? new Error('Duplicate failed'), 'cards/duplicate/POST/insert');
   }
 
   return NextResponse.json(inserted);

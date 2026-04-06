@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { internalError } from '@/lib/apiError';
 
 const PUBLISHED_FIELDS =
   'id, title, item_type, data, published_at, view_count, fork_count, published_author_name, user_id, upvote_count, downvote_count, favorite_count, is_published';
@@ -35,7 +36,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     .maybeSingle();
 
   if (pubErr) {
-    return NextResponse.json({ error: pubErr.message }, { status: 500 });
+    return internalError(pubErr, 'explore/[id]/GET/published');
   }
 
   if (publishedRow) {
@@ -50,7 +51,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       .maybeSingle();
 
     if (ownErr) {
-      return NextResponse.json({ error: ownErr.message }, { status: 500 });
+      return internalError(ownErr, 'explore/[id]/GET/own');
     }
     if (ownRow) {
       data = ownRow as Record<string, unknown> & { user_id: string; is_published?: boolean };

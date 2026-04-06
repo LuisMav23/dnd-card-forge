@@ -7,6 +7,7 @@ import {
   parseEncounterEffects,
   parseEncounterInstanceStatesArray,
 } from '@/lib/encounterStatHelpers';
+import { internalError } from '@/lib/apiError';
 
 export async function PATCH(
   request: Request,
@@ -68,7 +69,7 @@ export async function PATCH(
     .maybeSingle();
 
   if (fetchErr) {
-    return NextResponse.json({ error: fetchErr.message }, { status: 500 });
+    return internalError(fetchErr, 'encounters/entries/PATCH/fetch');
   }
   if (!row) {
     return NextResponse.json({ error: 'Entry not found' }, { status: 404 });
@@ -164,7 +165,7 @@ export async function PATCH(
     .eq('encounter_id', encounterId);
 
   if (upErr) {
-    return NextResponse.json({ error: upErr.message }, { status: 500 });
+    return internalError(upErr, 'encounters/entries/PATCH/update');
   }
 
   const { error: encUpErr } = await supabase
@@ -173,7 +174,7 @@ export async function PATCH(
     .eq('id', encounterId);
 
   if (encUpErr) {
-    return NextResponse.json({ error: encUpErr.message }, { status: 500 });
+    return internalError(encUpErr, 'encounters/entries/PATCH/enc-updated-at');
   }
 
   const { data: fresh, error: selErr } = await supabase

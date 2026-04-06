@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { mapPublishedRowToExploreItem, type PublishedCardExploreRow } from '@/lib/exploreItemMap';
 import { createClient } from '@/lib/supabase/server';
+import { internalError } from '@/lib/apiError';
 
 const LIST_FIELDS =
   'id, title, item_type, user_id, published_at, view_count, fork_count, published_author_name, data, upvote_count, downvote_count, favorite_count';
@@ -30,7 +31,7 @@ export async function GET(request: Request) {
     .eq('follower_id', user.id);
 
   if (fErr) {
-    return NextResponse.json({ error: fErr.message }, { status: 500 });
+    return internalError(fErr, 'following-feed/GET/follows');
   }
 
   const ids = (follows ?? []).map(f => f.following_id).filter(Boolean) as string[];
@@ -48,7 +49,7 @@ export async function GET(request: Request) {
     .limit(limit);
 
   if (cErr) {
-    return NextResponse.json({ error: cErr.message }, { status: 500 });
+    return internalError(cErr, 'following-feed/GET/cards');
   }
 
   const items = (rows ?? []).map(row =>

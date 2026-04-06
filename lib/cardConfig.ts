@@ -6,7 +6,7 @@ export const CARD_TYPES: Record<CardType, CardTypeConfig> = {
     iconId: 'sparkles',
     defaultIcon: 'loader',
     defaultTheme: 'arcane',
-    icons: ['loader','bomb','flame','snowflake','zap','skull','sparkles','leaf','shield','eye','moon','sun','skull','wind','droplets','orbit','sparkle','waves'],
+    icons: ['loader','bomb','flame','snowflake','zap','skull','sparkles','leaf','shield','eye','moon','sun','wind','droplets','orbit','sparkle','waves'],
     themes: [
       { key: 'arcane', bg: 'linear-gradient(135deg,#e8d4f0,#c4a0d8)', name: 'Arcane' },
       { key: 'fire', bg: 'linear-gradient(135deg,#f5d5b0,#e8a870)', name: 'Fire' },
@@ -107,7 +107,7 @@ export const CARD_TYPES: Record<CardType, CardTypeConfig> = {
     iconId: 'loader',
     defaultIcon: 'loader',
     defaultTheme: 'arcane',
-    icons: ['loader','bomb','flame','snowflake','zap','skull','sparkles','leaf','shield','eye','moon','sun','skull','wind','droplets','orbit','sparkle','waves','backpack','sword','target','axe','anchor','hammer','test-tube','scroll-text','circle-dot','flame','key-round','wand','dragon','eagle','wolf','rainbow','drama','tent'],
+    icons: ['loader','bomb','flame','snowflake','zap','skull','sparkles','leaf','shield','eye','moon','sun','wind','droplets','orbit','sparkle','waves','backpack','sword','target','axe','anchor','hammer','test-tube','scroll-text','circle-dot','key-round','wand','dragon','eagle','wolf','rainbow','drama','tent'],
     themes: [
       { key: 'arcane', bg: 'linear-gradient(135deg,#e8d4f0,#c4a0d8)', name: 'Arcane' },
       { key: 'fire', bg: 'linear-gradient(135deg,#f5d5b0,#e8a870)', name: 'Fire' },

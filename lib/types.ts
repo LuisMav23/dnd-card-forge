@@ -1,5 +1,8 @@
 export type CardType = 'spell' | 'armor' | 'equipment' | 'weapon' | 'sidekick' | 'anything';
 
+export type ImageAspect = 'portrait' | 'square' | 'landscape';
+export type CardFontSize = 'sm' | 'md' | 'lg';
+
 export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary' | 'artifact';
 
 export interface ThemeOption {
@@ -48,6 +51,12 @@ export interface CardState {
   colorBorderOuter: string;
   colorBorderInner: string;
   fields: Record<string, string>;
+  /** Controls the height/aspect of the art container. Default: 'square' (3:2 standard). */
+  imageAspect: ImageAspect;
+  /** Controls base text size inside the card. Default: 'md'. */
+  fontSize: CardFontSize;
+  /** Rarity gem pips in the card footer. Default: true. */
+  showPips: boolean;
 }
 
 export type CardPalettePatch = Partial<
@@ -72,6 +81,9 @@ export type CardAction =
   | { type: 'SET_CARD_COLORS'; payload: CardPalettePatch }
   | { type: 'SET_FIELD'; payload: { key: string; value: string } }
   | { type: 'SET_FIELDS'; payload: Record<string, string> }
+  | { type: 'SET_IMAGE_ASPECT'; payload: ImageAspect }
+  | { type: 'SET_FONT_SIZE'; payload: CardFontSize }
+  | { type: 'SET_SHOW_PIPS'; payload: boolean }
   | { type: 'LOAD_STATE'; payload: CardState };
 
 export interface TypebarResult {

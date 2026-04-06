@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { mapPublishedRowToExploreItem, type PublishedCardExploreRow } from '@/lib/exploreItemMap';
 import { createClient } from '@/lib/supabase/server';
+import { internalError } from '@/lib/apiError';
 
 const LIST_FIELDS =
   'id, title, item_type, user_id, published_at, view_count, fork_count, published_author_name, data, upvote_count, downvote_count, favorite_count';
@@ -33,7 +34,7 @@ export async function GET(request: Request) {
     .limit(limit);
 
   if (rErr) {
-    return NextResponse.json({ error: rErr.message }, { status: 500 });
+    return internalError(rErr, 'favorites/GET/reactions');
   }
 
   const cardIds = (rx ?? []).map(r => r.card_id).filter(Boolean) as string[];
@@ -48,7 +49,7 @@ export async function GET(request: Request) {
     .in('id', cardIds);
 
   if (cErr) {
-    return NextResponse.json({ error: cErr.message }, { status: 500 });
+    return internalError(cErr, 'favorites/GET/cards');
   }
 
   const byId = new Map((rows ?? []).map(r => [r.id as string, r]));

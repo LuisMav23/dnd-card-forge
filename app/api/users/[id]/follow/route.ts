@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { isUuidString } from '@/lib/uuidValidate';
+import { internalError } from '@/lib/apiError';
 
 export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id: targetId } = await params;
@@ -36,7 +37,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     if (error.code === '23505') {
       return NextResponse.json({ ok: true, already: true });
     }
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return internalError(error, 'users/follow/POST');
   }
 
   return NextResponse.json({ ok: true });
@@ -64,7 +65,7 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     .eq('following_id', targetId);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return internalError(error, 'users/follow/DELETE');
   }
 
   return NextResponse.json({ ok: true });

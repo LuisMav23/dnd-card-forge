@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { internalError } from '@/lib/apiError';
 
 function uniqueCopyName(existingNames: Set<string>, baseName: string): string {
   let candidate = `${baseName} (copy)`;
@@ -30,7 +31,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     .maybeSingle();
 
   if (folderErr) {
-    return NextResponse.json({ error: folderErr.message }, { status: 500 });
+    return internalError(folderErr, 'folders/duplicate/POST/fetch');
   }
   if (!sourceFolder) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -45,7 +46,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     .eq('user_id', user.id);
 
   if (namesErr) {
-    return NextResponse.json({ error: namesErr.message }, { status: 500 });
+    return internalError(namesErr, 'folders/duplicate/POST/names');
   }
 
   const nameSet = new Set((allFolders ?? []).map(r => r.name));
@@ -63,10 +64,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     .single();
 
   if (insFolderErr || !newFolder) {
-    return NextResponse.json(
-      { error: insFolderErr?.message ?? 'Failed to create folder' },
-      { status: 500 }
-    );
+    return internalError(insFolderErr ?? new Error('Failed to create folder'), 'folders/duplicate/POST/insert');
   }
 
   const newFolderId = newFolder.id;
@@ -79,7 +77,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
 
   if (cardsErr) {
     await supabase.from('folders').delete().eq('id', newFolderId).eq('user_id', user.id);
-    return NextResponse.json({ error: cardsErr.message }, { status: 500 });
+    return internalError(cardsErr, 'folders/duplicate/POST/cards');
   }
 
   const duplicatedCards: unknown[] = [];
@@ -100,7 +98,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     if (cErr || !inserted) {
       await supabase.from('cards').delete().eq('folder_id', newFolderId).eq('user_id', user.id);
       await supabase.from('folders').delete().eq('id', newFolderId);
-      return NextResponse.json({ error: cErr?.message ?? 'Failed to duplicate card' }, { status: 500 });
+      return internalError(cErr ?? new Error('Failed to duplicate card'), 'folders/duplicate/POST/card-insert');
     }
     duplicatedCards.push(inserted);
   }
@@ -114,7 +112,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   if (encListErr) {
     await supabase.from('cards').delete().eq('folder_id', newFolderId).eq('user_id', user.id);
     await supabase.from('folders').delete().eq('id', newFolderId).eq('user_id', user.id);
-    return NextResponse.json({ error: encListErr.message }, { status: 500 });
+    return internalError(encListErr, 'folders/duplicate/POST/encounters-list');
   }
 
   const duplicatedEncounters: unknown[] = [];
@@ -131,7 +129,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
       await supabase.from('encounters').delete().eq('folder_id', newFolderId).eq('user_id', user.id);
       await supabase.from('cards').delete().eq('folder_id', newFolderId).eq('user_id', user.id);
       await supabase.from('folders').delete().eq('id', newFolderId).eq('user_id', user.id);
-      return NextResponse.json({ error: encFetchErr?.message ?? 'Encounter not found' }, { status: 500 });
+      return internalError(encFetchErr ?? new Error('Encounter not found'), 'folders/duplicate/POST/enc-fetch');
     }
 
     const { data: entryRows, error: entFetchErr } = await supabase
@@ -146,7 +144,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
       await supabase.from('encounters').delete().eq('folder_id', newFolderId).eq('user_id', user.id);
       await supabase.from('cards').delete().eq('folder_id', newFolderId).eq('user_id', user.id);
       await supabase.from('folders').delete().eq('id', newFolderId).eq('user_id', user.id);
-      return NextResponse.json({ error: entFetchErr.message }, { status: 500 });
+      return internalError(entFetchErr, 'folders/duplicate/POST/entries-fetch');
     }
 
     const now = new Date().toISOString();
@@ -167,7 +165,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
       await supabase.from('encounters').delete().eq('folder_id', newFolderId).eq('user_id', user.id);
       await supabase.from('cards').delete().eq('folder_id', newFolderId).eq('user_id', user.id);
       await supabase.from('folders').delete().eq('id', newFolderId).eq('user_id', user.id);
-      return NextResponse.json({ error: insEncErr?.message ?? 'Failed to duplicate encounter' }, { status: 500 });
+      return internalError(insEncErr ?? new Error('Failed to duplicate encounter'), 'folders/duplicate/POST/enc-insert');
     }
 
     const newEncId = newEnc.id;
@@ -187,7 +185,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
       if (insEntErr) {
         await supabase.from('encounters').delete().eq('id', newEncId);
         await supabase.from('folders').delete().eq('id', newFolderId);
-        return NextResponse.json({ error: insEntErr.message }, { status: 500 });
+        return internalError(insEntErr, 'folders/duplicate/POST/entries-insert');
       }
     }
 

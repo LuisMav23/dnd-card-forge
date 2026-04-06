@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { fetchCardsForProfileAndActivity } from '@/lib/recentActivity';
 import { createClient } from '@/lib/supabase/server';
 import { parseOnboardingCompletedAt, parseOnboardingPayload } from '@/lib/onboarding/validateOnboarding';
+import { internalError } from '@/lib/apiError';
 
 const BIO_MAX = 500;
 
@@ -24,7 +25,7 @@ export async function GET() {
     .maybeSingle();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return internalError(error, 'profile/GET');
   }
 
   const { cards, error: cardsError } = await fetchCardsForProfileAndActivity(
@@ -34,7 +35,7 @@ export async function GET() {
   );
 
   if (cardsError) {
-    return NextResponse.json({ error: cardsError }, { status: 500 });
+    return internalError(cardsError, 'profile/GET/cards');
   }
 
   return NextResponse.json({
@@ -171,7 +172,6 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json({ profile: data });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Update failed';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return internalError(err, 'profile/PATCH');
   }
 }

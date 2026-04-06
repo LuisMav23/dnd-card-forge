@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { MeNotificationItem, NotificationType } from '@/lib/meNotifications';
 import { createClient } from '@/lib/supabase/server';
 import { isUuidString } from '@/lib/uuidValidate';
+import { internalError } from '@/lib/apiError';
 
 const NOTIFICATION_TYPES = new Set<NotificationType>(['comment', 'upvote', 'downvote', 'favorite']);
 
@@ -61,7 +62,7 @@ export async function GET(request: Request) {
     .is('read_at', null);
 
   if (countErr) {
-    return NextResponse.json({ error: countErr.message }, { status: 500 });
+    return internalError(countErr, 'notifications/GET/count');
   }
 
   let q = supabase
@@ -77,7 +78,7 @@ export async function GET(request: Request) {
   const { data: rows, error: listErr } = await q;
 
   if (listErr) {
-    return NextResponse.json({ error: listErr.message }, { status: 500 });
+    return internalError(listErr, 'notifications/GET/list');
   }
 
   const raw = (rows ?? []).map(r => {
@@ -132,7 +133,7 @@ export async function PATCH(request: Request) {
       .is('read_at', null);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return internalError(error, 'notifications/PATCH/mark-all-read');
     }
 
     return NextResponse.json({ ok: true });
@@ -155,7 +156,7 @@ export async function PATCH(request: Request) {
   const { error } = await supabase.from('user_notifications').update({ read_at: readAt }).in('id', ids);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return internalError(error, 'notifications/PATCH/ids');
   }
 
   return NextResponse.json({ ok: true });

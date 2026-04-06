@@ -7,7 +7,7 @@ import { GameSystem, StatBlockState, StatBlockAction, StatBlockType } from '@/li
 import { STATBLOCK_TYPES, getDefaultStatBlockFields, getDefaultFeatures } from '@/lib/statblockConfig';
 import { hydrateStatBlockPalette, paletteFromStatBlockDefaultTheme } from '@/lib/statBlockPalette';
 import { resolveIconId } from '@/lib/iconRegistry';
-import StatBlockTypeBar from '@/components/statblocks/StatBlockTypeBar';
+import StatBlockTypePicker from '@/components/forge/StatBlockTypePicker';
 import StatBlockFormPanel from '@/components/statblocks/StatBlockFormPanel';
 import StatBlockPreview from '@/components/statblocks/StatBlockPreview';
 import StatBlockLibraryLoadSkeleton from '@/components/ui/StatBlockLibraryLoadSkeleton';
@@ -98,6 +98,16 @@ const initialState: StatBlockState = {
 
 const NEW_STATBLOCK_BASELINE_SERIALIZED = JSON.stringify(initialState);
 
+function StatBlocksRouter() {
+  const searchParams = useSearchParams();
+  const systemParam = searchParams.get('system');
+  const typeParam = searchParams.get('type');
+  const libraryId = searchParams.get('library');
+
+  if (!libraryId && (!systemParam || !typeParam)) return <StatBlockTypePicker />;
+  return <StatBlocksInner />;
+}
+
 function StatBlocksInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -107,7 +117,24 @@ function StatBlocksInner() {
     ? `/statblocks/${libraryId}${fromLibrary ? FROM_LIBRARY_QS : ''}`
     : '/statblocks';
 
-  const [state, dispatch] = useReducer(statBlockReducer, initialState);
+  const systemParam = (searchParams.get('system') as GameSystem | null) ?? null;
+  const typeParam = (searchParams.get('type') as StatBlockType | null) ?? null;
+
+  const resolvedInitial: StatBlockState = (() => {
+    if (!systemParam || !typeParam) return initialState;
+    const cfg = STATBLOCK_TYPES[typeParam];
+    return {
+      system: systemParam,
+      type: typeParam,
+      ...paletteFromStatBlockDefaultTheme(cfg?.defaultTheme ?? 'arcane'),
+      icon: cfg?.defaultIcon ?? 'loader',
+      image: null,
+      fields: getDefaultStatBlockFields(systemParam, typeParam),
+      features: getDefaultFeatures(systemParam, typeParam),
+    };
+  })();
+
+  const [state, dispatch] = useReducer(statBlockReducer, resolvedInitial);
   const blockRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
   const [exportLabel, setExportLabel] = useState('⬇ Export Stat Block as PNG');
@@ -204,24 +231,6 @@ function StatBlocksInner() {
     };
   }, [libraryId]);
 
-  const selectionLocked = Boolean(libraryId);
-
-  const handleSystemChange = useCallback(
-    (system: GameSystem) => {
-      if (selectionLocked) return;
-      dispatch({ type: 'SET_SYSTEM', payload: system });
-    },
-    [selectionLocked]
-  );
-
-  const handleTypeChange = useCallback(
-    (type: StatBlockType) => {
-      if (selectionLocked) return;
-      dispatch({ type: 'SET_STATBLOCK_TYPE', payload: type });
-    },
-    [selectionLocked]
-  );
-
   const handleExport = useCallback(async () => {
     const el = blockRef.current;
     if (!el) return;
@@ -276,19 +285,6 @@ function StatBlocksInner() {
           Could not load this library item. It may have been deleted or is not a stat block.
         </div>
       )}
-      <div
-        className={
-          libraryId && loadState === 'loading' ? 'pointer-events-none opacity-90' : ''
-        }
-      >
-        <StatBlockTypeBar
-          system={state.system}
-          active={state.type}
-          onSystemChange={handleSystemChange}
-          onSelect={handleTypeChange}
-          selectionLocked={selectionLocked}
-        />
-      </div>
       {libraryId && loadState === 'loading' ? (
         <StatBlockLibraryLoadSkeleton />
       ) : (
@@ -318,7 +314,7 @@ function StatBlocksInner() {
 export default function StatBlocksNewPage() {
   return (
     <Suspense fallback={<RouteSuspenseFallback />}>
-      <StatBlocksInner />
+      <StatBlocksRouter />
     </Suspense>
   );
 }

@@ -7,6 +7,7 @@ import { cardPaletteCssVars } from '@/lib/cardPalette';
 import { crossOriginForImgSrc } from '@/lib/crossOriginForImgSrc';
 import { GEMS, abilityMod } from '@/lib/utils';
 import IconDisplay from '@/components/IconDisplay';
+import { sanitizeHtml } from '@/lib/sanitize';
 
 const CornerSVG = () => (
   <svg viewBox="0 0 20 20" aria-hidden>
@@ -56,10 +57,29 @@ const CardRenderer = forwardRef<HTMLDivElement, Props>(({ state }, ref) => {
       <div className="card-bg" />
     );
 
+  const imageAspect = state.imageAspect ?? 'square';
+
+  /** Shorter: wide strip (legacy card art height at full width). */
+  const ASPECT_SHORT = '559 / 256';
+  /** Standard: 3:2 photo-style frame — shorter than a square. */
+  const ASPECT_STANDARD = '3 / 2';
+  /** Longer: square (1:1) — more art height than standard, without extreme portrait. */
+  const ASPECT_LONG = '1 / 1';
+
+  const artStyle: React.CSSProperties = {
+    width: '100%',
+    flexShrink: 0,
+    ...(imageAspect === 'landscape'
+      ? { aspectRatio: ASPECT_SHORT }
+      : imageAspect === 'portrait'
+        ? { aspectRatio: ASPECT_LONG }
+        : { aspectRatio: ASPECT_STANDARD }),
+  };
+
   return (
     <div
       ref={ref}
-      className="spell-card"
+      className={['spell-card', isSK ? 'spell-card--sidekick' : ''].filter(Boolean).join(' ')}
       style={cardPaletteCssVars(state)}
     >
       {bgBlock}
@@ -99,20 +119,30 @@ const CardRenderer = forwardRef<HTMLDivElement, Props>(({ state }, ref) => {
               </div>
             ))}
           </div>
+          <div className="cz-typebar">
+            <span className="c-type">{tb.left}</span>
+            <span className="c-subtype">{tb.right}</span>
+          </div>
+          <div className="cz-text">
+            {flavor && <div className="c-flavor">&ldquo;{flavor}&rdquo;</div>}
+            <div className="c-desc" dangerouslySetInnerHTML={{ __html: sanitizeHtml(desc) }} />
+          </div>
         </>
       ) : (
-        <div className="cz-art">{artContent}</div>
+        <div className="cz-body">
+          <div className="cz-art" style={artStyle}>
+            {artContent}
+          </div>
+          <div className="cz-typebar">
+            <span className="c-type">{tb.left}</span>
+            <span className="c-subtype">{tb.right}</span>
+          </div>
+          <div className="cz-text">
+            {flavor && <div className="c-flavor">&ldquo;{flavor}&rdquo;</div>}
+            <div className="c-desc" dangerouslySetInnerHTML={{ __html: sanitizeHtml(desc) }} />
+          </div>
+        </div>
       )}
-
-      <div className="cz-typebar">
-        <span className="c-type">{tb.left}</span>
-        <span className="c-subtype">{tb.right}</span>
-      </div>
-
-      <div className="cz-text">
-        {flavor && <div className="c-flavor">&ldquo;{flavor}&rdquo;</div>}
-        <div className="c-desc" dangerouslySetInnerHTML={{ __html: desc }} />
-      </div>
 
       {stats.length > 0 && (
         <div className="cz-stats">
@@ -127,7 +157,7 @@ const CardRenderer = forwardRef<HTMLDivElement, Props>(({ state }, ref) => {
 
       <div className="cz-footer">
         <span className="c-class">{cls}</span>
-        <span className="c-gems">{GEMS[state.rarity]}</span>
+        <span className="c-gems">{state.showPips !== false ? GEMS[state.rarity] : ''}</span>
       </div>
     </div>
   );

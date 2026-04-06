@@ -8,6 +8,7 @@ import { getCardWikiCardExtras, getCardWikiFeatureRows } from '@/lib/cardWikiMet
 import CardBackFace from '@/components/CardBackFace';
 import CardRenderer from '@/components/CardRenderer';
 import WikiClickableArt from '@/components/wiki/WikiClickableArt';
+import { sanitizeHtml } from '@/lib/sanitize';
 
 interface Props {
   state: CardState;
@@ -63,9 +64,11 @@ const CardWikiView = forwardRef<HTMLDivElement, Props>(function CardWikiView(
                   ) : null}
                 </span>
                 <span className="text-sm text-muted">Rarity: {rarityLabel(state.rarity)}</span>
-                <span className="text-lg tracking-widest text-gold" aria-hidden>
-                  {GEMS[state.rarity]}
-                </span>
+                {state.showPips !== false ? (
+                  <span className="text-lg tracking-widest text-gold" aria-hidden>
+                    {GEMS[state.rarity]}
+                  </span>
+                ) : null}
               </div>
             </header>
             <WikiClickableArt
@@ -165,7 +168,7 @@ const CardWikiView = forwardRef<HTMLDivElement, Props>(function CardWikiView(
               <div
                 className="wiki-card-desc text-sm leading-relaxed text-parch [&_p]:mb-3 [&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-5 [&_li]:mt-1 [&_strong]:font-semibold"
                 dangerouslySetInnerHTML={{
-                  __html: f.desc?.trim() ? f.desc : '<p class="text-muted">No description.</p>',
+                  __html: sanitizeHtml(f.desc?.trim() ? f.desc : '<p class="text-muted">No description.</p>'),
                 }}
               />
             </section>

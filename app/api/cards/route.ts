@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { resolveDefaultCardFolderId } from '@/lib/ensureLibrarySystemFolders';
 import { createClient } from '@/lib/supabase/server';
+import { internalError } from '@/lib/apiError';
 
 export async function GET(request: Request) {
   const supabase = await createClient();
@@ -30,7 +31,7 @@ export async function GET(request: Request) {
   const { data, error } = await query;
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return internalError(error, 'cards/GET');
   }
 
   return NextResponse.json(data);
@@ -56,7 +57,7 @@ export async function POST(request: Request) {
         itemType
       );
       if (folderErr) {
-        return NextResponse.json({ error: folderErr }, { status: 500 });
+        return internalError(folderErr, 'cards/POST/folder');
       }
       resolvedFolderId = defId;
     } else {
@@ -80,7 +81,7 @@ export async function POST(request: Request) {
     if (error) throw error;
 
     return NextResponse.json(data);
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err) {
+    return internalError(err, 'cards/POST');
   }
 }

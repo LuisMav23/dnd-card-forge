@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { internalError } from '@/lib/apiError';
 
 export async function GET() {
   const supabase = await createClient();
@@ -15,7 +16,7 @@ export async function GET() {
     .order('created_at', { ascending: false });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return internalError(error, 'folders/GET');
   }
 
   return NextResponse.json(data);
@@ -47,9 +48,9 @@ export async function POST(request: Request) {
       .single();
 
     if (error) throw error;
-    
+
     return NextResponse.json(data);
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err) {
+    return internalError(err, 'folders/POST');
   }
 }

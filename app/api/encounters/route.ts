@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { ensureLibrarySystemFolders } from '@/lib/ensureLibrarySystemFolders';
 import { createClient } from '@/lib/supabase/server';
 import type { CreateEncounterBody } from '@/lib/encounterTypes';
+import { internalError } from '@/lib/apiError';
 
 const PLAYER_DESCRIPTION_MAX = 8000;
 const THUMBNAIL_URL_MAX = 2048;
@@ -39,7 +40,7 @@ export async function GET() {
     .order('updated_at', { ascending: false });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return internalError(error, 'encounters/GET');
   }
 
   const list = (rows ?? []).map(r => ({
@@ -119,7 +120,7 @@ export async function POST(request: Request) {
 
   const { systemFolderIds, error: ensureErr } = await ensureLibrarySystemFolders(supabase, user.id);
   if (ensureErr) {
-    return NextResponse.json({ error: ensureErr }, { status: 500 });
+    return internalError(ensureErr, 'encounters/POST/folders');
   }
 
   const now = new Date().toISOString();
@@ -137,7 +138,7 @@ export async function POST(request: Request) {
     .single();
 
   if (encErr || !enc) {
-    return NextResponse.json({ error: encErr?.message ?? 'Failed to create encounter' }, { status: 500 });
+    return internalError(encErr ?? new Error('Failed to create encounter'), 'encounters/POST/insert');
   }
 
   const encounterId = enc.id;
@@ -156,7 +157,7 @@ export async function POST(request: Request) {
 
   if (insErr) {
     await supabase.from('encounters').delete().eq('id', encounterId);
-    return NextResponse.json({ error: insErr.message }, { status: 500 });
+    return internalError(insErr, 'encounters/POST/entries');
   }
 
   return NextResponse.json({ id: encounterId }, { status: 201 });
