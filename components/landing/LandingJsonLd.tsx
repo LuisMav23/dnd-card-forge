@@ -15,7 +15,7 @@ export default function LandingJsonLd() {
         url: base,
         name: APP_NAME,
         description:
-          'Free online item card maker, TCG-style custom trading card designer, and stat block builder for tabletop play. Export PNGs, publish to Explore, and share with the community.',
+          'Free online item card maker, custom card designer for trading card games, and stat block builder for tabletop play. Export PNGs, publish to Explore, and share with the community.',
         publisher: { '@id': `${base}/#app` },
       },
       {
@@ -33,7 +33,7 @@ export default function LandingJsonLd() {
         },
         featureList: [
           'Item card templates: spells, armor, weapons, equipment, sidekicks',
-          'TCG-style custom trading card faces with mana, types, and rules text',
+          'Custom card faces for trading card games — mana, types, and rules text',
           'Stat block builder for NPCs, monsters, and environments',
           'PNG export for handouts and virtual tabletops',
           'Publish and browse community creations on Explore',

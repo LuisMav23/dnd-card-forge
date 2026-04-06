@@ -14,9 +14,9 @@ import { ITEM_CARD_GRID_CLASS } from '@/lib/itemCardGrid';
 import { createClient } from '@/lib/supabase/server';
 
 const LANDING_TITLE =
-  'Card Forge — TTRPG item cards, TCG-style trading cards, stat blocks & PNG export';
+  'Card Forge — TTRPG item cards, trading card games, stat blocks & PNG export';
 const LANDING_DESCRIPTION =
-  'Design fantasy TTRPG item cards and stat blocks, plus custom TCG-style trading card faces (creatures, spells, planeswalkers, sagas, and more) with mana symbols and live preview. PNG export for VTTs, handouts, and deck ideas — then publish and share on Explore with comments, votes, favorites, and creator follows.';
+  'Design fantasy TTRPG item cards and stat blocks, plus custom card faces for trading card games (creatures, spells, planeswalkers, sagas, and more) with mana symbols and live preview. PNG export for VTTs, handouts, and deck ideas — then publish and share on Explore with comments, votes, favorites, and creator follows.';
 
 export const metadata: Metadata = {
   title: LANDING_TITLE,
@@ -87,8 +87,8 @@ const createItems: { icon: ComponentType<SVGProps<SVGSVGElement>>; title: string
   },
   {
     icon: SquareStack,
-    title: 'TCG-style cards',
-    body: 'Build custom trading card-style faces: mana costs and symbols, type lines, rules text, planeswalkers, sagas, battles, and more — with the same live preview, PNG export, library, and Explore publishing as the rest of Card Forge.',
+    title: 'Trading card games',
+    body: 'Build custom faces for trading card games — mana costs and symbols, type lines, rules text, planeswalkers, sagas, battles, and more — with the same live preview, PNG export, library, and Explore publishing as the rest of Card Forge.',
   },
 ];
 
@@ -148,7 +148,7 @@ export default async function LandingPage() {
               Card Forge
             </h1>
             <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-bronze opacity-0 animate-landing-fade-up [animation-delay:280ms] sm:text-lg">
-              Item cards and stat blocks for fantasy TTRPGs, plus custom TCG-style trading card faces — craft handouts and deck ideas, export PNGs for virtual tabletops, then{' '}
+              Item cards and stat blocks for fantasy TTRPGs, plus custom faces for trading card games — craft handouts and deck ideas, export PNGs for virtual tabletops, then{' '}
               <Link href="/explore" className="text-gold underline-offset-2 hover:underline">
                 publish and share
               </Link>{' '}
@@ -288,7 +288,7 @@ export default async function LandingPage() {
                   className="landing-reveal-child mt-2 text-sm text-bronze sm:text-base"
                   style={{ '--landing-reveal-delay': '70ms' } as CSSProperties}
                 >
-                  Popular published work — item cards, TCG-style trading cards, and stat blocks. Open any tile for the full wiki-style view, comments, and forks on Explore.
+                  Popular published work — item cards, cards for trading card games, and stat blocks. Open any tile for the full wiki-style view, comments, and forks on Explore.
                 </p>
               </div>
               {spotlight.length === 0 ? (
@@ -337,7 +337,7 @@ export default async function LandingPage() {
                 className="landing-reveal-child mt-3 text-sm text-bronze sm:text-base"
                 style={{ '--landing-reveal-delay': '80ms' } as CSSProperties}
               >
-                Free account: cloud library, publish to Explore, follow creators, and keep your item cards, TCG-style faces, and stat blocks in sync everywhere.
+                Free account: cloud library, publish to Explore, follow creators, and keep your item cards, trading card game designs, and stat blocks in sync everywhere.
               </p>
               <div
                 className="landing-reveal-child mt-8"
