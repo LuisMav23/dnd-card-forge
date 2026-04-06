@@ -9,6 +9,9 @@ import { CARD_TYPE_ORDER, CARD_TYPES, getDefaultFields } from '@/lib/cardConfig'
 import { DEFAULT_CARD_PALETTE } from '@/lib/cardPalette';
 import CardRenderer from '@/components/CardRenderer';
 import IconDisplay from '@/components/IconDisplay';
+import MtgCardRenderer from '@/components/MtgCardRenderer';
+import { getDefaultMtgState } from '@/lib/mtgCardConfig';
+import type { MtgKeyword } from '@/lib/mtgTypes';
 
 const TYPE_DESCRIPTIONS: Record<CardType, string> = {
   spell: 'Arcane, divine, and natural magic — offensive, defensive, or utility.',
@@ -69,8 +72,24 @@ function buildPreviewState(
   };
 }
 
+const MTG_PREVIEW_STATE = {
+  ...getDefaultMtgState('creature'),
+  name: 'Storm Dragon',
+  manaCost: '{3}{R}{R}',
+  subtype: 'Dragon',
+  isLegendary: false,
+  rulesText: 'Flying, Trample\n\nWhen ~ enters, deal 3 damage to any target.',
+  flavorText: '"Wings of fire, heart of storms."',
+  power: '5',
+  toughness: '4',
+  rarity: 'rare' as const,
+  keywords: ['Flying', 'Trample'] as MtgKeyword[],
+  artistName: 'The Forge',
+};
+
 export default function CardTypePicker() {
   const router = useRouter();
+  const [section, setSection] = useState<'rpg' | 'trading'>('rpg');
   const [selected, setSelected] = useState<CardType>('spell');
   const [aspect, setAspect] = useState<ImageAspect>('square');
   const [fontSize, setFontSize] = useState<CardFontSize>('md');
@@ -98,159 +117,266 @@ export default function CardTypePicker() {
       </div>
 
       <main className="flex flex-1 flex-col overflow-y-auto px-4 py-10 sm:px-6">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 xl:flex-row xl:items-start xl:gap-12">
-          {/* Preview — top on narrow screens, right on xl */}
-          <aside className="order-1 flex w-full flex-col items-center rounded-xl border border-bdr bg-prev/80 p-4 xl:order-2 xl:sticky xl:top-6 xl:w-[min(100%,300px)] xl:shrink-0 xl:border-l xl:border-t-0">
-            <span className="prev-label mb-2">
-              <Sparkle className="inline-block h-3 w-3 align-[-1px]" /> Preview{' '}
-              <Sparkle className="inline-block h-3 w-3 align-[-1px]" />
-            </span>
-            <div className="card-scale-wrap relative flex w-full justify-center">
-              <CardRenderer state={previewState} />
-            </div>
-            <p className="prev-note mt-2 max-w-[260px] text-center">
-              Updates when you change type, picture shape, or text size
-            </p>
-          </aside>
+        <div className="mx-auto w-full max-w-6xl">
+          {/* Page header */}
+          <p className="font-[var(--font-cinzel),serif] text-xs uppercase tracking-[0.2em] text-gold-dark">
+            Step 1 — Choose a card category
+          </p>
+          <h1 className="mt-1 font-[var(--font-cinzel),serif] text-2xl font-black tracking-wide text-gold">
+            Card Forge
+          </h1>
+          <p className="mt-1 text-sm text-bronze">
+            Select whether you want to create a Role Playing card or a Trading Card.
+          </p>
 
-          <div className="order-2 min-w-0 flex-1 xl:order-1">
-            <p className="font-[var(--font-cinzel),serif] text-xs uppercase tracking-[0.2em] text-gold-dark">
-              Step 1 — Choose a template
-            </p>
-            <h1 className="mt-1 font-[var(--font-cinzel),serif] text-2xl font-black tracking-wide text-gold">
-              Card Forge
-            </h1>
-            <p className="mt-1 text-sm text-bronze">
-              Choose type, picture shape, and text size — the preview updates as you go.
-            </p>
-
-            {/* Type grid — icon + label only */}
-            <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
-              {CARD_TYPE_ORDER.map(({ type, label, iconId }) => {
-                const isActive = selected === type;
-                return (
-                  <button
-                    key={type}
-                    type="button"
-                    onClick={() => setSelected(type)}
-                    className={[
-                      'group flex flex-row items-center gap-3 rounded border-2 px-4 py-3 text-left transition-all duration-150',
-                      'bg-panel/60 hover:bg-panel',
-                      isActive
-                        ? 'border-gold shadow-[0_0_12px_rgba(201,168,76,0.15)]'
-                        : 'border-bdr hover:border-gold/40',
-                    ].join(' ')}
-                  >
-                    <IconDisplay
-                      iconId={iconId}
-                      className={[
-                        'h-9 w-9 shrink-0 opacity-80',
-                        isActive ? 'text-gold' : 'text-bronze group-hover:text-gold',
-                      ].join(' ')}
-                    />
-                    <span
-                      className={[
-                        'font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-wider',
-                        isActive ? 'text-gold' : 'text-bronze group-hover:text-gold',
-                      ].join(' ')}
-                    >
-                      {label}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Selected type description */}
-            <p className="mt-6 min-h-[1.5rem] text-sm text-muted">
-              <span className="font-semibold text-bronze">{selectedLabel}:</span>{' '}
-              {TYPE_DESCRIPTIONS[selected]}
-            </p>
-
-            {/* Layout options */}
-            <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2">
-            {/* Image aspect */}
-            <div>
-              <p className="mb-3 font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-[0.18em] text-gold-dark">
-                Picture shape
-              </p>
-              <div className="flex flex-col gap-2">
-                {ASPECT_OPTIONS.map(opt => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => setAspect(opt.value)}
-                    className={[
-                      'flex items-center gap-3 rounded border px-4 py-3 text-left transition-all duration-150',
-                      aspect === opt.value
-                        ? 'border-gold bg-panel text-gold'
-                        : 'border-bdr bg-panel/40 text-bronze hover:border-gold/40 hover:bg-panel',
-                    ].join(' ')}
-                  >
-                    <span className="w-4 text-center text-base">{opt.icon}</span>
-                    <span>
-                      <span className="block font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-wider">
-                        {opt.label}
-                      </span>
-                      <span className="block text-xs text-muted">{opt.description}</span>
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Font size */}
-            <div>
-              <p className="mb-3 font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-[0.18em] text-gold-dark">
-                Text Size
-              </p>
-              <div className="flex flex-col gap-2">
-                {FONT_SIZE_OPTIONS.map(opt => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => setFontSize(opt.value)}
-                    className={[
-                      'flex items-center gap-3 rounded border px-4 py-3 text-left transition-all duration-150',
-                      fontSize === opt.value
-                        ? 'border-gold bg-panel text-gold'
-                        : 'border-bdr bg-panel/40 text-bronze hover:border-gold/40 hover:bg-panel',
-                    ].join(' ')}
-                  >
-                    <span
-                      className={[
-                        'font-[var(--font-cinzel),serif] font-black',
-                        opt.value === 'sm' ? 'text-xs' : opt.value === 'md' ? 'text-sm' : 'text-base',
-                      ].join(' ')}
-                    >
-                      Aa
-                    </span>
-                    <span>
-                      <span className="block font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-wider">
-                        {opt.label}
-                      </span>
-                      <span className="block text-xs text-muted">{opt.description}</span>
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
+          {/* Category tabs */}
+          <div className="mt-6 flex gap-2 border-b border-bdr pb-0">
+            <button
+              type="button"
+              onClick={() => setSection('rpg')}
+              className={[
+                'flex items-center gap-2 rounded-t border border-b-0 px-5 py-2.5 font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-wider transition-all',
+                section === 'rpg'
+                  ? 'border-bdr bg-bg text-gold -mb-px pb-3'
+                  : 'border-transparent bg-panel/40 text-muted hover:text-bronze',
+              ].join(' ')}
+            >
+              <span>⚔</span> Role Playing Cards
+            </button>
+            <button
+              type="button"
+              onClick={() => setSection('trading')}
+              className={[
+                'flex items-center gap-2 rounded-t border border-b-0 px-5 py-2.5 font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-wider transition-all',
+                section === 'trading'
+                  ? 'border-bdr bg-bg text-gold -mb-px pb-3'
+                  : 'border-transparent bg-panel/40 text-muted hover:text-bronze',
+              ].join(' ')}
+            >
+              <span>⬡</span> Trading Cards
+            </button>
           </div>
 
-            {/* CTA */}
-            <div className="mt-10 flex flex-wrap items-center justify-end gap-4 border-t border-bdr pt-6">
-              <Link href="/card" className="panel-btn text-sm text-muted">
-                Cancel
-              </Link>
-              <button
-                type="button"
-                onClick={handleCreate}
-                className="panel-btn text-sm text-gold hover:border-gold"
-              >
-                Create {selectedLabel} Card →
-              </button>
+          {/* ── RPG SECTION ── */}
+          {section === 'rpg' && (
+            <div className="mt-8 flex flex-col gap-10 xl:flex-row xl:items-start xl:gap-12">
+              {/* Preview */}
+              <aside className="order-1 flex w-full flex-col items-center rounded-xl border border-bdr bg-prev/80 p-4 xl:order-2 xl:sticky xl:top-6 xl:w-[min(100%,300px)] xl:shrink-0">
+                <span className="prev-label mb-2">
+                  <Sparkle className="inline-block h-3 w-3 align-[-1px]" /> Preview{' '}
+                  <Sparkle className="inline-block h-3 w-3 align-[-1px]" />
+                </span>
+                <div className="card-scale-wrap relative flex w-full justify-center">
+                  <CardRenderer state={previewState} />
+                </div>
+                <p className="prev-note mt-2 max-w-[260px] text-center">
+                  Updates when you change type, shape, or size
+                </p>
+              </aside>
+
+              <div className="order-2 min-w-0 flex-1 xl:order-1">
+                <p className="text-xs text-muted mb-4">
+                  DnD-style cards for spells, weapons, armor, equipment, and companions.
+                </p>
+
+                {/* Type grid */}
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+                  {CARD_TYPE_ORDER.map(({ type, label, iconId }) => {
+                    const isActive = selected === type;
+                    return (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => setSelected(type)}
+                        className={[
+                          'group flex flex-row items-center gap-3 rounded border-2 px-4 py-3 text-left transition-all duration-150',
+                          'bg-panel/60 hover:bg-panel',
+                          isActive
+                            ? 'border-gold shadow-[0_0_12px_rgba(201,168,76,0.15)]'
+                            : 'border-bdr hover:border-gold/40',
+                        ].join(' ')}
+                      >
+                        <IconDisplay
+                          iconId={iconId}
+                          className={[
+                            'h-9 w-9 shrink-0 opacity-80',
+                            isActive ? 'text-gold' : 'text-bronze group-hover:text-gold',
+                          ].join(' ')}
+                        />
+                        <span
+                          className={[
+                            'font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-wider',
+                            isActive ? 'text-gold' : 'text-bronze group-hover:text-gold',
+                          ].join(' ')}
+                        >
+                          {label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <p className="mt-6 min-h-[1.5rem] text-sm text-muted">
+                  <span className="font-semibold text-bronze">{selectedLabel}:</span>{' '}
+                  {TYPE_DESCRIPTIONS[selected]}
+                </p>
+
+                {/* Layout options */}
+                <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2">
+                  <div>
+                    <p className="mb-3 font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-[0.18em] text-gold-dark">
+                      Picture shape
+                    </p>
+                    <div className="flex flex-col gap-2">
+                      {ASPECT_OPTIONS.map(opt => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setAspect(opt.value)}
+                          className={[
+                            'flex items-center gap-3 rounded border px-4 py-3 text-left transition-all duration-150',
+                            aspect === opt.value
+                              ? 'border-gold bg-panel text-gold'
+                              : 'border-bdr bg-panel/40 text-bronze hover:border-gold/40 hover:bg-panel',
+                          ].join(' ')}
+                        >
+                          <span className="w-4 text-center text-base">{opt.icon}</span>
+                          <span>
+                            <span className="block font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-wider">
+                              {opt.label}
+                            </span>
+                            <span className="block text-xs text-muted">{opt.description}</span>
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="mb-3 font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-[0.18em] text-gold-dark">
+                      Text Size
+                    </p>
+                    <div className="flex flex-col gap-2">
+                      {FONT_SIZE_OPTIONS.map(opt => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setFontSize(opt.value)}
+                          className={[
+                            'flex items-center gap-3 rounded border px-4 py-3 text-left transition-all duration-150',
+                            fontSize === opt.value
+                              ? 'border-gold bg-panel text-gold'
+                              : 'border-bdr bg-panel/40 text-bronze hover:border-gold/40 hover:bg-panel',
+                          ].join(' ')}
+                        >
+                          <span
+                            className={[
+                              'font-[var(--font-cinzel),serif] font-black',
+                              opt.value === 'sm' ? 'text-xs' : opt.value === 'md' ? 'text-sm' : 'text-base',
+                            ].join(' ')}
+                          >
+                            Aa
+                          </span>
+                          <span>
+                            <span className="block font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-wider">
+                              {opt.label}
+                            </span>
+                            <span className="block text-xs text-muted">{opt.description}</span>
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-10 flex flex-wrap items-center justify-end gap-4 border-t border-bdr pt-6">
+                  <Link href="/card" className="panel-btn text-sm text-muted">
+                    Cancel
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={handleCreate}
+                    className="panel-btn text-sm text-gold hover:border-gold"
+                  >
+                    Create {selectedLabel} Card →
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* ── TRADING CARDS SECTION ── */}
+          {section === 'trading' && (
+            <div className="mt-8 flex flex-col gap-10 xl:flex-row xl:items-start xl:gap-12">
+              {/* MTG Preview */}
+              <aside className="order-1 flex w-full flex-col items-center rounded-xl border border-bdr bg-prev/80 p-4 xl:order-2 xl:sticky xl:top-6 xl:w-[min(100%,300px)] xl:shrink-0">
+                <span className="prev-label mb-2">
+                  <Sparkle className="inline-block h-3 w-3 align-[-1px]" /> MTG Preview{' '}
+                  <Sparkle className="inline-block h-3 w-3 align-[-1px]" />
+                </span>
+                <div className="mtg-card-scale-wrap relative flex w-full justify-center">
+                  <MtgCardRenderer state={MTG_PREVIEW_STATE} />
+                </div>
+              </aside>
+
+              <div className="order-2 min-w-0 flex-1 xl:order-1">
+                <p className="text-xs text-muted mb-6">
+                  Create custom trading cards inspired by popular card game systems.
+                </p>
+
+                {/* MTG card game tile */}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <Link
+                    href="/card/new?game=mtg"
+                    className="group flex flex-col gap-3 rounded-xl border-2 border-bdr bg-panel/60 p-5 transition-all hover:border-gold/60 hover:bg-panel hover:shadow-[0_0_20px_rgba(201,168,76,0.1)]"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-3xl">⬡</span>
+                      <div>
+                        <p className="font-[var(--font-cinzel),serif] text-sm font-black uppercase tracking-wider text-gold group-hover:text-gold-light">
+                          Magic: The Gathering
+                        </p>
+                        <p className="text-xs text-muted mt-0.5">Custom MTG-style cards</p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-bronze leading-relaxed">
+                      Create custom Creatures, Instants, Sorceries, Enchantments, Artifacts,
+                      Planeswalkers, Lands, Battles, and Sagas with authentic MTG layout, mana cost
+                      builder, and keyword abilities.
+                    </p>
+                    <div className="flex flex-wrap gap-1.5 mt-1">
+                      {['9 Card Types', 'Mana Symbols', 'Keywords', 'P/T & Loyalty', 'Sagas'].map(tag => (
+                        <span
+                          key={tag}
+                          className="rounded-full border border-bdr-2 bg-bg/60 px-2 py-0.5 text-[0.65rem] text-muted"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                    <span className="self-end font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-wider text-gold-dark group-hover:text-gold">
+                      Start creating →
+                    </span>
+                  </Link>
+
+                  {/* Placeholder for future TCGs */}
+                  <div className="flex flex-col gap-3 rounded-xl border-2 border-dashed border-bdr/50 bg-panel/30 p-5 opacity-50">
+                    <div className="flex items-center gap-3">
+                      <span className="text-3xl">🃏</span>
+                      <div>
+                        <p className="font-[var(--font-cinzel),serif] text-sm font-black uppercase tracking-wider text-muted">
+                          More TCGs
+                        </p>
+                        <p className="text-xs text-muted mt-0.5">Coming soon</p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted leading-relaxed">
+                      Additional trading card game systems will be added in future updates.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </main>
 

@@ -10,6 +10,8 @@ import { resolveIconId } from '@/lib/iconRegistry';
 import { exportCardBackToPng, exportCardToPng } from '@/lib/exportCardPng';
 import { getDomPngExportButtonLabel } from '@/lib/domPngExportError';
 import CardTypePicker from '@/components/forge/CardTypePicker';
+import MtgCardTypePicker from '@/components/forge/MtgCardTypePicker';
+import MtgForgeInner from '@/components/forge/MtgForgeInner';
 import ExamplePanel from '@/components/ExamplePanel';
 import FormPanel from '@/components/FormPanel';
 import LivePreview, { type CardPreviewFace } from '@/components/LivePreview';
@@ -108,6 +110,12 @@ function CardForgeRouter() {
   const searchParams = useSearchParams();
   const typeParam = searchParams.get('type');
   const libraryId = searchParams.get('library');
+  const gameParam = searchParams.get('game');
+
+  if (gameParam === 'mtg') {
+    if (!typeParam && !libraryId) return <MtgCardTypePicker />;
+    return <MtgForgeInner />;
+  }
 
   if (!typeParam && !libraryId) return <CardTypePicker />;
   return <CardForgeInner />;
@@ -223,16 +231,21 @@ function CardForgeInner() {
           setLoadState('error');
           return;
         }
-        let loaded = row.data as CardState | string;
+        let loaded: unknown = row.data;
         if (typeof loaded === 'string') {
           try {
-            loaded = JSON.parse(loaded) as CardState;
+            loaded = JSON.parse(loaded);
           } catch {
             setLoadState('error');
             return;
           }
         }
-        dispatch({ type: 'LOAD_STATE', payload: loaded });
+        // If this is an MTG card, redirect to the MTG forge instead
+        if (loaded && typeof loaded === 'object' && (loaded as Record<string, unknown>).cardGame === 'mtg') {
+          router.replace(`/card/new?game=mtg&library=${libraryId}`);
+          return;
+        }
+        dispatch({ type: 'LOAD_STATE', payload: loaded as CardState });
         setLoadState('ready');
       } catch {
         if (!cancelled) setLoadState('error');

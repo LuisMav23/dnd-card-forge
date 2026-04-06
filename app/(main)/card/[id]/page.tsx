@@ -5,11 +5,13 @@ import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 import { FROM_LIBRARY_APPEND, isFromLibrarySearch } from '@/lib/fromLibraryNav';
 import { CardState } from '@/lib/types';
+import { MtgCardState } from '@/lib/mtgTypes';
 import { coerceRarity, hydrateCardPalette } from '@/lib/cardPalette';
 import { resolveIconId } from '@/lib/iconRegistry';
 import { exportCardBackToPng, exportCardToPng } from '@/lib/exportCardPng';
 import { getDomPngExportButtonLabel } from '@/lib/domPngExportError';
 import CardWikiView from '@/components/cards/CardWikiView';
+import MtgCardRenderer from '@/components/MtgCardRenderer';
 import RouteSuspenseFallback from '@/components/ui/RouteSuspenseFallback';
 import WikiDetailBodySkeleton from '@/components/ui/skeletons/WikiDetailBodySkeleton';
 
@@ -23,12 +25,12 @@ interface LibraryCardRow {
   id: string;
   title: string;
   item_type: string;
-  data: CardState | string | null;
+  data: unknown;
 }
 
 function parseCardStateFromRow(libraryRow: LibraryCardRow): CardState | null {
   if (libraryRow.item_type !== 'card' || libraryRow.data == null) return null;
-  let loaded: CardState | string = libraryRow.data;
+  let loaded: CardState | string = libraryRow.data as CardState | string;
   if (typeof loaded === 'string') {
     try {
       loaded = JSON.parse(loaded) as CardState;
@@ -64,28 +66,32 @@ function CardDetailInner() {
   const fromLibrary = isFromLibrarySearch(searchParams);
   const backHref = fromLibrary ? '/library' : '/card';
   const backLabel = fromLibrary ? '← Library' : '← Card Forge';
-  const editHref = fromLibrary
-    ? `/card/new?library=${id}${FROM_LIBRARY_APPEND}`
-    : `/card/new?library=${id}`;
 
   const [status, setStatus] = useState<'loading' | 'ready' | 'error' | 'unauthorized'>('loading');
   const [state, setState] = useState<CardState | null>(null);
+  const [mtgState, setMtgState] = useState<MtgCardState | null>(null);
   const [savedTitle, setSavedTitle] = useState<string>('');
   const [downloadLabel, setDownloadLabel] = useState('Download card (PNG)');
   const [downloading, setDownloading] = useState(false);
   const cardExportRef = useRef<HTMLDivElement>(null);
   const cardBackExportRef = useRef<HTMLDivElement>(null);
 
+  const isMtg = mtgState !== null;
+  const editHref = isMtg
+    ? (fromLibrary ? `/card/new?game=mtg&library=${id}${FROM_LIBRARY_APPEND}` : `/card/new?game=mtg&library=${id}`)
+    : (fromLibrary ? `/card/new?library=${id}${FROM_LIBRARY_APPEND}` : `/card/new?library=${id}`);
+
   const handleDownloadCard = useCallback(async () => {
     const frontEl = cardExportRef.current;
-    if (!frontEl || !state) return;
+    if (!frontEl) return;
     setDownloading(true);
     setDownloadLabel('Generating…');
     try {
-      await exportCardToPng(frontEl, state.fields.name || 'dnd-card');
-      if (state.backImage && cardBackExportRef.current) {
+      const name = isMtg ? (mtgState?.name || 'mtg-card') : (state?.fields.name || 'dnd-card');
+      await exportCardToPng(frontEl, name);
+      if (!isMtg && state?.backImage && cardBackExportRef.current) {
         await doubleRaf();
-        await exportCardBackToPng(cardBackExportRef.current, state.fields.name || 'dnd-card');
+        await exportCardBackToPng(cardBackExportRef.current, name);
       }
       setDownloadLabel('Downloaded');
       setTimeout(() => setDownloadLabel('Download card (PNG)'), 2000);
@@ -96,7 +102,7 @@ function CardDetailInner() {
     } finally {
       setDownloading(false);
     }
-  }, [state]);
+  }, [state, mtgState, isMtg]);
 
   useEffect(() => {
     if (!id) {
@@ -118,21 +124,38 @@ function CardDetailInner() {
           return;
         }
         const row = (await res.json()) as LibraryCardRow;
-        const parsed = parseCardStateFromRow(row);
+        setSavedTitle(row.title || '');
+
+        if (row.item_type !== 'card' || !row.data) {
+          setStatus('error');
+          return;
+        }
+
+        let loaded: unknown = row.data;
+        if (typeof loaded === 'string') {
+          try { loaded = JSON.parse(loaded); }
+          catch { setStatus('error'); return; }
+        }
+
+        // Detect MTG card
+        if (loaded && typeof loaded === 'object' && (loaded as Record<string, unknown>).cardGame === 'mtg') {
+          setMtgState(loaded as MtgCardState);
+          setStatus('ready');
+          return;
+        }
+
+        const parsed = parseCardStateFromRow({ ...row, data: loaded as CardState | string | null });
         if (!parsed) {
           setStatus('error');
           return;
         }
         setState(parsed);
-        setSavedTitle(row.title || '');
         setStatus('ready');
       } catch {
         if (!cancelled) setStatus('error');
       }
     })();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [id]);
 
   return (
@@ -188,7 +211,23 @@ function CardDetailInner() {
         </div>
       )}
 
-      {status === 'ready' && state && (
+      {status === 'ready' && isMtg && mtgState && (
+        <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-6 px-4 py-10">
+          <div className="flex items-center gap-2 self-start">
+            <span className="inline-flex items-center gap-1 rounded bg-red-900/30 px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-widest text-red-300 border border-red-800/40 font-[var(--font-cinzel),serif]">
+              ⬡ Magic: The Gathering — {mtgState.type.charAt(0).toUpperCase() + mtgState.type.slice(1)}
+            </span>
+          </div>
+          <h1 className="self-start font-[var(--font-cinzel),serif] text-xl font-black text-gold">
+            {savedTitle || mtgState.name || 'Untitled Card'}
+          </h1>
+          <div className="mtg-card-scale-wrap">
+            <MtgCardRenderer ref={cardExportRef} state={mtgState} />
+          </div>
+        </div>
+      )}
+
+      {status === 'ready' && !isMtg && state && (
         <CardWikiView
           ref={cardExportRef}
           backExportRef={cardBackExportRef}

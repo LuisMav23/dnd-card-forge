@@ -4,6 +4,7 @@ import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { CardState } from '@/lib/types';
+import { MtgCardState } from '@/lib/mtgTypes';
 import { coerceRarity, hydrateCardPalette } from '@/lib/cardPalette';
 import { resolveIconId } from '@/lib/iconRegistry';
 import { exportCardBackToPng, exportCardToPng } from '@/lib/exportCardPng';
@@ -13,6 +14,7 @@ import { parseStatBlockFromLibraryRow, type LibraryStatBlockRow } from '@/lib/st
 import type { StatBlockState } from '@/lib/statblockTypes';
 import { createClient } from '@/lib/supabase/client';
 import CardWikiView from '@/components/cards/CardWikiView';
+import MtgCardRenderer from '@/components/MtgCardRenderer';
 import ExploreCommentsSection from '@/components/explore/ExploreCommentsSection';
 import ExplorePublishedActionsBar from '@/components/explore/ExplorePublishedActionsBar';
 import StatBlockWikiView from '@/components/statblocks/StatBlockWikiView';
@@ -77,6 +79,7 @@ function ExplorePublishedInner() {
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [row, setRow] = useState<PublishedRow | null>(null);
   const [cardState, setCardState] = useState<CardState | null>(null);
+  const [mtgState, setMtgState] = useState<MtgCardState | null>(null);
   const [statState, setStatState] = useState<StatBlockState | null>(null);
   const [forkLabel, setForkLabel] = useState('Fork to my library');
   const [forking, setForking] = useState(false);
@@ -139,13 +142,25 @@ function ExplorePublishedInner() {
           viewer_favorited: Boolean(raw.viewer_favorited),
         };
         if (data.item_type === 'card') {
+          // Check for MTG card discriminator
+          let rawCardData = data.data;
+          if (typeof rawCardData === 'string') {
+            try { rawCardData = JSON.parse(rawCardData); } catch { /* ignore */ }
+          }
+          if (rawCardData && typeof rawCardData === 'object' && (rawCardData as MtgCardState).cardGame === 'mtg') {
+            setMtgState(rawCardData as MtgCardState);
+            setCardState(null);
+            setStatState(null);
+          } else {
           const parsed = parseCardStateFromRow(data);
           if (!parsed) {
             setStatus('error');
             return;
           }
           setCardState(parsed);
+          setMtgState(null);
           setStatState(null);
+          }
         } else if (data.item_type === 'statblock') {
           const sbRow = data as unknown as LibraryStatBlockRow;
           const parsed = parseStatBlockFromLibraryRow(sbRow);
@@ -155,6 +170,7 @@ function ExplorePublishedInner() {
           }
           setStatState(parsed);
           setCardState(null);
+          setMtgState(null);
         } else {
           setStatus('error');
           return;
@@ -249,7 +265,9 @@ function ExplorePublishedInner() {
     setDownloading(true);
     setDownloadLabel('Generating…');
     try {
-      if (cardState) {
+      if (mtgState) {
+        await exportCardToPng(el, mtgState.name || 'mtg-card');
+      } else if (cardState) {
         await exportCardToPng(el, cardState.fields.name || 'dnd-card');
       } else if (statState) {
         await exportStatBlockToPng(el, statState.fields.name || 'stat-block');
@@ -263,7 +281,7 @@ function ExplorePublishedInner() {
     } finally {
       setDownloading(false);
     }
-  }, [cardState, statState]);
+  }, [cardState, mtgState, statState]);
 
   return (
     <div className="page-radial-soft flex min-h-0 flex-1 flex-col overflow-x-hidden bg-bg">
@@ -304,6 +322,19 @@ function ExplorePublishedInner() {
           <Link href="/explore" className="mt-4 inline-block panel-btn">
             Back to Explore
           </Link>
+        </div>
+      )}
+
+      {status === 'ready' && mtgState && row && (
+        <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-6 px-4 py-10">
+          <div className="self-start flex items-center gap-2">
+            <span className="inline-flex items-center gap-1 rounded bg-red-900/30 px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-widest text-red-300 border border-red-800/40 font-[var(--font-cinzel),serif]">
+              ⬡ Magic: The Gathering — {mtgState.type.charAt(0).toUpperCase() + mtgState.type.slice(1)}
+            </span>
+          </div>
+          <div className="mtg-card-scale-wrap">
+            <MtgCardRenderer ref={exportRef} state={mtgState} />
+          </div>
         </div>
       )}
 

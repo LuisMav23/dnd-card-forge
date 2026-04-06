@@ -1,7 +1,8 @@
 import type { CSSProperties } from 'react';
 import type { CardFontSize, CardState, Rarity } from './types';
 
-const CARD_FONT_SCALE: Record<CardFontSize, number> = {
+/** Shared by DnD and MTG card renderers for face text scaling. */
+export const CARD_FONT_SCALE: Record<CardFontSize, number> = {
   sm: 0.86,
   md: 1,
   lg: 1.14,

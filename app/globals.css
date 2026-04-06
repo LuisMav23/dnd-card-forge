@@ -992,3 +992,381 @@ html.dark .landing-hero-aurora {
   max-width: 100%;
   box-sizing: border-box;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   MTG CARD — pixel-precise layout (595 × 833 px, scaled for UI)
+   ═══════════════════════════════════════════════════════════════ */
+
+.mtg-card {
+  width: 595px;
+  height: 833px;
+  position: relative;
+  border-radius: 24px;
+  overflow: hidden;
+  font-family: 'Crimson Text', Georgia, serif;
+  flex-shrink: 0;
+  --mtg-font-scale: 1;
+  box-shadow:
+    0 14px 56px rgba(0,0,0,.92),
+    0 0 0 4px rgba(0,0,0,.6);
+}
+
+/* Outer metallic border */
+.mtg-card-border {
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  background: linear-gradient(160deg, #c8c0a8 0%, #a89870 40%, #c8c0a8 70%, #a89870 100%);
+  z-index: 1;
+}
+
+/* Colored frame background */
+.mtg-card-frame {
+  position: absolute;
+  inset: 9px;
+  border-radius: 17px;
+  z-index: 2;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Frame gradient overlay */
+.mtg-frame-gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(175deg, var(--mtg-frame-top) 0%, var(--mtg-frame-bottom) 100%);
+}
+
+/* ─── NAME BAR ─── */
+.mtg-name-bar {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px 6px 14px;
+  margin: 8px 10px 4px 10px;
+  background: var(--mtg-name-bg);
+  border: 2px solid rgba(0,0,0,.45);
+  border-radius: 5px;
+  flex-shrink: 0;
+  box-shadow: inset 0 1px 2px rgba(255,255,255,.3);
+}
+
+.mtg-card-name {
+  font-family: 'Cinzel', serif;
+  font-size: calc(20px * var(--mtg-font-scale, 1));
+  font-weight: 900;
+  color: var(--mtg-text-color);
+  line-height: 1.1;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mtg-mana-cost-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  margin-left: 6px;
+}
+
+/* ─── ART BOX ─── (aspect ratio set inline — default 3/2 = RPG “standard”) */
+.mtg-art-box {
+  position: relative;
+  z-index: 10;
+  margin: 0 10px;
+  align-self: stretch;
+  width: auto;
+  flex-shrink: 0;
+  border: 3px solid rgba(0,0,0,.55);
+  overflow: hidden;
+  background: #2a2018;
+}
+
+.mtg-art-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.mtg-art-placeholder {
+  width: 100%;
+  height: 100%;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #3a3020 0%, #2a2018 60%, #1a1810 100%);
+  color: rgba(255,255,255,.2);
+  font-size: calc(56px * var(--mtg-font-scale, 1));
+}
+
+/* ─── TYPE LINE ─── */
+.mtg-type-line {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 12px 5px 14px;
+  margin: 4px 10px;
+  background: var(--mtg-name-bg);
+  border: 2px solid rgba(0,0,0,.45);
+  border-radius: 5px;
+  flex-shrink: 0;
+  box-shadow: inset 0 1px 2px rgba(255,255,255,.3);
+}
+
+.mtg-type-text {
+  font-family: 'Cinzel', serif;
+  font-size: calc(13.5px * var(--mtg-font-scale, 1));
+  font-weight: 700;
+  color: var(--mtg-text-color);
+  line-height: 1.1;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mtg-set-symbol {
+  width: calc(22px * var(--mtg-font-scale, 1));
+  height: calc(22px * var(--mtg-font-scale, 1));
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-left: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(11px * var(--mtg-font-scale, 1));
+  font-weight: 900;
+  background: var(--mtg-rarity-color, #a58e4a);
+  color: #fff;
+  border: 1.5px solid rgba(0,0,0,.45);
+}
+
+/* ─── TEXT BOX ─── */
+.mtg-text-box {
+  position: relative;
+  z-index: 10;
+  flex: 1;
+  margin: 0 10px;
+  background: var(--mtg-textbox-bg);
+  border: 3px solid rgba(0,0,0,.55);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 10px 12px 8px 12px;
+  min-height: 0;
+}
+
+.mtg-rules-text {
+  font-family: 'Crimson Text', Georgia, serif;
+  font-size: calc(15px * var(--mtg-font-scale, 1));
+  line-height: 1.5;
+  color: #14100c;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.mtg-flavor-text {
+  font-family: 'Crimson Text', Georgia, serif;
+  font-size: calc(13.5px * var(--mtg-font-scale, 1));
+  font-style: italic;
+  color: #302820;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(0,0,0,.18);
+  line-height: 1.45;
+}
+
+/* ─── POWER/TOUGHNESS ─── */
+.mtg-pt-box {
+  position: absolute;
+  bottom: 10px;
+  right: 14px;
+  background: var(--mtg-name-bg);
+  border: 2px solid rgba(0,0,0,.55);
+  border-radius: 5px;
+  padding: 3px 10px;
+  font-family: 'Cinzel', serif;
+  font-size: calc(17px * var(--mtg-font-scale, 1));
+  font-weight: 900;
+  color: var(--mtg-text-color);
+  z-index: 20;
+  box-shadow: 0 2px 8px rgba(0,0,0,.3);
+  white-space: nowrap;
+}
+
+/* ─── LOYALTY BOX ─── */
+.mtg-loyalty-badge {
+  position: absolute;
+  bottom: 10px;
+  right: 14px;
+  background: #2255aa;
+  border: 3px solid rgba(0,0,0,.55);
+  border-radius: 50%;
+  width: calc(40px * var(--mtg-font-scale, 1));
+  height: calc(40px * var(--mtg-font-scale, 1));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Cinzel', serif;
+  font-size: calc(18px * var(--mtg-font-scale, 1));
+  font-weight: 900;
+  color: #fff;
+  z-index: 20;
+  box-shadow: 0 2px 8px rgba(0,0,0,.4);
+}
+
+/* ─── LOYALTY ABILITIES ─── */
+.mtg-loyalty-abilities {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0;
+}
+
+.mtg-loyalty-ability {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.mtg-loyalty-cost {
+  min-width: calc(32px * var(--mtg-font-scale, 1));
+  height: calc(22px * var(--mtg-font-scale, 1));
+  border-radius: 11px;
+  background: #2255aa;
+  color: #fff;
+  font-family: 'Cinzel', serif;
+  font-size: calc(11px * var(--mtg-font-scale, 1));
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1.5px solid rgba(0,0,0,.4);
+  padding: 0 5px;
+}
+
+.mtg-loyalty-cost.minus {
+  background: #aa2222;
+}
+
+.mtg-loyalty-cost.zero {
+  background: #44aa44;
+}
+
+.mtg-loyalty-ability-text {
+  font-family: 'Crimson Text', Georgia, serif;
+  font-size: calc(13.5px * var(--mtg-font-scale, 1));
+  line-height: 1.4;
+  color: #14100c;
+  padding-top: 2px;
+}
+
+/* ─── BATTLE DEFENSE ─── */
+.mtg-defense-box {
+  position: absolute;
+  bottom: 10px;
+  right: 14px;
+  background: #c84020;
+  border: 3px solid rgba(0,0,0,.55);
+  width: calc(44px * var(--mtg-font-scale, 1));
+  height: calc(44px * var(--mtg-font-scale, 1));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Cinzel', serif;
+  font-size: calc(20px * var(--mtg-font-scale, 1));
+  font-weight: 900;
+  color: #fff;
+  z-index: 20;
+  box-shadow: 0 2px 8px rgba(0,0,0,.4);
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+}
+
+/* ─── SAGA CHAPTERS ─── */
+.mtg-saga-chapters {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mtg-saga-chapter {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.mtg-saga-chapter-num {
+  min-width: calc(22px * var(--mtg-font-scale, 1));
+  font-family: 'Cinzel', serif;
+  font-size: calc(13px * var(--mtg-font-scale, 1));
+  font-weight: 900;
+  color: #8a6010;
+  flex-shrink: 0;
+  padding-top: 1px;
+}
+
+.mtg-saga-chapter-text {
+  font-family: 'Crimson Text', Georgia, serif;
+  font-size: calc(13.5px * var(--mtg-font-scale, 1));
+  line-height: 1.4;
+  color: #14100c;
+}
+
+/* ─── CARD FOOTER ─── */
+.mtg-card-footer {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 14px;
+  flex-shrink: 0;
+  margin: 2px 10px 8px 10px;
+}
+
+.mtg-footer-left {
+  font-size: calc(10px * var(--mtg-font-scale, 1));
+  color: rgba(0,0,0,.55);
+  font-family: 'Crimson Text', serif;
+}
+
+.mtg-footer-right {
+  font-size: calc(10px * var(--mtg-font-scale, 1));
+  color: rgba(0,0,0,.55);
+  font-family: 'Crimson Text', serif;
+  font-style: italic;
+}
+
+/* ─── MTG SCALE WRAPPER ─── */
+.mtg-card-scale-wrap {
+  transform: scale(0.435);
+  transform-origin: top center;
+  margin-bottom: -476px;
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .mtg-card-scale-wrap {
+    transform: scale(0.38);
+    margin-bottom: -516px;
+  }
+}
+
+@media (max-width: 768px) {
+  .mtg-card-scale-wrap {
+    transform: scale(0.32);
+    margin-bottom: -566px;
+  }
+}

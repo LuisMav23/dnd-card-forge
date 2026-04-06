@@ -171,10 +171,11 @@ export function useLibraryItemAutosave<T>({
           const { id: newId } = await persistPostRef.current({ title, payload });
           skipLibraryFetchIdRef.current = newId;
           setClientDraftId(newId);
-          const qs = fromLibrary
-            ? `?library=${encodeURIComponent(newId)}&from=library`
-            : `?library=${encodeURIComponent(newId)}`;
-          router.replace(`${forgeNewPath}${qs}`);
+          const libraryQs = fromLibrary
+            ? `library=${encodeURIComponent(newId)}&from=library`
+            : `library=${encodeURIComponent(newId)}`;
+          const sep = forgeNewPath.includes('?') ? '&' : '?';
+          router.replace(`${forgeNewPath}${sep}${libraryQs}`);
         }
 
         lastSavedSerializedRef.current = JSON.stringify(stateRef.current);
