@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import FollowersListSkeleton from '@/components/ui/skeletons/FollowersListSkeleton';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 export type FollowTab = 'followers' | 'following';
@@ -25,7 +26,7 @@ function UserList({
   emptyMessage: string;
 }) {
   if (loading) {
-    return <p className="mt-4 text-sm text-muted">Loading…</p>;
+    return <FollowersListSkeleton rows={8} />;
   }
   if (error) {
     return <p className="mt-4 text-sm text-red-300">{error}</p>;

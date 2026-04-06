@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import ExploreItemCard from '@/components/explore/ExploreItemCard';
+import FavoritesPageSkeleton from '@/components/ui/skeletons/FavoritesPageSkeleton';
 import { createClient } from '@/lib/supabase/client';
 import type { ExploreListItem } from '@/lib/exploreTypes';
 
@@ -45,28 +46,33 @@ export default function ProfileFavoritesPage() {
   return (
     <div className="page-radial-soft flex min-h-0 flex-1 flex-col bg-bg">
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-8 sm:py-10">
-        <Link
-          href="/profile"
-          className="font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-wider text-gold-dark hover:text-gold"
-        >
-          ← Profile
-        </Link>
-        <h1 className="mt-6 font-[var(--font-cinzel),serif] text-2xl font-bold text-gold">Favorites</h1>
-        <p className="mt-2 text-sm text-bronze">Published items you saved from Explore.</p>
+        {loading ? (
+          <FavoritesPageSkeleton />
+        ) : (
+          <>
+            <Link
+              href="/profile"
+              className="font-[var(--font-cinzel),serif] text-xs font-semibold uppercase tracking-wider text-gold-dark hover:text-gold"
+            >
+              ← Profile
+            </Link>
+            <h1 className="mt-6 font-[var(--font-cinzel),serif] text-2xl font-bold text-gold">Favorites</h1>
+            <p className="mt-2 text-sm text-bronze">Published items you saved from Explore.</p>
 
-        {loading && <p className="mt-8 text-sm text-muted">Loading…</p>}
-        {error && <p className="mt-8 text-sm text-red-300">{error}</p>}
-        {!loading && !error && items.length === 0 && (
-          <p className="mt-8 text-sm italic text-muted">
-            No favorites yet. Open something on Explore and tap ♥ Save.
-          </p>
-        )}
-        {!loading && !error && items.length > 0 && (
-          <ul className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {items.map(item => (
-              <ExploreItemCard key={item.id} item={item} />
-            ))}
-          </ul>
+            {error && <p className="mt-8 text-sm text-red-300">{error}</p>}
+            {!error && items.length === 0 && (
+              <p className="mt-8 text-sm italic text-muted">
+                No favorites yet. Open something on Explore and tap ♥ Save.
+              </p>
+            )}
+            {!error && items.length > 0 && (
+              <ul className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {items.map(item => (
+                  <ExploreItemCard key={item.id} item={item} />
+                ))}
+              </ul>
+            )}
+          </>
         )}
       </main>
     </div>

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import type { MeNotificationItem, MeNotificationsResponse, NotificationType } from '@/lib/meNotifications';
+import NotificationsSkeleton from '@/components/ui/skeletons/NotificationsSkeleton';
 
 function actionPhrase(type: NotificationType): string {
   switch (type) {
@@ -114,8 +115,13 @@ export default function NotificationsPage() {
 
   if (data === undefined) {
     return (
-      <main className="mx-auto flex max-w-2xl flex-1 flex-col px-4 py-10">
-        <p className="font-[Georgia,serif] text-sm text-muted">Loading…</p>
+      <main
+        className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 py-8 sm:py-10"
+        role="status"
+        aria-label="Loading notifications"
+      >
+        <span className="sr-only">Loading notifications</span>
+        <NotificationsSkeleton />
       </main>
     );
   }

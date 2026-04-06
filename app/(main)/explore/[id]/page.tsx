@@ -19,7 +19,7 @@ import ExploreCommentsSection from '@/components/explore/ExploreCommentsSection'
 import ExplorePublishedActionsBar from '@/components/explore/ExplorePublishedActionsBar';
 import StatBlockWikiView from '@/components/statblocks/StatBlockWikiView';
 import RouteSuspenseFallback from '@/components/ui/RouteSuspenseFallback';
-import WikiDetailBodySkeleton from '@/components/ui/skeletons/WikiDetailBodySkeleton';
+import ExplorePublishedDetailSkeleton from '@/components/ui/skeletons/ExplorePublishedDetailSkeleton';
 
 interface PublishedRow {
   id: string;
@@ -312,7 +312,7 @@ function ExplorePublishedInner() {
       {status === 'loading' && (
         <div role="status" aria-label="Loading">
           <span className="sr-only">Loading</span>
-          <WikiDetailBodySkeleton />
+          <ExplorePublishedDetailSkeleton />
         </div>
       )}
 

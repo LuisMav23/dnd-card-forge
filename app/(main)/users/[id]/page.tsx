@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import ExploreItemCard from '@/components/explore/ExploreItemCard';
+import PublicProfileSkeleton from '@/components/ui/skeletons/PublicProfileSkeleton';
 import { createClient } from '@/lib/supabase/client';
 import type { ExploreListItem } from '@/lib/exploreTypes';
 
@@ -101,6 +102,10 @@ export default function PublicUserProfilePage() {
   return (
     <div className="page-radial-soft flex min-h-0 flex-1 flex-col overflow-x-hidden bg-bg">
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-8 sm:py-10">
+        {loading ? (
+          <PublicProfileSkeleton />
+        ) : (
+          <>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Link
             href="/explore"
@@ -108,7 +113,7 @@ export default function PublicUserProfilePage() {
           >
             ← Explore
           </Link>
-          {!loading && profile && isSelf ? (
+          {profile && isSelf ? (
             <Link
               href="/profile/edit"
               className="panel-btn shrink-0 border-gold/35 bg-gold/10 text-center text-xs text-gold hover:bg-gold/20 sm:text-sm"
@@ -118,15 +123,7 @@ export default function PublicUserProfilePage() {
           ) : null}
         </div>
 
-        {loading && (
-          <div className="mt-8 animate-pulse space-y-4">
-            <div className="h-24 w-24 rounded-full bg-mid/80" />
-            <div className="h-8 w-48 rounded bg-mid/80" />
-            <div className="h-20 max-w-xl rounded bg-mid/60" />
-          </div>
-        )}
-
-        {error && !loading && (
+        {error && (
           <div className="mt-8">
             <p className="text-sm text-red-300">{error}</p>
             <Link href="/explore" className="mt-4 inline-block text-gold underline">
@@ -135,7 +132,7 @@ export default function PublicUserProfilePage() {
           </div>
         )}
 
-        {profile && !loading && (
+        {profile && (
           <>
             <header className="mt-8 flex flex-col gap-6 border-b border-bdr/80 pb-8 sm:flex-row sm:items-start">
               <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-full border-2 border-bdr bg-mid shadow-[0_8px_24px_rgba(0,0,0,0.35)]">
@@ -250,6 +247,8 @@ export default function PublicUserProfilePage() {
                 )}
               </section>
             )}
+          </>
+        )}
           </>
         )}
       </main>

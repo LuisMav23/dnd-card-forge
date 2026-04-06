@@ -46,6 +46,8 @@ async function captureWithHtml2Canvas(
     allowTaint,
     backgroundColor: null,
     logging: false,
+    scrollX: 0,
+    scrollY: 0,
     onclone: (_doc, element) => {
       if (element instanceof HTMLElement) {
         selfFlattenHtml2CanvasTree(element);

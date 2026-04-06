@@ -4,6 +4,10 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import ExploreItemCard from '@/components/explore/ExploreItemCard';
 import ExploreTopRatedRow from '@/components/explore/ExploreTopRatedRow';
+import {
+  ExploreLeaderboardColumnSkeleton,
+  ExploreSectionSkeleton,
+} from '@/components/ui/skeletons/ExploreSectionSkeleton';
 import type { ExploreListItem, ExploreSort } from '@/lib/exploreTypes';
 import { ITEM_CARD_GRID_CLASS } from '@/lib/itemCardGrid';
 
@@ -54,20 +58,7 @@ function ExploreSection({
         <p className="mt-1 text-sm text-bronze">{subtitle}</p>
       </div>
       {loading ? (
-        <ul className={ITEM_CARD_GRID_CLASS}>
-          {Array.from({ length: 6 }).map((_, i) => (
-            <li
-              key={i}
-              className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-bdr/60 bg-panel/50 shadow-[0_4px_20px_rgba(0,0,0,0.2)]"
-            >
-              <div className="aspect-[4/3] shrink-0 animate-pulse bg-mid/90" />
-              <div className="flex min-h-0 flex-1 flex-col justify-between gap-2 p-3">
-                <div className="h-4 w-3/4 animate-pulse rounded bg-mid/80" />
-                <div className="mt-auto h-3 w-1/2 animate-pulse rounded bg-mid/60" />
-              </div>
-            </li>
-          ))}
-        </ul>
+        <ExploreSectionSkeleton count={6} />
       ) : items.length === 0 ? (
         <p className="text-sm italic text-muted">Nothing published here yet.</p>
       ) : (
@@ -90,24 +81,6 @@ function LeaderboardSection({
   topStatblocks: ExploreListItem[];
   loading: boolean;
 }) {
-  const skeleton = (
-    <ul className={TOP_RATED_LIST_CLASS}>
-      {Array.from({ length: 4 }).map((_, i) => (
-        <li
-          key={i}
-          className="flex min-h-[5.75rem] flex-row overflow-hidden rounded-xl border border-bdr/60 bg-panel/50 shadow-[0_4px_20px_rgba(0,0,0,0.2)]"
-        >
-          <div className="w-[min(38%,10.5rem)] shrink-0 animate-pulse bg-mid/90 sm:w-44" />
-          <div className="flex min-w-0 flex-1 flex-col justify-center gap-2 p-3 sm:pl-4">
-            <div className="h-4 w-4/5 max-w-xs animate-pulse rounded bg-mid/80" />
-            <div className="h-3 w-24 animate-pulse rounded bg-mid/60" />
-            <div className="mt-1 h-3 w-3/5 animate-pulse rounded bg-mid/50" />
-          </div>
-        </li>
-      ))}
-    </ul>
-  );
-
   return (
     <section className="mb-14">
       <div className="mb-4 border-b border-bdr/80 pb-3">
@@ -121,8 +94,8 @@ function LeaderboardSection({
       </div>
       {loading ? (
         <div className="grid gap-10 lg:grid-cols-2">
-          <div>{skeleton}</div>
-          <div>{skeleton}</div>
+          <ExploreLeaderboardColumnSkeleton />
+          <ExploreLeaderboardColumnSkeleton />
         </div>
       ) : (
         <div className="grid gap-10 lg:grid-cols-2">
@@ -185,20 +158,7 @@ function FollowingFeedSection({
           </Link>
         </div>
       ) : loading ? (
-        <ul className={ITEM_CARD_GRID_CLASS}>
-          {Array.from({ length: 3 }).map((_, i) => (
-            <li
-              key={i}
-              className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-bdr/60 bg-panel/50 shadow-[0_4px_20px_rgba(0,0,0,0.2)]"
-            >
-              <div className="aspect-[4/3] shrink-0 animate-pulse bg-mid/90" />
-              <div className="flex min-h-0 flex-1 flex-col justify-between gap-2 p-3">
-                <div className="h-4 w-3/4 animate-pulse rounded bg-mid/80" />
-                <div className="mt-auto h-3 w-1/2 animate-pulse rounded bg-mid/60" />
-              </div>
-            </li>
-          ))}
-        </ul>
+        <ExploreSectionSkeleton count={3} />
       ) : items.length === 0 ? (
         <p className="text-sm italic text-muted">
           No new publishes yet. Follow creators from their public profile, then check back here.

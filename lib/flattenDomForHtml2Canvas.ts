@@ -164,6 +164,22 @@ function applyComputedPaintOntoElement(origin: HTMLElement, target: HTMLElement)
   target.style.textShadow = legacySafePaintValue(s.textShadow, 'none');
   target.style.filter = legacySafePaintValue(s.filter, 'none');
   target.style.borderImageSource = legacySafePaintValue(s.borderImageSource, 'none');
+
+  // html2canvas parses font-size/line-height into internal tokens; `calc()`, `var()`, and
+  // relative units often resolve to wrong numbers so FontMetrics + text Y positions drift
+  // (clipped titles, type lines cut off). Inline computed typography so metrics match the live DOM.
+  target.style.fontFamily = s.fontFamily;
+  target.style.fontSize = s.fontSize;
+  target.style.fontWeight = s.fontWeight;
+  target.style.fontStyle = s.fontStyle;
+  target.style.lineHeight = s.lineHeight;
+  target.style.letterSpacing = s.letterSpacing;
+  target.style.wordSpacing = s.wordSpacing;
+  target.style.textAlign = s.textAlign;
+  target.style.textTransform = s.textTransform;
+  if (s.fontFeatureSettings && s.fontFeatureSettings !== 'normal') {
+    target.style.fontFeatureSettings = s.fontFeatureSettings;
+  }
 }
 
 /**

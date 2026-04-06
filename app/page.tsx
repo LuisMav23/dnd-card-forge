@@ -1,7 +1,7 @@
 import type { ComponentType, CSSProperties, SVGProps } from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Globe, Heart, MessageSquare, UserPlus } from 'lucide-react';
+import { Globe, Heart, MessageSquare, SquareStack, UserPlus } from 'lucide-react';
 import ExploreItemCard from '@/components/explore/ExploreItemCard';
 import { ForgeIcon, MonsterIcon, BookIcon } from '@/components/icons/FeatureIcons';
 import LandingCta from '@/components/landing/LandingCta';
@@ -13,9 +13,10 @@ import { fetchLandingSpotlightItems } from '@/lib/landingSpotlight';
 import { ITEM_CARD_GRID_CLASS } from '@/lib/itemCardGrid';
 import { createClient } from '@/lib/supabase/server';
 
-const LANDING_TITLE = 'Card Forge — TTRPG item card maker, stat block builder & PNG export';
+const LANDING_TITLE =
+  'Card Forge — TTRPG item cards, TCG-style trading cards, stat blocks & PNG export';
 const LANDING_DESCRIPTION =
-  'Design fantasy tabletop RPG item cards and stat blocks online: spells, weapons, armor, NPCs, monsters, and more. Live preview, PNG export for VTTs and handouts, then publish and share on Explore — with comments, votes, favorites, and creator follows.';
+  'Design fantasy TTRPG item cards and stat blocks, plus custom TCG-style trading card faces (creatures, spells, planeswalkers, sagas, and more) with mana symbols and live preview. PNG export for VTTs, handouts, and deck ideas — then publish and share on Explore with comments, votes, favorites, and creator follows.';
 
 export const metadata: Metadata = {
   title: LANDING_TITLE,
@@ -33,6 +34,9 @@ export const metadata: Metadata = {
     'PNG export',
     'RPG community',
     'Card Forge',
+    'custom trading card',
+    'TCG card maker',
+    'TCG-style cards',
   ],
   alternates: {
     canonical: '/',
@@ -80,6 +84,11 @@ const createItems: { icon: ComponentType<SVGProps<SVGSVGElement>>; title: string
     icon: BookIcon,
     title: 'Encounters',
     body: 'Plan and run encounters linked to your library so prep and play stay in one workspace.',
+  },
+  {
+    icon: SquareStack,
+    title: 'TCG-style cards',
+    body: 'Build custom trading card-style faces: mana costs and symbols, type lines, rules text, planeswalkers, sagas, battles, and more — with the same live preview, PNG export, library, and Explore publishing as the rest of Card Forge.',
   },
 ];
 
@@ -139,7 +148,7 @@ export default async function LandingPage() {
               Card Forge
             </h1>
             <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-bronze opacity-0 animate-landing-fade-up [animation-delay:280ms] sm:text-lg">
-              The item card maker and stat block builder for fantasy TTRPGs: craft handouts, export PNGs for virtual tabletops, then{' '}
+              Item cards and stat blocks for fantasy TTRPGs, plus custom TCG-style trading card faces — craft handouts and deck ideas, export PNGs for virtual tabletops, then{' '}
               <Link href="/explore" className="text-gold underline-offset-2 hover:underline">
                 publish and share
               </Link>{' '}
@@ -185,13 +194,13 @@ export default async function LandingPage() {
                 className="landing-reveal-child mt-2 max-w-2xl text-sm text-bronze sm:text-base"
                 style={{ '--landing-reveal-delay': '80ms' } as CSSProperties}
               >
-                Props, player handouts, and GM reference — built for long campaigns and one-shots. Everything saves to your library when you{' '}
+                Props, player handouts, GM reference, and custom card makers — built for campaigns, one-shots, and deck brewers. Everything saves to your library when you{' '}
                 <Link href="/signup" className="text-gold underline-offset-2 hover:underline">
                   sign up free
                 </Link>
                 .
               </p>
-              <ul className="mt-10 grid gap-6 sm:grid-cols-3">
+              <ul className="mt-10 grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
                 {createItems.map((item, i) => (
                   <li
                     key={item.title}
@@ -279,7 +288,7 @@ export default async function LandingPage() {
                   className="landing-reveal-child mt-2 text-sm text-bronze sm:text-base"
                   style={{ '--landing-reveal-delay': '70ms' } as CSSProperties}
                 >
-                  Popular published item cards and stat blocks — open any tile for the full wiki-style view, comments, and forks on Explore.
+                  Popular published work — item cards, TCG-style trading cards, and stat blocks. Open any tile for the full wiki-style view, comments, and forks on Explore.
                 </p>
               </div>
               {spotlight.length === 0 ? (
@@ -328,7 +337,7 @@ export default async function LandingPage() {
                 className="landing-reveal-child mt-3 text-sm text-bronze sm:text-base"
                 style={{ '--landing-reveal-delay': '80ms' } as CSSProperties}
               >
-                Free account: cloud library, publish to Explore, follow creators, and keep your item cards and stat blocks in sync everywhere.
+                Free account: cloud library, publish to Explore, follow creators, and keep your item cards, TCG-style faces, and stat blocks in sync everywhere.
               </p>
               <div
                 className="landing-reveal-child mt-8"
