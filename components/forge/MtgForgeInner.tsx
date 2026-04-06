@@ -1,6 +1,6 @@
 'use client';
 
-import { useReducer, useRef, useCallback, useState, useEffect } from 'react';
+import { useReducer, useRef, useCallback, useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Sparkle } from 'lucide-react';
@@ -67,12 +67,19 @@ export default function MtgForgeInner() {
     ? `/card/${libraryId}${fromLibrary ? FROM_LIBRARY_QS : ''}`
     : '/card';
 
-  const resolvedInitial: MtgCardState = {
-    ...getDefaultMtgState(typeParam),
-    imageAspect: aspectParam,
-    fontSize: fontSizeParam,
-  };
-  const NEW_CARD_BASELINE_SERIALIZED = JSON.stringify(resolvedInitial);
+  const resolvedInitial = useMemo(
+    (): MtgCardState => ({
+      ...getDefaultMtgState(typeParam),
+      imageAspect: aspectParam,
+      fontSize: fontSizeParam,
+    }),
+    [typeParam, aspectParam, fontSizeParam]
+  );
+
+  const NEW_CARD_BASELINE_SERIALIZED = useMemo(
+    () => JSON.stringify(resolvedInitial),
+    [resolvedInitial]
+  );
 
   const [state, dispatch] = useReducer(mtgCardReducer, resolvedInitial);
   const cardRef = useRef<HTMLDivElement>(null);

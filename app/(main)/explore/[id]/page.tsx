@@ -14,7 +14,7 @@ import { parseStatBlockFromLibraryRow, type LibraryStatBlockRow } from '@/lib/st
 import type { StatBlockState } from '@/lib/statblockTypes';
 import { createClient } from '@/lib/supabase/client';
 import CardWikiView from '@/components/cards/CardWikiView';
-import MtgCardRenderer from '@/components/MtgCardRenderer';
+import MtgWikiView from '@/components/cards/MtgWikiView';
 import ExploreCommentsSection from '@/components/explore/ExploreCommentsSection';
 import ExplorePublishedActionsBar from '@/components/explore/ExplorePublishedActionsBar';
 import StatBlockWikiView from '@/components/statblocks/StatBlockWikiView';
@@ -326,16 +326,7 @@ function ExplorePublishedInner() {
       )}
 
       {status === 'ready' && mtgState && row && (
-        <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-6 px-4 py-10">
-          <div className="self-start flex items-center gap-2">
-            <span className="inline-flex items-center gap-1 rounded bg-red-900/30 px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-widest text-red-300 border border-red-800/40 font-[var(--font-cinzel),serif]">
-              ⬡ Magic: The Gathering — {mtgState.type.charAt(0).toUpperCase() + mtgState.type.slice(1)}
-            </span>
-          </div>
-          <div className="mtg-card-scale-wrap">
-            <MtgCardRenderer ref={exportRef} state={mtgState} />
-          </div>
-        </div>
+        <MtgWikiView ref={exportRef} state={mtgState} savedTitle={row.title} />
       )}
 
       {status === 'ready' && cardState && row && (

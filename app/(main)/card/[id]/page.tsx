@@ -11,7 +11,7 @@ import { resolveIconId } from '@/lib/iconRegistry';
 import { exportCardBackToPng, exportCardToPng } from '@/lib/exportCardPng';
 import { getDomPngExportButtonLabel } from '@/lib/domPngExportError';
 import CardWikiView from '@/components/cards/CardWikiView';
-import MtgCardRenderer from '@/components/MtgCardRenderer';
+import MtgWikiView from '@/components/cards/MtgWikiView';
 import RouteSuspenseFallback from '@/components/ui/RouteSuspenseFallback';
 import WikiDetailBodySkeleton from '@/components/ui/skeletons/WikiDetailBodySkeleton';
 
@@ -212,19 +212,7 @@ function CardDetailInner() {
       )}
 
       {status === 'ready' && isMtg && mtgState && (
-        <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-6 px-4 py-10">
-          <div className="flex items-center gap-2 self-start">
-            <span className="inline-flex items-center gap-1 rounded bg-red-900/30 px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-widest text-red-300 border border-red-800/40 font-[var(--font-cinzel),serif]">
-              ⬡ Magic: The Gathering — {mtgState.type.charAt(0).toUpperCase() + mtgState.type.slice(1)}
-            </span>
-          </div>
-          <h1 className="self-start font-[var(--font-cinzel),serif] text-xl font-black text-gold">
-            {savedTitle || mtgState.name || 'Untitled Card'}
-          </h1>
-          <div className="mtg-card-scale-wrap">
-            <MtgCardRenderer ref={cardExportRef} state={mtgState} />
-          </div>
-        </div>
+        <MtgWikiView ref={cardExportRef} state={mtgState} savedTitle={savedTitle} />
       )}
 
       {status === 'ready' && !isMtg && state && (

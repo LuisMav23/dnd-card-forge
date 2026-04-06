@@ -161,9 +161,20 @@ function openHrefCard(c: LibraryCard) {
   return `${path}${FROM_LIBRARY_QS}`;
 }
 
+function isMtgLibraryCard(c: LibraryCard): boolean {
+  const d = c.data;
+  return c.item_type === 'card' && d != null && typeof d === 'object' && (d as { cardGame?: string }).cardGame === 'mtg';
+}
+
 function editHrefCard(c: LibraryCard) {
-  const path =
-    c.item_type === 'card' ? `/card/new?library=${c.id}` : `/statblocks/new?library=${c.id}`;
+  let path: string;
+  if (c.item_type === 'card') {
+    path = isMtgLibraryCard(c)
+      ? `/card/new?game=mtg&library=${c.id}`
+      : `/card/new?library=${c.id}`;
+  } else {
+    path = `/statblocks/new?library=${c.id}`;
+  }
   return `${path}${FROM_LIBRARY_APPEND}`;
 }
 
